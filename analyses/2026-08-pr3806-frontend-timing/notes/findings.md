@@ -37,12 +37,13 @@ at compile_fx entry, 273 SDSC specs), one cold compile takes:
 | Spyre pass pipelines | 5.3 | 5.3 % |
 | `unattributed_compile_fx` | 12.5 | 12.5 % |
 
-At every workload point measured, external `dxp_standalone` accounts
-for 73–96 % of `compile_fx_wrapper`. The Spyre pass pipelines account
-for 5–5.5 % across the whole range. `unattributed_compile_fx` starts
-at ~13 % at baseline and shrinks in relative share as tile count grows
-because `dxp_standalone` and the Spyre pipelines both grow much
-faster than it does. See
+Across the fully sampled points, external `dxp_standalone` accounts
+for 69–92 % of `compile_fx_wrapper`, rising monotonically with tile
+count; the preliminary 128-body point reaches ~96 %. The Spyre pass
+pipelines remain a single-digit percentage of `compile_fx_wrapper`
+across the measured range. `unattributed_compile_fx` starts at ~13 %
+at baseline and shrinks in relative share as tile count grows because
+`dxp_standalone` grows much faster than it does. See
 [`tables/table-a-workload.md`](tables/table-a-workload.md) and
 [`../plots/compile-stages.png`](../plots/compile-stages.png).
 
