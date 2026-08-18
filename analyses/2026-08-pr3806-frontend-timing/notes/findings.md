@@ -1,9 +1,11 @@
 # Findings — PR #3806 front-end compiler timing
 
-Cold-compile scaling of `test_flash` from PR #3806. Nine
-`(Lq, Lk)` points, three samples per point except the largest which
-is preliminary at `n=1`. All timings are medians in seconds unless
-otherwise noted. Detailed tables and plots are cross-referenced
+Cold-compile scaling of `test_flash` from PR #3806. The primary
+sweep covers nine `(Lq, Lk)` points at `H=8` with three samples per
+point except the largest, which is preliminary at `n=1`. A separate
+controlled sweep varies `H ∈ {16, 32}` at fixed `Lq=512, Lk=1024`
+with three samples per point (§6). All timings are medians in seconds
+unless otherwise noted. Detailed tables and plots are cross-referenced
 throughout.
 
 ## 1. Compile-time decomposition
@@ -114,7 +116,7 @@ for dup in group[1:]:
 Both are executed once per duplicate. Source inspection therefore
 predicts work proportional to `|operations| × |duplicates|`.
 
-Directly measured (from [`tables/dedup-mechanism.md`](tables/dedup-mechanism.md)):
+Directly measured on the H=8 sweep (from [`tables/dedup-mechanism.md`](tables/dedup-mechanism.md)):
 
 | Lq | Lk | input_ops | duplicates | ops × dups | measured (ms) | ops × dups × baseline | t × baseline |
 |---:|---:|---:|---:|---:|---:|---:|---:|
@@ -133,12 +135,14 @@ within a few percent across the entire range. A single-parameter
 linear fit through the origin ([`../plots/dedup-model-fit.png`](../plots/dedup-model-fit.png))
 gives:
 
-`t ≈ 200.9 µs × (|operations| × |duplicates|)`
+`t ≈ 201.8 µs × (|operations| × |duplicates|)`
 
-For this workload, `|duplicates|` scales approximately proportionally
-with `|operations|`, which is why the pass appears near-quadratic in
+(least-squares through the origin over the H=8 sweep). For this
+workload, `|duplicates|` scales approximately proportionally with
+`|operations|`, which is why the pass appears near-quadratic in
 program size. The underlying cost model is the product, not a
-universal `O(n²)` in graph size.
+universal `O(n²)` in graph size. §6 tests this coefficient against
+an out-of-sample H-dimension sweep.
 
 ## 5. Backend scaling per SDSC spec
 
@@ -165,7 +169,74 @@ consistent with strongly superlinear scaling of the backend in the
 size of the bundle it receives. The external backend is outside the
 scope of this study and is reported here only for context.
 
-## 6. What the `unattributed_compile_fx` bucket does and does not say
+## 6. H-dimension controlled scaling
+
+The primary sweep varies `Lq` and `Lk` at fixed `H=8`. A separate
+controlled sweep varies `H ∈ {8, 16, 32}` at fixed `Lq=512, Lk=1024`
+with `h_block_size=4`, doubling and quadrupling the H-tile count while
+holding every other block size at its baseline value. Three samples
+per point. Full numbers are in
+[`tables/h-scaling.md`](tables/h-scaling.md).
+
+**H scaling at Lq=512, Lk=1024**:
+
+| H | H tiles | bodies | FX nodes | n_specs | compile_fx (s) | Spyre passes (s) | dxp (s) |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8  | 2 | 8  | 236 | 273  |  99.4 |  5.3 |  79.6 |
+| 16 | 4 | 16 | 460 | 545  | 220.9 | 13.9 | 188.0 |
+| 32 | 8 | 32 | 908 | 1089 | 580.1 | 40.4 | 509.7 |
+
+Inner-body count, FX nodes, and `n_specs` scale essentially linearly
+with `H` (2.00×, 1.95×, 2.00× at H=16 and 4.00×, 3.85×, 3.99× at
+H=32). `compile_fx` and the Spyre pass pipelines grow slightly
+faster than linearly (2.22× and 2.63× at H=16; 5.84× and 7.65× at
+H=32), which is consistent with the superlinear per-input-op cost
+already documented for the top pre-scheduling passes in §3 and with
+the backend per-spec growth in §5.
+
+**Equal-inner-body comparison** — reaching the same predicted
+inner-body count by growing `H` (with `Lk` fixed) versus by growing
+`Lk` (with `H=8` fixed) produces graphs of matching size at
+`compile_fx` entry, identical `n_specs`, and front-end pass time
+agreeing to within a couple percent:
+
+| bodies | H | Lq | Lk | FX nodes | n_specs | compile_fx (s) | Spyre passes (s) | dxp (s) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 16 | 16 | 512 | 1024 | 460 | 545 | 220.9 | 13.9 | 188.0 |
+| 16 |  8 | 512 | 2048 | 444 | 545 | 219.5 | 13.8 | 186.6 |
+| 32 | 32 | 512 | 1024 | 908 | 1089 | 580.1 | 40.4 | 509.7 |
+| 32 |  8 | 512 | 4096 | 860 | 1089 | 568.0 | 40.7 | 497.7 |
+
+`n_specs` is identical within each pair; FX-node counts differ by
+3–6% (an artifact of the loop-unrolling structure, not of the tile
+budget) and Spyre pass time differs by well under 1%. Compiler
+scaling in the measured regime is a function of the resulting
+graph size, not of which input dimension produced it.
+
+**Out-of-sample dedup validation** — the coefficient
+`t ≈ 201.8 µs × (|operations| × |duplicates|)` fit on the H=8 sweep
+predicts the H=16 and H=32 dedup times as an out-of-sample check
+(see [`tables/dedup-oos.md`](tables/dedup-oos.md)):
+
+| H | Lq | Lk | ops × dups | predicted (ms) | measured (ms) | error |
+|---:|---:|---:|---:|---:|---:|---:|
+| 16 | 512 | 1024 |    17,536 |  3,539 |  3,505 | −1.0% |
+| 32 | 512 | 1024 |    69,888 | 14,105 | 13,787 | −2.2% |
+
+Refitting the coefficient with the H points included changes it by
+less than 0.1 µs. The source-derived cost model generalizes across
+an independent axis of program-size growth.
+
+**Correctness** — the compiled Spyre output was compared against the
+CPU reference for both new H values in separate runs
+(`patches/run_h_correctness.sh`), outside the timed region:
+
+| H | Lq | Lk | `torch.testing.assert_close(atol=0.1, rtol=0.1)` |
+|---:|---:|---:|:---|
+| 16 | 512 | 1024 | pass |
+| 32 | 512 | 1024 | pass |
+
+## 7. What the `unattributed_compile_fx` bucket does and does not say
 
 The bucket grows more slowly than either the backend or the Spyre
 pass pipelines over the measured range
@@ -179,7 +250,7 @@ class-level wraps in `patches/extra_timers.py` are enabled. The
 validation-run infrastructure to make that measurement is in place
 (see `patches/run_validation.sh` and `patches/analyze_validation.py`).
 
-## 7. Limitations
+## 8. Limitations
 
 - Three samples per point support median comparisons but do not
   support tight asymptotic complexity claims.
@@ -194,8 +265,13 @@ validation-run infrastructure to make that measurement is in place
   `_maybe_scratchpad_planning` becomes a no-op and its share of the
   Spyre pipeline evaporates. This does not change the dominant
   conclusions but does change the per-pass table.
+- The controlled H sweep covers `H ∈ {16, 32}` only at
+  `Lq=512, Lk=1024`; it deliberately does not cross the largest
+  workload points (the backend cost at H=32 combined with Lk=8192
+  would grow far beyond what §5 already documents, and is not
+  needed to answer the H-vs-Lk question).
 
-## 8. Next investigations
+## 9. Next investigations
 
 Ranked by evidence:
 

@@ -117,23 +117,43 @@ are held fixed. Three cold-compile samples per point, executed
 serially, with the driver in
 [`patches/sweep-driver.sh`](patches/sweep-driver.sh).
 
-Sweep points (9 in total; 25 samples):
+Primary sweep points (9 in total; 25 samples):
 
-| Lq | Lk | inner_bodies | samples |
-|---:|---:|---:|---:|
-| 256 | 1024 | 4 | 3 |
-| 512 | 512 | 4 | 3 |
-| 512 | 1024 | 8 | 3 |
-| 512 | 2048 | 16 | 3 |
-| 1024 | 1024 | 16 | 3 |
-| 512 | 4096 | 32 | 3 |
-| 2048 | 1024 | 32 | 3 |
-| 512 | 8192 | 64 | 3 |
-| 1024 | 8192 | 128 | 1 (preliminary; two additional samples in progress) |
+| H | Lq | Lk | inner_bodies | samples |
+|---:|---:|---:|---:|---:|
+| 8 | 256 | 1024 | 4 | 3 |
+| 8 | 512 | 512 | 4 | 3 |
+| 8 | 512 | 1024 | 8 | 3 |
+| 8 | 512 | 2048 | 16 | 3 |
+| 8 | 1024 | 1024 | 16 | 3 |
+| 8 | 512 | 4096 | 32 | 3 |
+| 8 | 2048 | 1024 | 32 | 3 |
+| 8 | 512 | 8192 | 64 | 3 |
+| 8 | 1024 | 8192 | 128 | 1 (preliminary) |
 
 The 128-body point is marked preliminary until three samples are
 present. It is included with `n=1` for completeness but is not given
 equal statistical weight in fitted trends.
+
+### H-dimension controlled sweep
+
+A separate sweep varies `H ∈ {16, 32}` at fixed `Lq=512, Lk=1024` and
+otherwise identical block sizes, driven by
+[`patches/run_h_sweep.sh`](patches/run_h_sweep.sh). Three cold samples
+per point.
+
+| H | Lq | Lk | inner_bodies | samples |
+|---:|---:|---:|---:|---:|
+| 16 | 512 | 1024 | 16 | 3 |
+| 32 | 512 | 1024 | 32 | 3 |
+
+By construction these match the predicted inner-body counts of the
+existing `H=8, 512×2048` and `H=8, 512×4096` points, enabling a
+controlled H-vs-Lk comparison at equal graph size.
+Correctness for each H value is validated separately from the timed
+samples by running the harness with `--compare-cpu`, driven by
+[`patches/run_h_correctness.sh`](patches/run_h_correctness.sh). CPU
+reference time is never included in timed runs.
 
 ## Results
 
@@ -150,6 +170,10 @@ equal statistical weight in fitted trends.
   [`notes/tables/backend-per-spec.md`](notes/tables/backend-per-spec.md).
 - Unattributed-bucket table:
   [`notes/tables/residual-decomposition.md`](notes/tables/residual-decomposition.md).
+- H-dimension controlled scaling and equal-inner-body H-vs-Lk
+  comparison: [`notes/tables/h-scaling.md`](notes/tables/h-scaling.md).
+- Out-of-sample dedup cost-model check across H:
+  [`notes/tables/dedup-oos.md`](notes/tables/dedup-oos.md).
 - Plots: [`plots/compile-stages.png`](plots/compile-stages.png),
   [`plots/pass-scaling.png`](plots/pass-scaling.png),
   [`plots/dedup-model-fit.png`](plots/dedup-model-fit.png),
@@ -204,7 +228,17 @@ matching flex/deeptools/senlib/spyre-comms), and a Spyre device.
      bash patches/sweep-driver.sh
    ```
 
-4. Regenerate tables and plots from the collected data:
+4. Run the controlled H-dimension sweep and correctness checks:
+
+   ```bash
+   TORCH_SPYRE_TIMING=1 \
+     TORCH_SPYRE_CHECKOUT=<checkout> \
+     DATA_DIR=./data \
+     bash patches/run_h_sweep.sh
+   bash patches/run_h_correctness.sh
+   ```
+
+5. Regenerate tables and plots from the collected data:
 
    ```bash
    python3 patches/assemble_analysis.py

@@ -13,12 +13,14 @@ carries its own README, instrumentation patches, raw data, and plots.
   — Torch-Spyre front-end compiler timing study for the OpSpec-tiling
   flash-attention test introduced in `torch-spyre` PR #3806
   (`tests/inductor/test_opspec_tiling.py::TestOpSpecTiling::test_flash`).
-  Cold-compile scaling sweep across `Lq` and `Lk`, exhaustive
-  compile-stage decomposition, ranking of the pre-scheduling passes
-  that dominate. Central result: `dedup_and_promote_constants` scales
-  as `|operations| × |duplicates|` derived directly from source, with
-  measured pass time agreeing with the model within a few percent
-  across a 250× workload range. Start with
+  Cold-compile scaling sweep across `Lq` and `Lk`, controlled
+  `H`-dimension sweep, exhaustive compile-stage decomposition, ranking
+  of the pre-scheduling passes that dominate. Central result:
+  `dedup_and_promote_constants` scales as `|operations| × |duplicates|`
+  derived directly from source, with measured pass time agreeing with
+  the model within a few percent across a 250× workload range and
+  generalizing out-of-sample across an independent `H`-growth axis.
+  Start with
   [`analyses/2026-08-pr3806-frontend-timing/notes/findings.md`](analyses/2026-08-pr3806-frontend-timing/notes/findings.md).
 
 ## Layout of a study directory
