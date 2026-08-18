@@ -1,0 +1,64 @@
+{
+  "captured_at": "2026-08-17T20:20:07+00:00",
+  "cluster": {
+    "kind": "kubernetes-managed dev pod"
+  },
+  "host": {
+    "python": "3.12.13 (main, Apr 16 2026, 00:00:00) [GCC 14.3.1 20251022 (Red Hat 14.3.1-4)]",
+    "platform": "Linux-5.14.0-570.131.1.el9_6.x86_64-x86_64-with-glibc2.39"
+  },
+  "torch_spyre_repo": {
+    "git_rev_parse_HEAD": "a9316b381fb66013945b0a5fa6159ae7c782e1d9",
+    "branch": "pr3806",
+    "pr_number": 3806,
+    "head_ref": "opspec-tiling",
+    "log_last": "a9316b381fb66013945b0a5fa6159ae7c782e1d9 Merge branch 'main' into opspec-tiling"
+  },
+  "test_file_confirm": {
+    "path": "tests/inductor/test_opspec_tiling.py",
+    "sha256": "d64c05a88a1c9c489d17fe1a00a93ca0b1c8f4d15804a3f2d74cb474d487c1a4",
+    "size_bytes": 5939
+  },
+  "spyre_hw": {
+    "PCIDEVICE_IBM_COM_AIU_PF": "0000:bb:00.0",
+    "AIU_WORLD_RANK_0": "0000:bb:00.0",
+    "AIU_WORLD_SIZE": "1",
+    "AIU_ENV_FILE": "/tmp/etc/ibm/spyre/aiu_env.sh",
+    "FLEX_COMPUTE": "SENTIENT",
+    "FLEX_DEVICE": "PF",
+    "AIU_SETUP_MULTI_AIU": "1",
+    "components_txt_head": "ibm-deeptools:2.0.0-0.main.1+2238.654a8d5_0.el10\nibm-senlib-core:2.0.0-0.main.1+234.e51eac8_0.el10\nibm-senlib-dd2:2.0.0-0.main.1+234.e51eac8_0.el10\nibm-flex:2.0.0-0.main.1+468.11c1329_0.el10\nibm-aiu-toolbox-e2e:2.0.0-0.main.1+27.4f08606_0.el10"
+  },
+  "compiler_env_of_interest": {
+    "SENCORES": "<unset>",
+    "TORCH_LOGS": "<unset>",
+    "TORCH_COMPILE_DEBUG": "<unset>",
+    "TORCH_SPYRE_DEBUG": "<unset>",
+    "TORCHINDUCTOR_CACHE_DIR": "<unset>",
+    "TORCH_SPYRE_TIMING": "<unset>",
+    "LX_PLANNING": "<unset>",
+    "DT_DEEPRT_VERBOSE": "<unset>",
+    "TORCH_SPYRE_DOWNCAST_WARN": "<unset>",
+    "INDUCTOR_PROVENANCE": "<unset>",
+    "TORCH_DEVICE_BACKEND_AUTOLOAD": "<unset>"
+  },
+  "dxp_standalone": {
+    "which": "/opt/ibm/spyre/deeptools/bin/dxp_standalone",
+    "version_line": "dxp_standalone: unrecognized option '--version'"
+  },
+  "packages": {
+    "torch": "2.13.0+cpu",
+    "torch-spyre": "0.0.1",
+    "sympy": "1.14.0",
+    "pytest": "9.1.1",
+    "numpy": "2.5.1",
+    "torch.__version__": "2.13.0+cpu",
+    "torch.version.git_version": "cf30153c4c131c8164ee7798e5022d810682e2cb",
+    "torch_spyre.__file__": "<home>/pr3806/torch-spyre/torch_spyre/__init__.py",
+    "torch_spyre.version.__version__": "__err__: module 'torch_spyre' has no attribute 'version'"
+  },
+  "torch_spyre_visible": {
+    "ok": true,
+    "device": "spyre:0"
+  }
+}
