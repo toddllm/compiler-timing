@@ -104,6 +104,25 @@ Every measurement is a cold compile:
 - Spyre acquires the device exclusively per process; samples run
   strictly serially.
 
+### Cache-path protocol used at collection
+
+Each committed driver script writes a distinct per-sample cache
+directory whose name encodes the point and sample index; the driver
+then `rm -rf`s that path before every sample and exports it as
+`TORCHINDUCTOR_CACHE_DIR` for the process. The exact string in each
+committed timing JSON is the path that the driver produced for that
+sample (see `meta.TORCHINDUCTOR_CACHE_DIR` and any backend
+`output_dir` fields on individual events):
+
+| dataset | driver | cache path per sample |
+|---|---|---|
+| primary sweep (`data/{Lq}x{Lk}-run{i}.json`) | [`patches/sweep-driver.sh`](patches/sweep-driver.sh) | `/tmp/torchinductor_sweep_{Lq}x{Lk}_r{i}` |
+| H-dimension sweep (`data/h{H}-{Lq}x{Lk}-run{i}.json`) | [`patches/run_h_sweep.sh`](patches/run_h_sweep.sh) | `/tmp/torchinductor_sweep_h{H}_{Lq}x{Lk}_r{i}` |
+| H-dimension correctness (`data-correctness/h{H}-correctness.json`) | [`patches/run_h_correctness.sh`](patches/run_h_correctness.sh) | `/tmp/torchinductor_h{H}_correctness` |
+
+Committed drivers are the exact scripts used to collect each dataset;
+no post-hoc rewrite of measurement metadata is applied.
+
 The workload harness [`patches/workload_harness.py`](patches/workload_harness.py)
 reproduces the flash-attention closure from the test verbatim, so
 the compiled path exercised is the same one the test exercises.
