@@ -1,0 +1,21 @@
+--- a/torch_spyre/_inductor/__init__.py
++++ b/torch_spyre/_inductor/__init__.py
+@@ -23,6 +23,7 @@
+ from .propagate_hints import spyre_hint, get_op_hints  # noqa: F401
+ from torch_spyre.profiler._ffdc import CATEGORY_COMPILE_FRONTEND, try_collect
+ from . import timing_recorder as _tr
++from . import extra_timers as _extra_timers
+ 
+ _autoload_lock = threading.Lock()
+ 
+@@ -147,6 +148,10 @@
+                 "compile_fx_wrapper" if uses_spyre
+                 else "compile_fx_wrapper_non_spyre"
+             )
++            # Install extra timers on first Spyre compile per process. No-op
++            # thereafter and no-op when TORCH_SPYRE_TIMING is off.
++            if uses_spyre:
++                _extra_timers.install_extra_timers()
+             try:
+                 with _tr.stage(
+                     timing_stage_name, fx_nodes_at_entry=fx_nodes_at_entry
