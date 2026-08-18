@@ -152,8 +152,11 @@ existing `H=8, 512×2048` and `H=8, 512×4096` points, enabling a
 controlled H-vs-Lk comparison at equal graph size.
 Correctness for each H value is validated separately from the timed
 samples by running the harness with `--compare-cpu`, driven by
-[`patches/run_h_correctness.sh`](patches/run_h_correctness.sh). CPU
-reference time is never included in timed runs.
+[`patches/run_h_correctness.sh`](patches/run_h_correctness.sh); CPU
+reference time is never included in timed runs. The two correctness
+runs are committed as raw JSON under
+[`data-correctness/`](data-correctness/) and summarized in
+[`notes/tables/h-correctness.md`](notes/tables/h-correctness.md).
 
 ## Results
 
@@ -174,6 +177,8 @@ reference time is never included in timed runs.
   comparison: [`notes/tables/h-scaling.md`](notes/tables/h-scaling.md).
 - Out-of-sample dedup cost-model check across H:
   [`notes/tables/dedup-oos.md`](notes/tables/dedup-oos.md).
+- H-dimension correctness (Spyre vs CPU reference):
+  [`notes/tables/h-correctness.md`](notes/tables/h-correctness.md).
 - Plots: [`plots/compile-stages.png`](plots/compile-stages.png),
   [`plots/pass-scaling.png`](plots/pass-scaling.png),
   [`plots/dedup-model-fit.png`](plots/dedup-model-fit.png),

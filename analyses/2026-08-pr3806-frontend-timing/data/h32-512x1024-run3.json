@@ -11,7 +11,7 @@
     "q_block_size": 256,
     "kv_block_size": 512,
     "predicted_inner_bodies": 32,
-    "TORCHINDUCTOR_CACHE_DIR": "/tmp/torchinductor_sweep",
+    "TORCHINDUCTOR_CACHE_DIR": "/tmp/torchinductor_sweep_h32_512x1024_r3",
     "SENCORES": "<unset>",
     "pod": "<sanitized>",
     "recorder_version": 1,
@@ -553,7 +553,7 @@
       "self_ns": 511089665598,
       "meta": {
         "kernel": "sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0",
-        "output_dir": "/tmp/torchinductor_sweep_512x1024_r3/inductor-spyre/d0374a6f_sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0_sk36tv4k"
+        "output_dir": "/tmp/torchinductor_sweep_h32_512x1024_r3/inductor-spyre/d0374a6f_sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0_sk36tv4k"
       }
     },
     {

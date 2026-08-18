@@ -229,12 +229,12 @@ an independent axis of program-size growth.
 
 **Correctness** — the compiled Spyre output was compared against the
 CPU reference for both new H values in separate runs
-(`patches/run_h_correctness.sh`), outside the timed region:
-
-| H | Lq | Lk | `torch.testing.assert_close(atol=0.1, rtol=0.1)` |
-|---:|---:|---:|:---|
-| 16 | 512 | 1024 | pass |
-| 32 | 512 | 1024 | pass |
+(`patches/run_h_correctness.sh`), outside the timed region. Raw
+evidence is committed under
+[`data-correctness/`](../data-correctness/); the summary and
+tolerance are in
+[`tables/h-correctness.md`](tables/h-correctness.md). Both points
+pass `torch.testing.assert_close(atol=0.1, rtol=0.1)`.
 
 ## 7. What the `unattributed_compile_fx` bucket does and does not say
 
