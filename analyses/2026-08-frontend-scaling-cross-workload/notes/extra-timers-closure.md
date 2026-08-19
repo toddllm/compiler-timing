@@ -39,20 +39,26 @@ This residual is upstream Inductor scheduling + wrapper code generation
 (scheduler.codegen writes the Python wrapper file for the compiled
 graph). It scales roughly linearly with graph size.
 
-## The unattributed bucket is upstream-Inductor floor
+## The unattributed bucket — comparatively sublinear upstream/setup component
 
 Workload A baseline (97.9 s total) and workload B n=8 (104.6 s total)
-both have `unattr ≈ 11 s` at nearly identical total cost. That's
-strong evidence the residual is a **fixed floor** — AOTAutograd
-joint-graph decomposition + compile_fx wrapper setup + inner-compile
-plumbing — that doesn't scale linearly with graph size.
+both have `unattr ≈ 11 s` at nearly identical total cost. Across the
+four points recorded here (three in workload B, one in workload A),
+`unattr` is in the 6–11 s range and grows much more slowly than the
+Spyre pass pipelines.
 
-Workload B n=2 has 6.3 s unattr on a 21 s compile (29.8%). The floor
-is a bigger relative share when the compile is small. Same absolute
-floor, different denominators.
+Workload B n=2 has 6.3 s unattr on a 21 s compile (29.8%). The
+component is a bigger relative share when the compile is small.
 
 Workload B n=8 unattr (11.4 s) / n=2 unattr (6.3 s) = 1.8× while
-compile_fx grows 5.0×. Unattr is very sublinear in graph size.
+`compile_fx_wrapper` grows 5.0×. Unattr is very sublinear in graph
+size over the sampled range.
+
+Four points do not prove this is a universal fixed constant — but
+they are enough to say the component is (a) present in both workload
+families, (b) much slower-scaling than the Spyre pass pipelines, and
+(c) an unattractive optimization target for Spyre engineering since
+it lives upstream of Spyre code paths.
 
 ## What the unattributed bucket contains
 
@@ -88,14 +94,17 @@ By elimination (everything else is now timed):
 
 Future opportunity ranking gets one more line:
 
-- **AOTAutograd/upstream Inductor "floor" is ~10-11 s**. Anything faster
-  than 11 s cannot come from frontend work alone at this baseline — it
-  requires reducing the fixed pre-Inductor cost. Out of scope for
-  Spyre engineering; noted for cross-team coordination.
-- **Spyre custom pass pipelines are the entire frontend hotspot** in
-  both workloads. `codegen_residual` is small; kernel codegen is
-  effectively free. Fixing coarse-tile hints and dedup (already
-  identified) IS fixing the Spyre-owned frontend.
+- **AOTAutograd/upstream Inductor "component" is 6–11 s across the
+  points measured**. A total compile faster than the sum
+  (unattr + gl_codegen − Spyre pipes) cannot come from Spyre-owned
+  frontend work alone at these workload scales — it requires reducing
+  the upstream pre-Inductor cost. Out of scope for Spyre engineering;
+  noted for cross-team coordination.
+- **Spyre custom pass pipelines contain essentially the entire
+  Spyre-owned frontend hotspot** in both workloads. `codegen_residual`
+  is small; kernel codegen is effectively free. Fixing coarse-tile
+  hints and dedup (already identified) IS fixing the Spyre-owned
+  frontend.
 
 ## Instrumentation overhead
 

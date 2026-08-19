@@ -1,0 +1,45 @@
+# Frontend engineering opportunities — ranked
+
+Guiding principle: **measured impact outranks scary-looking source
+complexity.** Every candidate is labeled with evidence level and
+whether a prototype has actually demonstrated the fix.
+
+## Legend
+
+- **Evidence**: measured (data on this tree) / source-level (from
+  static analysis) / reported (external observation only).
+- **Prototype**: measured (working prototype with numbers) / estimated
+  (paper analysis with no working prototype).
+- **Generality**: cross-workload / workload A only / workload B only.
+- **Engineering risk**: low / medium / high — informed by whether prior
+  naïve attempts failed for a specific reason.
+
+## Table
+
+| # | Opportunity | Affected path | Workloads | Absolute cost | Observed scaling | Source-level mechanism | Evidence | Proposed change | Expected leverage | Prototype | Risk | Next validation |
+|:-:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| 1 | Per-substage reverse-adjacency in `_maybe_coarse_tile_hints` | `wsr/coarse_tile.py:_plan_tiling_propagation` (22%), `wsr/coarse_tile.py:_patch_retiled_load_indexes` (74%) | B (dominant); A (present but far smaller) | 14 s at n=8; 53 s at n=16 (workload B) | ~4× per 2× chunks (near-quadratic) | Per-op `_reads_buffer(op, buf)` scan calls raw `op.get_read_writes()`, run O(N × K) times per substage. Same driver as opportunity #3. | measured | Build one O(N) `readers_by_buffer` + `reads_by_op` per substage from a snapshot of `operations`; scope to substage lifetime so mutations across substage boundaries cannot leave stale entries. | **measured**: `_maybe_coarse_tile_hints` 4.11 s → 1.40 s at n=4 (2.93× speedup); 14.46 s → 3.93 s at n=8 (3.68× speedup). Total Spyre pipes at n=8: 23.3 s → 12.8 s. Growth ratio 4→8 shifts from 3.52× (near-quadratic) to 2.80× (approaching linear). | see `notes/coarse-tile-prototype.md` | medium — naïve global `op_read_writes` swap broke correctness (prototypes.md); per-substage scoping avoids that failure mode | see `coarse-tile-prototype.md` |
+| 2 | `_extern_kernel_in_live_range` prefix-sum | `scratchpad/allocator.py:122` — the `range(min(uses), max(uses)+1)` per-buffer scan | A (workload B is already linear) | ~21 s at 512×8192 (b=64); ~74 s at 1024×8192 (b=128 preliminary) | n^1.45 on workload A | Per-buffer O(range) scan for `isinstance(op, ExternKernel)`. Long-lived carry buffers in workload A make per-buffer scan lengths grow with graph size. | measured (cross-workload comparison confirms same code + different topology → different laws) | Precompute an O(N) prefix-sum of ExternKernel-count once per pass; per-buffer check becomes O(1) via subtract. | estimated: 74 s → ~4 s at #3806 largest point; measurement in progress at 512×4096 / 512×8192 | see `notes/scratchpad-prototype.md` | low — single-function algorithm swap, no cross-cutting concerns | see `scratchpad-prototype.md` |
+| 3 | Dedup reverse-adjacency / avoid full graph rescans per duplicate | `_inductor/dedup_constants.py::_redirect_consumers` + `_drop_constant` | cross-workload | 10 s at workload B n=16; up to 225 s at workload A 1024×8192 (b=128 preliminary) | `ops × dups` — near-quadratic when dups ∝ ops | For each duplicate: walks `operations` in `_redirect_consumers` and calls `operations.remove(dup)` (O(N) list scan). Same uncached `get_read_writes` mechanism as #1. | measured | Build a single `consumers_by_buf` and `op_to_position` at pass entry; skip full-graph scan per duplicate; batch-remove instead of `list.remove` per element. | estimated: `ops × dups` shape stays, per-pair constant should drop by the same 4.6× factor that separates workload A's 202 µs/pair from workload B's 931 µs/pair | not built | low | prototype: measure workload A 512×4096 and workload B n=8 |
+| 4 | `operations.index(op)` → local `op_to_position` dict in mutating paths | `pass_utils.py:1342` (`replace_computed_buffer_body`); also insert_restickify, split_multi_ops | cross-workload | Bundled with #1 in coarse-tile-hints; visible in restickify insert cost too | O(N) linear scan per splice, called O(K) times per mutating pass | Pattern is already used at `coarse_tile.py:1480` for `op_to_position`; extend to `replace_computed_buffer_body`. | source-level | Add a local `op_to_position` dict maintained across mutations in the same pass; `list.index` → `dict.get`. | estimated: 5–15% off `_patch_retiled_load_indexes` on top of #1; possibly larger benefit on insert_restickify | not built | low | prototype together with #1 or #3 |
+| 5 | Restickify post-fix ~2.2–2.4× per doubling | `_inductor/optimize_restickify.py:beam_global_min_cost` | B primarily | 2.3 s at n=8; 5.6 s at n=16 (workload B) | ~2.2–2.4× per doubling in the post-fix range | Not source-attributed yet. Static audit flagged the beam's `state.assignments + (candidate_stl,)` tuple concatenation as O(N²·K·|L|) Python-bookkeeping cost; the beam trace confirms `merged_total` grows fast but overall time is bounded. | source-level (candidate mechanism only) | Investigate the tuple-concat cost with cProfile on one diagnostic compile at n=16. If confirmed, replace with dict-of-lists mutating structure. | estimated: unknown until measured | not built | medium — the beam is a correctness-critical DP; changes need care | diagnostic profile run |
+| 6 | `dxp_standalone` backend growth | `torch_spyre/execution/async_compile.py:sdsc` — external subprocess | cross-workload | Dominant at scale: 217 s (workload B n=16); >2000 s (workload A largest points) | strongly superlinear | External backend; separate ownership | reported / observed | Backend-team owned | out of frontend scope | separate ownership | separate ownership | separate ownership |
+| 7 | `_maybe_reorder_unhinted_interlopers` explicit `O(n²)` docstring | `wsr/coarse_tile_hints.py:reorder_unhinted_interlopers` | either | 0.3–1 ms across all measured points | source says O(n²), measured negligible | Small graphs in practice — the O(n²) admission holds but at these graph sizes the constant is dominant. | measured (as a null: not a real hotspot) | do nothing | none — measured impact refutes the source concern | n/a | none | n/a |
+| 8 | Compile-side extent scaling reported in PR #3812 docstring | (unknown — does not reproduce on our base) | B (in the full PR #3812 tree) | reported >2 h at Lq=8192, n=4; on our base <60 s across Lq 64→4096 | reported extreme; not observed here | Unknown — the code path either lives in PR #3812's additional 22 files (including 820 lines of new C++), or requires state our controlled base does not build. | reported only | Build a full pr3812 tree with C-extension, replay the same sweep, isolate. | unknown | not investigated | n/a | build pr3812 and rerun the Lq/Lk sweeps at fixed n_chunks |
+
+## What we would recommend the team do first
+
+1. Take **opportunity #1** into a proper engineering PR. The prototype
+   scoping decision (per-substage indexes, no cross-mutation state) is
+   already validated. The measurable question is whether the change
+   turns the 4×-per-doubling curve into ~2×-per-doubling — and the
+   prototype numbers answer it directly.
+2. Take **opportunity #2** in parallel. It is a self-contained
+   `scratchpad/allocator.py` refactor; the prototype either confirms
+   or refutes the collapse to linear.
+3. Address **opportunity #3** next: same mechanism as #1, different
+   pass, cross-workload benefit.
+4. Investigate **opportunity #5** with a diagnostic profile; do not
+   optimize restickify until the mechanism is source-attributed.
+5. Leave **opportunity #8** as a "worth investigating if a full pr3812
+   build becomes convenient" item. Not blocking anything.

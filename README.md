@@ -24,22 +24,21 @@ carries its own README, instrumentation patches, raw data, and plots.
   [`analyses/2026-08-pr3806-frontend-timing/notes/findings.md`](analyses/2026-08-pr3806-frontend-timing/notes/findings.md).
 
 - [`analyses/2026-08-frontend-scaling-cross-workload/`](analyses/2026-08-frontend-scaling-cross-workload/)
-  — Cross-workload frontend compiler scalability investigation extending
-  the PR #3806 dataset with a second workload family: WSR/coarse-tiled
-  KV-chunked FlashAttention (torch-spyre PR #3812 test recipe). Adds
-  100%-attribution decomposition of `_maybe_coarse_tile_hints`
-  (dominant pass in the new workload), directly measured pre/post
-  layout-fix beam frontier evolution in `optimize_restickify_locations`
-  (reproducing issue #3687's exponential-beam signature verbatim on
-  the pre-fix tree), and an out-of-sample test of the dedup cost model
-  on the new workload. Central results: the top substage
-  `_patch_retiled_load_indexes` is Θ(N²) and accounts for 74.5% of the
-  hotspot pass at n=8 chunks; the dedup `ops × duplicates` shape
-  generalizes across workloads but the per-op constant does not
-  (4.6× larger on the KV-chunked workload); tensor-extent effects at
-  fixed n_chunks are absent on this tree.
-  Start with
-  [`analyses/2026-08-frontend-scaling-cross-workload/notes/findings.md`](analyses/2026-08-frontend-scaling-cross-workload/notes/findings.md).
+  — Cross-workload frontend compiler scalability investigation
+  extending the PR #3806 dataset with a second workload family: WSR/
+  coarse-tiled KV-chunked FlashAttention derived from torch-spyre
+  PR #3812. Identifies three distinct frontend scaling mechanisms
+  (repeated dependency work, restickify search-state explosion,
+  workload-topology-dependent scratchpad scaling) plus the backend as
+  a separate concern. Includes measured optimization prototypes for
+  the top opportunities.
+
+  **Start with the 2-minute summary:
+  [`analyses/2026-08-frontend-scaling-cross-workload/SUMMARY.md`](analyses/2026-08-frontend-scaling-cross-workload/SUMMARY.md).**
+  Then the ranked opportunity list
+  [`notes/engineering-opportunities.md`](analyses/2026-08-frontend-scaling-cross-workload/notes/engineering-opportunities.md)
+  and the full technical synthesis
+  [`notes/findings.md`](analyses/2026-08-frontend-scaling-cross-workload/notes/findings.md).
 
 ## Layout of a study directory
 

@@ -390,27 +390,29 @@ Estimated: scratchpad drops from 74 s → ~4 s at #3806's largest point.
 
 ## 10. Executive summary
 
-The frontend compilation cost of PR #3812's KV-chunked FlashAttention
-is dominated by `_maybe_coarse_tile_hints`, whose 4×-per-doubling
-scaling is 74% caused by `_patch_retiled_load_indexes` and 22% by
-`_plan_tiling_propagation` — both driven by the same uncached
-`get_read_writes()` mechanism that also inflates dedup's per-pair
-constant 4.6× on this workload vs the PR #3806 workload. A per-substage
-reverse-adjacency + a `op_to_position`-style splice fix would collapse
-this class of quadratic behavior to linear in graph size across three
+Spyre-owned frontend cost on the #3812-derived KV-chunked workload
+(controlled base tree) is dominated by `_maybe_coarse_tile_hints`,
+whose ~4×-per-doubling scaling is 74% caused by
+`_patch_retiled_load_indexes` and 22% by `_plan_tiling_propagation` —
+both driven by the same uncached `op.get_read_writes()` pattern that
+also inflates dedup's per-pair constant 4.6× on workload B vs the
+workload A dataset. A per-substage reverse-adjacency + a
+`op_to_position`-style splice fix would collapse this class of
+quadratic-like behavior to linear in graph size across three
 different passes simultaneously. The 5-line PR #3812 layout fix
 independently removes the exponential state-space explosion in
 `optimize_restickify` — that mechanism is confirmed at per-op
 candidate granularity and reduces beam-state metrics by ~50% at
-n_chunks=2.
+n_chunks=2 on the same graph.
 
-Closed compile_fx decomposition (extra_timers hook) confirms
-`gl_run` and `spyre_kernel_codegen` are effectively free (<1% each)
-and that the previously-unattributed bucket is a nearly-fixed 11 s
-upstream-Inductor floor (AOTAutograd + `torch.compile` setup) that
-does not scale with graph size — meaning the entire Spyre-owned
-frontend cost is captured by the Spyre pass pipelines. Scratchpad
-planning is linear on workload B but superlinear on workload A
-(same code, driven by workload A's long-lived carry buffers hitting
+Closed `compile_fx_wrapper` decomposition (extra_timers hook)
+confirms `gl_run` and `spyre_kernel_codegen` are effectively free
+(<1% each). A comparatively sublinear upstream/setup component
+(measured at 6–11 s across the four points recorded) remains, and
+does not scale nearly as fast as the Spyre pass pipelines — so the
+Spyre pass pipelines contain essentially all the Spyre-owned
+frontend work worth optimizing. Scratchpad planning is linear on
+workload B but superlinear on workload A (same code, driven by
+workload A's long-lived carry buffers hitting
 `_extern_kernel_in_live_range`'s O(range) scan); a prefix-sum fix
-turns that into O(1) per buffer.
+would turn that into O(1) per buffer.
