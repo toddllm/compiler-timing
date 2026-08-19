@@ -1,0 +1,606 @@
+{
+  "meta": {
+    "workload": "pr3812_kvchunk_flash",
+    "B": 1,
+    "H": 8,
+    "D": 128,
+    "Lq": 128,
+    "Lk": 4096,
+    "kv_block": 1024,
+    "n_chunks": 4,
+    "h_tiles": 4,
+    "lq_tiles": 0,
+    "TORCHINDUCTOR_CACHE_DIR": "/tmp/torchinductor_lqsweep_lq128_r1",
+    "SENCORES": "<unset>",
+    "pod": "<sanitized>",
+    "recorder_version": 1,
+    "clock": "time.perf_counter_ns",
+    "python_pid": 127411
+  },
+  "events": [
+    {
+      "name": "device_init_and_transfer",
+      "ordinal": 0,
+      "parent_ordinal": null,
+      "t_start_ns": 937151595501030,
+      "t_end_ns": 937151685035252,
+      "inclusive_ns": 89534222,
+      "self_ns": 89534222
+    },
+    {
+      "name": "first_call_wall",
+      "ordinal": 1,
+      "parent_ordinal": null,
+      "t_start_ns": 937151803643888,
+      "t_end_ns": 937196607812846,
+      "inclusive_ns": 44804168958,
+      "self_ns": 1443930194
+    },
+    {
+      "name": "compile_fx_wrapper",
+      "ordinal": 2,
+      "parent_ordinal": 1,
+      "t_start_ns": 937152237243779,
+      "t_end_ns": 937195597482543,
+      "inclusive_ns": 43360238764,
+      "self_ns": 13460970202,
+      "meta": {
+        "fx_nodes_at_entry": 105
+      }
+    },
+    {
+      "name": "pipeline:CustomPrePasses",
+      "ordinal": 3,
+      "parent_ordinal": 2,
+      "t_start_ns": 937164145748737,
+      "t_end_ns": 937164145809935,
+      "inclusive_ns": 61198,
+      "self_ns": 24964,
+      "meta": {
+        "passes": 1
+      }
+    },
+    {
+      "name": "pass:CustomPrePasses:collect_spyre_hints",
+      "ordinal": 4,
+      "parent_ordinal": 3,
+      "t_start_ns": 937164145770824,
+      "t_end_ns": 937164145807058,
+      "inclusive_ns": 36234,
+      "self_ns": 36234
+    },
+    {
+      "name": "pipeline:CustomPostPasses",
+      "ordinal": 5,
+      "parent_ordinal": 2,
+      "t_start_ns": 937164169541504,
+      "t_end_ns": 937164170691894,
+      "inclusive_ns": 1150390,
+      "self_ns": 20297,
+      "meta": {
+        "passes": 5
+      }
+    },
+    {
+      "name": "pass:CustomPostPasses:recover_spyre_hints",
+      "ordinal": 6,
+      "parent_ordinal": 5,
+      "t_start_ns": 937164169548719,
+      "t_end_ns": 937164169587657,
+      "inclusive_ns": 38938,
+      "self_ns": 38938
+    },
+    {
+      "name": "pass:CustomPostPasses:decompose_addmm",
+      "ordinal": 7,
+      "parent_ordinal": 5,
+      "t_start_ns": 937164169591979,
+      "t_end_ns": 937164169724952,
+      "inclusive_ns": 132973,
+      "self_ns": 132973
+    },
+    {
+      "name": "pass:CustomPostPasses:apply",
+      "ordinal": 8,
+      "parent_ordinal": 5,
+      "t_start_ns": 937164169728067,
+      "t_end_ns": 937164169740781,
+      "inclusive_ns": 12714,
+      "self_ns": 12714
+    },
+    {
+      "name": "pass:CustomPostPasses:mark_direct_unit_bmm_pass",
+      "ordinal": 9,
+      "parent_ordinal": 5,
+      "t_start_ns": 937164169743091,
+      "t_end_ns": 937164169768214,
+      "inclusive_ns": 25123,
+      "self_ns": 25123
+    },
+    {
+      "name": "pass:CustomPostPasses:apply",
+      "ordinal": 10,
+      "parent_ordinal": 5,
+      "t_start_ns": 937164169769845,
+      "t_end_ns": 937164170690190,
+      "inclusive_ns": 920345,
+      "self_ns": 920345
+    },
+    {
+      "name": "pipeline:CustomPreSchedulingPasses",
+      "ordinal": 11,
+      "parent_ordinal": 2,
+      "t_start_ns": 937164429562392,
+      "t_end_ns": 937171916213287,
+      "inclusive_ns": 7486650895,
+      "self_ns": 519671,
+      "meta": {
+        "passes": 20,
+        "input_operations": 73
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:deadcode_elimination",
+      "ordinal": 12,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164429587982,
+      "t_end_ns": 937164442934467,
+      "inclusive_ns": 13346485,
+      "self_ns": 13346485,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 73,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:propagate_named_dims",
+      "ordinal": 13,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164442963168,
+      "t_end_ns": 937164588990637,
+      "inclusive_ns": 146027469,
+      "self_ns": 146027469,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 73,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:validate_named_dims",
+      "ordinal": 14,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164589126718,
+      "t_end_ns": 937164589246058,
+      "inclusive_ns": 119340,
+      "self_ns": 119340,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 73,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:assign_dim_hints",
+      "ordinal": 15,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164589254302,
+      "t_end_ns": 937164665415022,
+      "inclusive_ns": 76160720,
+      "self_ns": 76160720,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 73,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:_maybe_reorder_unhinted_interlopers",
+      "ordinal": 16,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164665433713,
+      "t_end_ns": 937164665942942,
+      "inclusive_ns": 509229,
+      "self_ns": 509229,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 73,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_hints",
+      "ordinal": 17,
+      "parent_ordinal": 11,
+      "t_start_ns": 937164665952379,
+      "t_end_ns": 937168484961727,
+      "inclusive_ns": 3819009348,
+      "self_ns": 3819009348,
+      "meta": {
+        "input_operations": 73,
+        "output_operations": 87,
+        "ops_delta": 14
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:split_multi_ops",
+      "ordinal": 18,
+      "parent_ordinal": 11,
+      "t_start_ns": 937168484994810,
+      "t_end_ns": 937168557677171,
+      "inclusive_ns": 72682361,
+      "self_ns": 72682361,
+      "meta": {
+        "input_operations": 87,
+        "output_operations": 95,
+        "ops_delta": 8
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:propagate_spyre_tensor_layouts",
+      "ordinal": 19,
+      "parent_ordinal": 11,
+      "t_start_ns": 937168557703835,
+      "t_end_ns": 937169039221489,
+      "inclusive_ns": 481517654,
+      "self_ns": 481517654,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:validate_ops",
+      "ordinal": 20,
+      "parent_ordinal": 11,
+      "t_start_ns": 937169039245319,
+      "t_end_ns": 937169098267374,
+      "inclusive_ns": 59022055,
+      "self_ns": 59022055,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:optimize_restickify_locations",
+      "ordinal": 21,
+      "parent_ordinal": 11,
+      "t_start_ns": 937169098288658,
+      "t_end_ns": 937170126553980,
+      "inclusive_ns": 1028265322,
+      "self_ns": 1028265322,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:finalize_layouts",
+      "ordinal": 22,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170126599177,
+      "t_end_ns": 937170127596399,
+      "inclusive_ns": 997222,
+      "self_ns": 997222,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:insert_restickify",
+      "ordinal": 23,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170127609798,
+      "t_end_ns": 937170127613298,
+      "inclusive_ns": 3500,
+      "self_ns": 3500,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:enforce_indirect_access_layout",
+      "ordinal": 24,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170127620152,
+      "t_end_ns": 937170208312071,
+      "inclusive_ns": 80691919,
+      "self_ns": 80691919,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:insert_post_mutation_restickify",
+      "ordinal": 25,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170208332716,
+      "t_end_ns": 937170208347024,
+      "inclusive_ns": 14308,
+      "self_ns": 14308,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:insert_bmm_padding",
+      "ordinal": 26,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170208354592,
+      "t_end_ns": 937170225199494,
+      "inclusive_ns": 16844902,
+      "self_ns": 16844902,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 95,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:dedup_and_promote_constants",
+      "ordinal": 27,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170225222285,
+      "t_end_ns": 937170867839619,
+      "inclusive_ns": 642617334,
+      "self_ns": 642617334,
+      "meta": {
+        "input_operations": 95,
+        "output_operations": 87,
+        "ops_delta": -8
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_span_overflow",
+      "ordinal": 28,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170867861857,
+      "t_end_ns": 937170867876927,
+      "inclusive_ns": 15070,
+      "self_ns": 15070,
+      "meta": {
+        "input_operations": 87,
+        "output_operations": 87,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:span_reduction",
+      "ordinal": 29,
+      "parent_ordinal": 11,
+      "t_start_ns": 937170867885278,
+      "t_end_ns": 937171143832599,
+      "inclusive_ns": 275947321,
+      "self_ns": 275947321,
+      "meta": {
+        "input_operations": 87,
+        "output_operations": 87,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:_distribute_work",
+      "ordinal": 30,
+      "parent_ordinal": 11,
+      "t_start_ns": 937171143850585,
+      "t_end_ns": 937171363931468,
+      "inclusive_ns": 220080883,
+      "self_ns": 220080883,
+      "meta": {
+        "input_operations": 87,
+        "output_operations": 87,
+        "ops_delta": 0
+      }
+    },
+    {
+      "name": "pass:CustomPreSchedulingPasses:_maybe_scratchpad_planning",
+      "ordinal": 31,
+      "parent_ordinal": 11,
+      "t_start_ns": 937171363949469,
+      "t_end_ns": 937171916208251,
+      "inclusive_ns": 552258782,
+      "self_ns": 552258782,
+      "meta": {
+        "input_operations": 87,
+        "output_operations": 91,
+        "ops_delta": 4
+      }
+    },
+    {
+      "name": "pipeline:CustomPreFusionPasses",
+      "ordinal": 32,
+      "parent_ordinal": 2,
+      "t_start_ns": 937172103427288,
+      "t_end_ns": 937172142253488,
+      "inclusive_ns": 38826200,
+      "self_ns": 43873,
+      "meta": {
+        "passes": 3,
+        "input_nodes": 91
+      }
+    },
+    {
+      "name": "pass:CustomPreFusionPasses:propagate_mutation_layouts",
+      "ordinal": 33,
+      "parent_ordinal": 32,
+      "t_start_ns": 937172103443278,
+      "t_end_ns": 937172103465437,
+      "inclusive_ns": 22159,
+      "self_ns": 22159,
+      "meta": {
+        "input_nodes": 91
+      }
+    },
+    {
+      "name": "pass:CustomPreFusionPasses:align_lx_producer_loop_order",
+      "ordinal": 34,
+      "parent_ordinal": 32,
+      "t_start_ns": 937172103473639,
+      "t_end_ns": 937172140623454,
+      "inclusive_ns": 37149815,
+      "self_ns": 37149815,
+      "meta": {
+        "input_nodes": 91
+      }
+    },
+    {
+      "name": "pass:CustomPreFusionPasses:build_loop_scheduler_nodes",
+      "ordinal": 35,
+      "parent_ordinal": 32,
+      "t_start_ns": 937172140640733,
+      "t_end_ns": 937172142251086,
+      "inclusive_ns": 1610353,
+      "self_ns": 1610353,
+      "meta": {
+        "input_nodes": 91
+      }
+    },
+    {
+      "name": "pipeline:CustomPostFusionPasses",
+      "ordinal": 36,
+      "parent_ordinal": 2,
+      "t_start_ns": 937172147181137,
+      "t_end_ns": 937172179792926,
+      "inclusive_ns": 32611789,
+      "self_ns": 52241,
+      "meta": {
+        "passes": 3,
+        "input_nodes": 10
+      }
+    },
+    {
+      "name": "pass:CustomPostFusionPasses:demote_incoherent_lx_buffers",
+      "ordinal": 37,
+      "parent_ordinal": 36,
+      "t_start_ns": 937172147192327,
+      "t_end_ns": 937172178983363,
+      "inclusive_ns": 31791036,
+      "self_ns": 31791036,
+      "meta": {
+        "input_nodes": 10
+      }
+    },
+    {
+      "name": "pass:CustomPostFusionPasses:spyre_fuse_nodes",
+      "ordinal": 38,
+      "parent_ordinal": 36,
+      "t_start_ns": 937172179011820,
+      "t_end_ns": 937172179239844,
+      "inclusive_ns": 228024,
+      "self_ns": 228024,
+      "meta": {
+        "input_nodes": 10
+      }
+    },
+    {
+      "name": "pass:CustomPostFusionPasses:hbm_pool_planning",
+      "ordinal": 39,
+      "parent_ordinal": 36,
+      "t_start_ns": 937172179250476,
+      "t_end_ns": 937172179790964,
+      "inclusive_ns": 540488,
+      "self_ns": 540488,
+      "meta": {
+        "input_nodes": 6
+      }
+    },
+    {
+      "name": "sdsc_total",
+      "ordinal": 40,
+      "parent_ordinal": 2,
+      "t_start_ns": 937173002531156,
+      "t_end_ns": 937174025267065,
+      "inclusive_ns": 1022735909,
+      "self_ns": 4270724,
+      "meta": {
+        "kernel": "sdsc_fused_amax_full_zeros_like_0"
+      }
+    },
+    {
+      "name": "sdsc_bundle_gen",
+      "ordinal": 41,
+      "parent_ordinal": 40,
+      "t_start_ns": 937173002748615,
+      "t_end_ns": 937173030651831,
+      "inclusive_ns": 27903216,
+      "self_ns": 27903216,
+      "meta": {
+        "kernel": "sdsc_fused_amax_full_zeros_like_0",
+        "n_specs": 5
+      }
+    },
+    {
+      "name": "dxp_standalone",
+      "ordinal": 42,
+      "parent_ordinal": 40,
+      "t_start_ns": 937173031609336,
+      "t_end_ns": 937174022171305,
+      "inclusive_ns": 990561969,
+      "self_ns": 990561969,
+      "meta": {
+        "kernel": "sdsc_fused_amax_full_zeros_like_0",
+        "output_dir": "/tmp/torchinductor_lqsweep_lq128_r1/inductor-spyre/057970c9_sdsc_fused_amax_full_zeros_like_0_348fy4fl"
+      }
+    },
+    {
+      "name": "sdsc_total",
+      "ordinal": 43,
+      "parent_ordinal": 2,
+      "t_start_ns": 937174257751477,
+      "t_end_ns": 937195574652524,
+      "inclusive_ns": 21316901047,
+      "self_ns": 54181183,
+      "meta": {
+        "kernel": "sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1"
+      }
+    },
+    {
+      "name": "sdsc_bundle_gen",
+      "ordinal": 44,
+      "parent_ordinal": 43,
+      "t_start_ns": 937174257962129,
+      "t_end_ns": 937174707012786,
+      "inclusive_ns": 449050657,
+      "self_ns": 449050657,
+      "meta": {
+        "kernel": "sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1",
+        "n_specs": 1
+      }
+    },
+    {
+      "name": "dxp_standalone",
+      "ordinal": 45,
+      "parent_ordinal": 43,
+      "t_start_ns": 937174721345297,
+      "t_end_ns": 937195535014504,
+      "inclusive_ns": 20813669207,
+      "self_ns": 20813669207,
+      "meta": {
+        "kernel": "sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1",
+        "output_dir": "/tmp/torchinductor_lqsweep_lq128_r1/inductor-spyre/4d5fb549_sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1_ye9fzg8d"
+      }
+    },
+    {
+      "name": "async_compile_wait",
+      "ordinal": 46,
+      "parent_ordinal": 2,
+      "t_start_ns": 937195574857920,
+      "t_end_ns": 937195575189054,
+      "inclusive_ns": 331134,
+      "self_ns": 331134
+    }
+  ]
+}
