@@ -111,10 +111,14 @@ for the ranked map with confidence levels._
    23.3 s → 12.8 s.
 
 2. **`_extern_kernel_in_live_range` prefix-sum in scratchpad_planning**
-   (measurement in progress). Replace per-buffer interval scan
-   with an O(1) range query. Root cause **measured (source-level and
-   cross-workload comparison)**; prototype impact
-   **estimated (measurement running); source-level analysis predicts collapse of n^1.45 → linear on workload A**.
+   (**MEASURED NULL — hypothesis refuted**). The prototype changed
+   `_maybe_scratchpad_planning` by only 1–2% (128 ms saved at 512×4096,
+   204 ms saved at 512×8192 — within measurement noise). The source
+   audit correctly identified an O(N·B) code pattern, but
+   `isinstance(op, ExternKernel)` is empirically not the dominant term.
+   The real driver of workload A's n^1.45 scratchpad scaling is still
+   unattributed. **Needs substage instrumentation inside
+   `plan_allocation` before another prototype.**
 
 3. **Dedup reverse-adjacency / consumer index** (estimated). The same
    uncached-`get_read_writes` mechanism that drives coarse-tile hints

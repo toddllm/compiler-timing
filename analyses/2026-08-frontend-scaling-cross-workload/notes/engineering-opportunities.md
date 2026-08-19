@@ -19,7 +19,7 @@ whether a prototype has actually demonstrated the fix.
 | # | Opportunity | Affected path | Workloads | Absolute cost | Observed scaling | Source-level mechanism | Evidence | Proposed change | Expected leverage | Prototype | Risk | Next validation |
 |:-:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | 1 | Per-substage reverse-adjacency in `_maybe_coarse_tile_hints` | `wsr/coarse_tile.py:_plan_tiling_propagation` (22%), `wsr/coarse_tile.py:_patch_retiled_load_indexes` (74%) | B (dominant); A (present but far smaller) | 14 s at n=8; 53 s at n=16 (workload B) | ~4× per 2× chunks (near-quadratic) | Per-op `_reads_buffer(op, buf)` scan calls raw `op.get_read_writes()`, run O(N × K) times per substage. Same driver as opportunity #3. | measured | Build one O(N) `readers_by_buffer` + `reads_by_op` per substage from a snapshot of `operations`; scope to substage lifetime so mutations across substage boundaries cannot leave stale entries. | **measured**: `_maybe_coarse_tile_hints` 4.11 s → 1.40 s at n=4 (2.93× speedup); 14.46 s → 3.93 s at n=8 (3.68× speedup). Total Spyre pipes at n=8: 23.3 s → 12.8 s. Growth ratio 4→8 shifts from 3.52× (near-quadratic) to 2.80× (approaching linear). | see `notes/coarse-tile-prototype.md` | medium — naïve global `op_read_writes` swap broke correctness (prototypes.md); per-substage scoping avoids that failure mode | see `coarse-tile-prototype.md` |
-| 2 | `_extern_kernel_in_live_range` prefix-sum | `scratchpad/allocator.py:122` — the `range(min(uses), max(uses)+1)` per-buffer scan | A (workload B is already linear) | ~21 s at 512×8192 (b=64); ~74 s at 1024×8192 (b=128 preliminary) | n^1.45 on workload A | Per-buffer O(range) scan for `isinstance(op, ExternKernel)`. Long-lived carry buffers in workload A make per-buffer scan lengths grow with graph size. | measured (cross-workload comparison confirms same code + different topology → different laws) | Precompute an O(N) prefix-sum of ExternKernel-count once per pass; per-buffer check becomes O(1) via subtract. | estimated: 74 s → ~4 s at #3806 largest point; measurement in progress at 512×4096 / 512×8192 | see `notes/scratchpad-prototype.md` | low — single-function algorithm swap, no cross-cutting concerns | see `scratchpad-prototype.md` |
+| 2 | ~~`_extern_kernel_in_live_range` prefix-sum~~ **REFUTED** | `scratchpad/allocator.py:122` | — | — | — | Static audit predicted this was the driver of workload A's n^1.45 scratchpad scaling; measurement disagrees. | **measured null** — patched scratchpad time was within 1–2% of baseline at both 512×4096 and 512×8192 (see `notes/scratchpad-prototype.md`) | no change to this function | none — measurement refutes the hypothesis | patch preserved as no-op micro-optimization only; not a workload-A fix | scratchpad's real n^1.45 driver is still unattributed | n/a (moves to "needs more investigation") | Add substage instrumentation *inside* `plan_allocation` before proposing another scratchpad prototype |
 | 3 | Dedup reverse-adjacency / avoid full graph rescans per duplicate | `_inductor/dedup_constants.py::_redirect_consumers` + `_drop_constant` | cross-workload | 10 s at workload B n=16; up to 225 s at workload A 1024×8192 (b=128 preliminary) | `ops × dups` — near-quadratic when dups ∝ ops | For each duplicate: walks `operations` in `_redirect_consumers` and calls `operations.remove(dup)` (O(N) list scan). Same uncached `get_read_writes` mechanism as #1. | measured | Build a single `consumers_by_buf` and `op_to_position` at pass entry; skip full-graph scan per duplicate; batch-remove instead of `list.remove` per element. | estimated: `ops × dups` shape stays, per-pair constant should drop by the same 4.6× factor that separates workload A's 202 µs/pair from workload B's 931 µs/pair | not built | low | prototype: measure workload A 512×4096 and workload B n=8 |
 | 4 | `operations.index(op)` → local `op_to_position` dict in mutating paths | `pass_utils.py:1342` (`replace_computed_buffer_body`); also insert_restickify, split_multi_ops | cross-workload | Bundled with #1 in coarse-tile-hints; visible in restickify insert cost too | O(N) linear scan per splice, called O(K) times per mutating pass | Pattern is already used at `coarse_tile.py:1480` for `op_to_position`; extend to `replace_computed_buffer_body`. | source-level | Add a local `op_to_position` dict maintained across mutations in the same pass; `list.index` → `dict.get`. | estimated: 5–15% off `_patch_retiled_load_indexes` on top of #1; possibly larger benefit on insert_restickify | not built | low | prototype together with #1 or #3 |
 | 5 | Restickify post-fix ~2.2–2.4× per doubling | `_inductor/optimize_restickify.py:beam_global_min_cost` | B primarily | 2.3 s at n=8; 5.6 s at n=16 (workload B) | ~2.2–2.4× per doubling in the post-fix range | Not source-attributed yet. Static audit flagged the beam's `state.assignments + (candidate_stl,)` tuple concatenation as O(N²·K·|L|) Python-bookkeeping cost; the beam trace confirms `merged_total` grows fast but overall time is bounded. | source-level (candidate mechanism only) | Investigate the tuple-concat cost with cProfile on one diagnostic compile at n=16. If confirmed, replace with dict-of-lists mutating structure. | estimated: unknown until measured | not built | medium — the beam is a correctness-critical DP; changes need care | diagnostic profile run |
@@ -29,17 +29,39 @@ whether a prototype has actually demonstrated the fix.
 
 ## What we would recommend the team do first
 
-1. Take **opportunity #1** into a proper engineering PR. The prototype
-   scoping decision (per-substage indexes, no cross-mutation state) is
-   already validated. The measurable question is whether the change
-   turns the 4×-per-doubling curve into ~2×-per-doubling — and the
-   prototype numbers answer it directly.
-2. Take **opportunity #2** in parallel. It is a self-contained
-   `scratchpad/allocator.py` refactor; the prototype either confirms
-   or refutes the collapse to linear.
-3. Address **opportunity #3** next: same mechanism as #1, different
-   pass, cross-workload benefit.
-4. Investigate **opportunity #5** with a diagnostic profile; do not
-   optimize restickify until the mechanism is source-attributed.
-5. Leave **opportunity #8** as a "worth investigating if a full pr3812
-   build becomes convenient" item. Not blocking anything.
+1. Take **opportunity #1** (coarse-tile reverse adjacency) into a proper
+   engineering PR. Prototype scoping is validated; the measurement
+   shows a 2.93×/3.68× reduction on the umbrella pass at n_chunks=4/8
+   and shifts the 4→8 growth ratio from 3.52× toward 2.80×. This is
+   the clearest measured win in the study.
+2. Address **opportunity #3** (dedup reverse adjacency) next: same
+   uncached-`get_read_writes` mechanism as #1, different pass, benefits
+   both workloads. Not yet prototyped.
+3. Investigate the **real n^1.45 scratchpad driver** on workload A. The
+   `_extern_kernel_in_live_range` prefix-sum hypothesis was measured to
+   be within noise (see `notes/scratchpad-prototype.md`). Substage
+   instrumentation inside `plan_allocation` is the right next step —
+   the layout solver internals or per-buffer allocation overhead are
+   likely candidates, but that has not been measured.
+4. Investigate **opportunity #5** (post-fix restickify ~2.2–2.4× per
+   doubling) with a diagnostic profile before proposing a change.
+5. Consider **opportunity #4** (`operations.index` → `op_to_position`)
+   as a bundled improvement alongside #1 or #3; not standalone-worth.
+6. Leave **opportunity #8** (extent-scaling repro on full pr3812) as
+   "worth investigating if a full pr3812 build becomes convenient."
+   Not blocking anything.
+
+## Lesson from the measured null
+
+The scratchpad prototype demonstrates why the "measured impact
+outranks scary-looking source complexity" principle matters. The
+static-audit hypothesis was source-plausible (documented
+`range(min, max+1)` per-buffer scan) and even had a cross-workload
+comparison suggesting scratchpad topology-dependency mattered — but
+the isinstance check inside the scan is not the hot inner loop.
+The n^1.45 slope is real; the cause is elsewhere in
+`plan_allocation`.
+
+**Future opportunity entries should be labeled "measured" or
+"estimated" prominently, and estimated entries should not be
+implemented without the measurement first.**
