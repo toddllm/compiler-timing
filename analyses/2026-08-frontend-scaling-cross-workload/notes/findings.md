@@ -237,7 +237,86 @@ pr3812 tree build with C-extension would answer this; deferred.
 - **Restickify state space** is only exercised in workloads with
   constant-fill diamonds. Absent from A entirely.
 
-## 7. Ranked opportunity list
+## 7. Closed decomposition of `compile_fx_wrapper` (extra timers)
+
+With `patches/extra_timers_v2.py` + hook installed, `compile_fx_wrapper`
+is now 100% attributable. Wraps around `GraphLowering.run` (upstream
+Inductor lowering), `GraphLowering.codegen` (upstream + Spyre pipes +
+kernel codegen + wrapper), and `SpyreKernel.codegen_kernel`. See
+[`notes/extra-timers-closure.md`](extra-timers-closure.md).
+
+Medians in milliseconds:
+
+| point | n | compile_fx | gl_run | gl_codegen | sdsc | unattr | unattr % |
+|:---|--:|---:|---:|---:|---:|---:|---:|
+| A: 512×1024 | 1 | 97,944 | 651 | 5,744 | 80,480 | 11,069 | 11.3% |
+| B: n=2 | 3 | 21,048 | 113 | 3,521 | 11,123 | 6,266 | 29.8% |
+| B: n=4 | 3 | 37,594 | 152 | 8,149 | 23,765 | 5,843 | 15.5% |
+| B: n=8 | 3 | 104,587 | 417 | 23,239 | 70,446 | 11,423 | 10.9% |
+
+Sub-decomposition of `graphlowering_codegen`:
+
+| point | gl_codegen | Spyre pipes | kernel_codegen | codegen residual |
+|:---|---:|---:|---:|---:|
+| A: 512×1024 | 5,744 | 4,359 | 244 | 1,142 |
+| B: n=2 | 3,521 | 3,009 | 52 | 460 |
+| B: n=4 | 8,149 | 7,263 | 101 | 785 |
+| B: n=8 | 23,239 | 21,630 | 176 | 1,433 |
+
+`codegen_residual = gl_codegen − Σ Spyre pipes − spyre_kernel_codegen`
+is upstream Inductor scheduling + wrapper code generation. Scales
+linearly with graph size, small in absolute terms.
+
+**Two structural findings.**
+
+1. **`gl_run` and `spyre_kernel_codegen` are effectively free** (<1% of
+   compile_fx in every measured point). Upstream Inductor lowering and
+   per-kernel codegen are not hotspots.
+2. **The unattributed bucket is a nearly-fixed floor**: 11 s in both
+   workload A baseline (98 s total) and workload B n=8 (105 s total),
+   at the same absolute cost despite very different graph structures.
+   Workload B n=8 unattr (11.4 s) / n=2 unattr (6.3 s) = 1.8× while
+   `compile_fx` grows 5.0× — the bucket is very sublinear.
+   Contains AOTAutograd joint-graph decomposition + `torch.compile`
+   setup + inner-compile plumbing. Out of frontend scope.
+
+**Implication**: Spyre-owned frontend cost = `gl_codegen − codegen_residual
+− spyre_kernel_codegen` ≈ Σ Spyre pass pipelines. Optimizing the Spyre
+pass pipelines IS optimizing the Spyre frontend end-to-end.
+
+## 8. Scratchpad scaling — same code, two very different laws
+
+Same `scratchpad_planning` code path, dramatically different scaling
+on the two workloads. See
+[`notes/scratchpad-scaling.md`](scratchpad-scaling.md) for the
+full table.
+
+Per-input-operation cost:
+
+| workload | at smallest measured | at largest measured | growth |
+|:---|---:|---:|---:|
+| A | 3.6 µs/op (b=4) | 18.1 µs/op (b=128) | 5× |
+| B | 5.8 µs/op (n=2) | 6.3 µs/op (n=16) | 1.1× (flat) |
+
+Workload B: scratchpad is **linear** in graph size. Workload A:
+scratchpad is **superlinear** (n^~1.45 as reported in #3806).
+
+Root cause identified statically in `scratchpad/allocator.py:122` —
+`_extern_kernel_in_live_range` iterates `range(min(uses), max(uses)+1)`
+per buffer. Cost = Σ buffer live-range lengths.
+
+- Workload A has long-lived carry buffers (`running_max`, `denominator`,
+  `output`) that thread through every inner tile loop → each carry's
+  live range grows with N → total pass work grows O(N·B) → superlinear.
+- Workload B carries only 3 top-level state variables through the K
+  loop; per-chunk scratch buffers stay local → live ranges bounded →
+  pass stays linear.
+
+**Fix (LOW/MEDIUM priority; workload A gains only)**: precompute a
+prefix-sum of ExternKernel-count. Per-buffer check becomes O(1).
+Estimated: scratchpad drops from 74 s → ~4 s at #3806's largest point.
+
+## 9. Ranked opportunity list
 
 ### High-confidence fixes
 
@@ -266,6 +345,17 @@ pr3812 tree build with C-extension would answer this; deferred.
    Impact: dedup 10 s → ~2 s at n=16 (5×). The `ops × dups` product
    stays; the per-pair constant shrinks by removing per-op sympy cost.
    Risk: LOW — dedup is already well-understood structurally.
+
+4. **`_extern_kernel_in_live_range` prefix-sum in scratchpad_planning.**
+   Replace `range(min(uses), max(uses)+1)` per-buffer scan with an
+   O(N) precomputed prefix-sum of ExternKernel-count → O(1) per buffer
+   check. Impact: scratchpad_planning drops from O(N·B) to O(N+B),
+   collapsing workload A's n^1.45 slope to n^1.0. Estimated: 74 s → ~4 s
+   at #3806's largest measured point (1024×8192).
+   Source location: `scratchpad/allocator.py:122`.
+   Risk: LOW — pure algorithm change on a single function.
+   Workload-B benefit is small (scratchpad is already linear there);
+   workload-A benefit is substantial at large graph sizes.
 
 ### Needs more measurement
 
@@ -298,7 +388,7 @@ pr3812 tree build with C-extension would answer this; deferred.
    chunk count in workload B because plan entries stay small. Not a
    priority for this workload family.
 
-## 8. Executive summary in three lines
+## 10. Executive summary
 
 The frontend compilation cost of PR #3812's KV-chunked FlashAttention
 is dominated by `_maybe_coarse_tile_hints`, whose 4×-per-doubling
@@ -313,3 +403,14 @@ independently removes the exponential state-space explosion in
 `optimize_restickify` — that mechanism is confirmed at per-op
 candidate granularity and reduces beam-state metrics by ~50% at
 n_chunks=2.
+
+Closed compile_fx decomposition (extra_timers hook) confirms
+`gl_run` and `spyre_kernel_codegen` are effectively free (<1% each)
+and that the previously-unattributed bucket is a nearly-fixed 11 s
+upstream-Inductor floor (AOTAutograd + `torch.compile` setup) that
+does not scale with graph size — meaning the entire Spyre-owned
+frontend cost is captured by the Spyre pass pipelines. Scratchpad
+planning is linear on workload B but superlinear on workload A
+(same code, driven by workload A's long-lived carry buffers hitting
+`_extern_kernel_in_live_range`'s O(range) scan); a prefix-sum fix
+turns that into O(1) per buffer.
