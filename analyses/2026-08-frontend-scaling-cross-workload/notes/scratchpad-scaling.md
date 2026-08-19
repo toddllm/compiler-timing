@@ -28,7 +28,7 @@ Extracted from existing datasets (no new runs needed):
   graph range. Scratchpad is **superlinear** in workload A, matching
   the #3806 study's reported n^1.45 slope.
 
-## Why the same code shows different scaling
+## Initial hypothesis (subsequently refuted)
 
 `_extern_kernel_in_live_range` in `scratchpad/allocator.py:122`:
 
@@ -41,23 +41,52 @@ def _extern_kernel_in_live_range(graph: GraphLowering, uses: list[int]) -> bool:
     )
 ```
 
-Cost per buffer: O(max(uses) − min(uses) + 1). Total pass work is
-Σ over B buffers of (max-min+1). Two extremes:
+Cost per buffer is proportional to `max(uses) − min(uses) + 1`, so
+buffers with wide live ranges pay O(N) per query. Two extremes are
+possible:
 
-- All buffer live ranges are LOCAL (small max-min): total = O(B), linear.
-- All buffer live ranges SPAN the graph (max-min ≈ N): total = O(B·N),
-  quadratic — the n^1.45 behavior in workload A.
+- All buffer live ranges LOCAL (small max-min): total = O(B), linear.
+- All buffer live ranges SPAN the graph (max-min ≈ N): total = O(B·N).
 
-**Workload A (OpSpec) has long-lived carry buffers**: `running_max`,
-`denominator`, `output` all thread through every inner loop. As Lq/Lk
-grow (more inner_bodies), each carry's live range grows with the graph.
-Every carry contributes O(N) work per pass call.
+Combined with the observation that **workload A (OpSpec) has
+long-lived carry buffers** (`running_max`, `denominator`, `output`
+thread through every inner loop, so their live ranges grow with the
+graph) and **workload B carries stay bounded per chunk**, this looked
+like a source-level explanation for the different scaling laws.
 
-**Workload B (KV-chunked FA) has mostly local buffers**: each chunk's
-scratch (block_max, exp_scores, weighted, correction) is produced and
-consumed within a few ops. Only the top-level running_max/denom/acc
-carry through the full loop, so long-lived buffer count is O(1) — the
-pass stays linear.
+**Prototype measurement disagreed.** A prefix-sum implementation that
+turns the per-buffer scan into O(1) is in
+[`../patches/scratchpad_prefix_sum.py`](../patches/scratchpad_prefix_sum.py).
+Measured effect on `_maybe_scratchpad_planning`:
+
+- 512×4096 (b=32): 6,722 ms → 6,594 ms (1.9%, within noise)
+- 512×8192 (b=64): 21,037 ms → 20,833 ms (1.0%, within noise)
+
+The `_extern_kernel_in_live_range` function is called, but the
+`isinstance(op, ExternKernel)` check inside it is cheap enough that
+even with wide live ranges it is not the pass hotspot. Full write-up
+is in
+[`scratchpad-prototype.md`](scratchpad-prototype.md).
+
+## What is still true
+
+- **The measured cross-workload difference is robust**: linear on
+  workload B, n^1.45 on workload A. That is the finding worth
+  carrying forward.
+- **The per-op cost table above** is measurement, unaffected by the
+  refutation.
+- **The topology observation** (workload A carries are long-lived,
+  workload B buffers are per-chunk) is a real graph-shape difference
+  — it just isn't what makes `scratchpad_planning` slower on A.
+
+## What is not yet known
+
+The mechanism responsible for the workload-A n^1.45 slope is
+**unattributed**. `scratchpad_planning` contains buffer construction,
+several possible layout solvers (workload A's `cost_model=""` config
+selects a default allocator), `plan_allocation` internals, and a
+fallback greedy path. One of these is the actual hotspot; only
+substage instrumentation *inside* `plan_allocation` can identify it.
 
 ## Priority for workload B
 
@@ -65,32 +94,8 @@ At n_chunks=16, scratchpad_planning = 1.9 s vs coarse_tile_hints = 53.1 s.
 Scratchpad is **3.6% of pre-scheduling total**. Not a priority in this
 workload family.
 
-For workload A at 1024×8192, scratchpad = 74 s vs Spyre pipes total
-~460 s. Scratchpad is **16% of pre-scheduling** — more significant, but
-not the top hotspot.
-
-## Recommended fix (LOW/MEDIUM priority; workload A gains only)
-
-Replace the `range(min(uses), max(uses)+1)` scan with a precomputed
-prefix-sum of ExternKernel-count. Once per pass:
-
-```python
-extern_prefix = [0] * (len(graph.operations) + 1)
-for i, op in enumerate(graph.operations):
-    extern_prefix[i+1] = extern_prefix[i] + (1 if isinstance(op, ExternKernel) else 0)
-
-# per-buffer check becomes O(1):
-def _extern_kernel_in_live_range(graph, uses):
-    if not uses:
-        return False
-    lo, hi = min(uses), max(uses)
-    return extern_prefix[hi+1] - extern_prefix[lo] > 0
-```
-
-Cost: one-time O(N) build, O(1) per buffer check, total O(N + B).
-Compared to O(N · B) current worst case, this collapses the workload A
-n^1.45 slope to n^1.0.
-
-Expected impact: scratchpad drops from 74 s → ~4 s at workload A's
-largest point. **70 seconds recovered** in the H=8, 1024×8192 case,
-but that's a 1-sample preliminary point in the #3806 study.
+For workload A at 1024×8192, scratchpad = 74 s (preliminary, n=1)
+vs Spyre pipes total ~460 s. Scratchpad is a meaningful minority
+component at the largest workload-A points; identifying the real
+driver would be worthwhile after the coarse-tile fix (opportunity #1)
+lands.

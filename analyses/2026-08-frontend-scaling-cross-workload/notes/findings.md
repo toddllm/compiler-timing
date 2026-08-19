@@ -284,12 +284,14 @@ linearly with graph size, small in absolute terms.
 − spyre_kernel_codegen` ≈ Σ Spyre pass pipelines. Optimizing the Spyre
 pass pipelines IS optimizing the Spyre frontend end-to-end.
 
-## 8. Scratchpad scaling — same code, two very different laws
+## 8. Scratchpad scaling — same code, two very different laws (root cause unresolved)
 
 Same `scratchpad_planning` code path, dramatically different scaling
 on the two workloads. See
-[`notes/scratchpad-scaling.md`](scratchpad-scaling.md) for the
-full table.
+[`notes/scratchpad-scaling.md`](scratchpad-scaling.md) for the full
+table and
+[`notes/scratchpad-prototype.md`](scratchpad-prototype.md) for the
+prototype that refuted the first hypothesis.
 
 Per-input-operation cost:
 
@@ -300,78 +302,101 @@ Per-input-operation cost:
 
 Workload B: scratchpad is **linear** in graph size. Workload A:
 scratchpad is **superlinear** (n^~1.45 as reported in #3806).
+The cross-workload measured difference is robust and stands.
 
-Root cause identified statically in `scratchpad/allocator.py:122` —
-`_extern_kernel_in_live_range` iterates `range(min(uses), max(uses)+1)`
-per buffer. Cost = Σ buffer live-range lengths.
+### First hypothesis, tested and refuted
 
-- Workload A has long-lived carry buffers (`running_max`, `denominator`,
-  `output`) that thread through every inner tile loop → each carry's
-  live range grows with N → total pass work grows O(N·B) → superlinear.
-- Workload B carries only 3 top-level state variables through the K
-  loop; per-chunk scratch buffers stay local → live ranges bounded →
-  pass stays linear.
+The static complexity audit flagged `_extern_kernel_in_live_range`
+(`scratchpad/allocator.py:122`) as the plausible culprit — it walks
+`range(min(uses), max(uses)+1)` per buffer, and workload A has
+long-lived carry buffers that would make per-buffer scan lengths grow
+with graph size.
 
-**Fix (LOW/MEDIUM priority; workload A gains only)**: precompute a
-prefix-sum of ExternKernel-count. Per-buffer check becomes O(1).
-Estimated: scratchpad drops from 74 s → ~4 s at #3806's largest point.
+A prototype (`patches/scratchpad_prefix_sum.py`) replaced that scan
+with an O(N)-once prefix-sum + O(1) range query. Measured impact at
+two workload A points, baseline vs patched:
+
+| point | scratchpad baseline | scratchpad patched | speedup |
+|:---|---:|---:|---:|
+| 512×4096 (b=32) | 6,722 ms | 6,594 ms | 1.019× |
+| 512×8192 (b=64) | 21,037 ms | 20,833 ms | 1.010× |
+
+**Both deltas are within measurement noise** (1–2%). The
+`_extern_kernel_in_live_range` prefix-sum hypothesis is refuted.
+
+### Real driver still unattributed
+
+`scratchpad_planning` includes buffer construction, layout solver
+work (multiple solver variants; workload A's `cost_model=""` config
+selects a default allocator), and `plan_allocation` internals. The
+n^1.45 slope must come from one of those, but none has been
+instrumented at substage granularity.
+
+**Next step**: add substage timers *inside* `scratchpad_planning` /
+`plan_allocation` (mirroring how coarse-tile-hints was decomposed to
+100% attribution). Only measurement can identify the real hotspot.
 
 ## 9. Ranked opportunity list
 
 ### High-confidence fixes
 
 1. **Reverse-adjacency `{buf_name: [reader_ops]}` in `_plan_tiling_propagation`
-   and `_patch_retiled_load_indexes`.**
-   Impact: Θ(N²) → Θ(N) on the two substages representing 96.6% of
-   `_maybe_coarse_tile_hints`. Estimated reduction: from 14 s → ~2 s at
-   n=8 (7× on the coarse-tile pass), from 53 s → ~7 s at n=16.
-   Source location: `wsr/coarse_tile.py:510-635` (plan_tiling_propagation)
-   and `1483-1489` (resync block) + `_patch_retiled_load_indexes`.
-   Risk: MEDIUM — must be built per-substage since op mutation happens
-   between substages (a naïve global memo breaks correctness, verified
-   empirically in Phase 10 prototype).
+   and `_patch_retiled_load_indexes`.** **MEASURED**.
+   Prototype `patches/coarse_tile_reverse_adj.py` builds a per-substage
+   reverse-adjacency index scoped to substage lifetime (mutation-safe,
+   unlike the earlier naïve global memo — see `notes/prototypes.md`).
+   Measured on workload B, 3 samples per point:
+   - `_maybe_coarse_tile_hints` at n=4: 4.11 s → 1.40 s (**2.93×**).
+   - `_maybe_coarse_tile_hints` at n=8: 14.46 s → 3.93 s (**3.68×**).
+   - Total Spyre pass pipelines at n=8: 23.3 s → 12.8 s.
+   - **Growth ratio 4→8 shifts from 3.52× (near-quadratic) to 2.80×
+     (approaching linear)** — the change moves the scaling law, not
+     just constants.
+   Source: `wsr/coarse_tile.py:510-635` (plan_tiling_propagation) and
+   `1483-1489` (resync block) + `_patch_retiled_load_indexes`.
+   Risk: MEDIUM — must be built per-substage; correctness confirmed via
+   `torch.testing.assert_close`. See `notes/coarse-tile-prototype.md`.
 
 2. **Replace `operations.index(op)` with an `op_to_position` dict in
    `replace_computed_buffer_body`.**
    Pattern already used at `coarse_tile.py:1480`; extend to
-   `pass_utils.py:1342`.
-   Impact: eliminates O(N)-per-splice in every mutating pass — dedup,
-   coarse_tile, insert_restickify, split_multi_ops. Rough estimate:
-   another 10–20% reduction in `_patch_retiled_load_indexes`.
-   Risk: LOW — pure indexing change.
+   `pass_utils.py:1342`. Impact: eliminates O(N)-per-splice in every
+   mutating pass — dedup, coarse_tile, insert_restickify,
+   split_multi_ops. **Estimated**: another 10–20% reduction on top of
+   opportunity #1 in `_patch_retiled_load_indexes`. Risk: LOW.
 
 3. **Same reverse-adjacency approach applied to `dedup_and_promote_constants`'s
    `_redirect_consumers` per-op operations scan.**
-   Impact: dedup 10 s → ~2 s at n=16 (5×). The `ops × dups` product
-   stays; the per-pair constant shrinks by removing per-op sympy cost.
-   Risk: LOW — dedup is already well-understood structurally.
-
-4. **`_extern_kernel_in_live_range` prefix-sum in scratchpad_planning.**
-   Replace `range(min(uses), max(uses)+1)` per-buffer scan with an
-   O(N) precomputed prefix-sum of ExternKernel-count → O(1) per buffer
-   check. Impact: scratchpad_planning drops from O(N·B) to O(N+B),
-   collapsing workload A's n^1.45 slope to n^1.0. Estimated: 74 s → ~4 s
-   at #3806's largest measured point (1024×8192).
-   Source location: `scratchpad/allocator.py:122`.
-   Risk: LOW — pure algorithm change on a single function.
-   Workload-B benefit is small (scratchpad is already linear there);
-   workload-A benefit is substantial at large graph sizes.
+   **Estimated**: `ops × dups` shape stays; the per-pair constant is
+   expected to shrink by the same 4.6× factor that separates workload
+   A's 202 µs/pair from workload B's 931 µs/pair. Same source-level
+   mechanism as #1. Risk: LOW.
 
 ### Needs more measurement
 
-4. **`optimize_restickify_locations` post-fix ~2.2–2.4× per doubling.**
+4. **Workload A's n^1.45 scratchpad-planning driver.** Cross-workload
+   comparison establishes the scaling is real; the
+   `_extern_kernel_in_live_range` hypothesis was prototyped and
+   measured null (1–2% within noise at both b=32 and b=64 —
+   `notes/scratchpad-prototype.md`). The real driver has not yet been
+   attributed. Right next step: substage instrumentation *inside*
+   `plan_allocation` (layout solver, per-buffer `LifetimeBoundBuffer`
+   construction, or allocation loop internals are the remaining
+   candidates).
+
+5. **`optimize_restickify_locations` post-fix ~2.2–2.4× per doubling.**
    The mechanism after the constant-fill collapse is not yet
    source-attributed. Static audit flagged `state.assignments +
    (candidate_stl,)` tuple concat inside the beam loop as a
    O(N²·K·|L|) Python-bookkeeping cost. Instrumenting that path
    would confirm.
 
-5. **Backend `dxp_standalone` growth.** Outside frontend scope but
+6. **Backend `dxp_standalone` growth.** Outside frontend scope but
    dominant in absolute compile time (2200 s at #3806's largest
    workload, 217 s at workload B n_chunks=16). Backend team's
    territory.
 
-6. **Extent-driven scaling in pr3812 tree.** Our pr3806-base tree
+7. **Extent-driven scaling in pr3812 tree.** Our pr3806-base tree
    does not reproduce the PR docstring's ">2 hour Lq=8192" pathology.
    A pr3812 build would tell us whether that phenomenon lives in the
    new `perm_layout_native.cpp`, in extended
@@ -379,14 +404,20 @@ Estimated: scratchpad drops from 74 s → ~4 s at #3806's largest point.
 
 ### Interesting but low leverage
 
-7. **`_maybe_reorder_unhinted_interlopers` explicit `O(n²)`
+8. **`_maybe_reorder_unhinted_interlopers` explicit `O(n²)`
    docstring.** Measured at 0.32 ms at n=2, 1 ms at n=16. The static
    worry is empirically fine for these graphs.
 
-8. **`insert_all_read_copy_ops`'s `name_to_op` rebuild-per-entry.**
+9. **`insert_all_read_copy_ops`'s `name_to_op` rebuild-per-entry.**
    Predicted as a hotspot by static audit; measured to shrink with
    chunk count in workload B because plan entries stay small. Not a
    priority for this workload family.
+
+10. **`_extern_kernel_in_live_range` prefix-sum micro-optimization.**
+    The prototype (`patches/scratchpad_prefix_sum.py`) makes the check
+    O(1) per buffer instead of O(range) but the measured effect is
+    within noise (1–2%). Preserved as a code-quality improvement; not
+    a workload-A scratchpad fix.
 
 ## 10. Executive summary
 
@@ -396,14 +427,16 @@ whose ~4×-per-doubling scaling is 74% caused by
 `_patch_retiled_load_indexes` and 22% by `_plan_tiling_propagation` —
 both driven by the same uncached `op.get_read_writes()` pattern that
 also inflates dedup's per-pair constant 4.6× on workload B vs the
-workload A dataset. A per-substage reverse-adjacency + a
-`op_to_position`-style splice fix would collapse this class of
-quadratic-like behavior to linear in graph size across three
-different passes simultaneously. The 5-line PR #3812 layout fix
-independently removes the exponential state-space explosion in
-`optimize_restickify` — that mechanism is confirmed at per-op
-candidate granularity and reduces beam-state metrics by ~50% at
-n_chunks=2 on the same graph.
+workload A dataset. A per-substage reverse-adjacency prototype
+already **measured** this class of quadratic-like behavior moving
+toward linear on the coarse-tile pass: `_maybe_coarse_tile_hints`
+runs 2.93×/3.68× faster at n_chunks=4/8, and the 4→8 growth ratio
+shifts from 3.52× to 2.80×. The same mechanism can be applied to
+dedup and the `operations.index` splice pattern — those remain
+estimated. The 5-line PR #3812 layout fix independently removes the
+exponential state-space explosion in `optimize_restickify` — that
+mechanism is confirmed at per-op candidate granularity and reduces
+beam-state metrics by ~50% at n_chunks=2 on the same graph.
 
 Closed `compile_fx_wrapper` decomposition (extra_timers hook)
 confirms `gl_run` and `spyre_kernel_codegen` are effectively free
@@ -412,7 +445,9 @@ confirms `gl_run` and `spyre_kernel_codegen` are effectively free
 does not scale nearly as fast as the Spyre pass pipelines — so the
 Spyre pass pipelines contain essentially all the Spyre-owned
 frontend work worth optimizing. Scratchpad planning is linear on
-workload B but superlinear on workload A (same code, driven by
-workload A's long-lived carry buffers hitting
-`_extern_kernel_in_live_range`'s O(range) scan); a prefix-sum fix
-would turn that into O(1) per buffer.
+workload B and superlinear (n^~1.45) on workload A; the first
+source-level hypothesis for that difference
+(`_extern_kernel_in_live_range` per-buffer range scan) was
+prototyped and refuted by measurement, so the actual driver of the
+workload-A slope remains unattributed and awaits substage
+instrumentation inside `plan_allocation`.

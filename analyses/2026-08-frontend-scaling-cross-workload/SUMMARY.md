@@ -60,18 +60,21 @@ instrumentation directly confirms the candidate reduction: on the same
 graph, constant-fill ops go from 2 candidates each to 1, and immediate
 downstream `post_expand` metrics halve.
 
-### 3. Workload-topology-dependent scratchpad scaling
+### 3. Workload-dependent scratchpad scaling — root cause unresolved
 
 Same `scratchpad_planning` code:
 
 - **Workload A**: superlinear (~n^1.45 across the 32× range measured).
 - **Workload B**: linear.
 
-Root cause: `_extern_kernel_in_live_range` walks `range(min(uses),
-max(uses)+1)` per buffer. Workload A has long-lived carry buffers
-(`running_max`, `denominator`, `output`) threading through every inner
-tile, so per-buffer scan lengths grow with graph size. Workload B's
-per-chunk scratch buffers stay local, so scan lengths are bounded.
+The measured cross-workload difference is robust. The first source-level
+hypothesis — that per-buffer `_extern_kernel_in_live_range` scans over
+long-lived carry buffers were driving the workload-A slope — was
+prototyped and **refuted by measurement** (patched scratchpad time
+within 1–2% of baseline at both b=32 and b=64). The real cause of the
+workload-A superlinear behavior remains unattributed. See
+[`notes/scratchpad-prototype.md`](notes/scratchpad-prototype.md) and
+[`notes/scratchpad-scaling.md`](notes/scratchpad-scaling.md).
 
 ### 4. What is not a hidden frontend problem
 
@@ -100,36 +103,36 @@ the primary frontend scope.
 _See [`notes/engineering-opportunities.md`](notes/engineering-opportunities.md)
 for the ranked map with confidence levels._
 
-1. **Per-substage reverse adjacency in coarse-tile hints**
-   (**MEASURED**). Replace the two dominant
-   O(N × K) `_reads_buffer` scan patterns in `_plan_tiling_propagation`
-   and `_patch_retiled_load_indexes` with a single per-substage
-   `readers_by_buffer` / `reads_by_op` index. Root cause measured;
-   prototype impact **measured**: coarse-tile pass 2.93× faster at n=4,
-   3.68× faster at n=8; scaling-law growth 4→8 shifts from 3.52× down
-   to 2.80× (approaching linear). Total Spyre pass pipelines at n=8:
-   23.3 s → 12.8 s.
+1. **Per-substage reverse adjacency in coarse-tile hints — MEASURED.**
+   Replace the two dominant O(N × K) `_reads_buffer` scan patterns in
+   `_plan_tiling_propagation` and `_patch_retiled_load_indexes` with
+   a single per-substage `readers_by_buffer` / `reads_by_op` index.
+   Root cause measured; prototype impact measured: coarse-tile pass
+   2.93× faster at n=4, 3.68× faster at n=8; scaling-law growth 4→8
+   shifts from 3.52× down to 2.80× (approaching linear). Total Spyre
+   pass pipelines at n=8: 23.3 s → 12.8 s.
 
-2. **`_extern_kernel_in_live_range` prefix-sum in scratchpad_planning**
-   (**MEASURED NULL — hypothesis refuted**). The prototype changed
-   `_maybe_scratchpad_planning` by only 1–2% (128 ms saved at 512×4096,
-   204 ms saved at 512×8192 — within measurement noise). The source
-   audit correctly identified an O(N·B) code pattern, but
-   `isinstance(op, ExternKernel)` is empirically not the dominant term.
-   The real driver of workload A's n^1.45 scratchpad scaling is still
-   unattributed. **Needs substage instrumentation inside
-   `plan_allocation` before another prototype.**
-
-3. **Dedup reverse-adjacency / consumer index** (estimated). The same
-   uncached-`get_read_writes` mechanism that drives coarse-tile hints
+2. **Dedup reverse-adjacency / consumer index — ESTIMATED.** The same
+   uncached `get_read_writes` mechanism that drives coarse-tile hints
    also inflates dedup's per-pair constant 4.6× on workload B. Root
-   cause **measured**; no prototype yet — awaiting prototype.
+   cause measured; no prototype yet.
 
-4. **Restickify's post-fix ~2.2–2.4× per doubling** (needs further
-   investigation). The exponential mechanism is closed by PR #3812.
+3. **Restickify's post-fix ~2.2–2.4× per doubling — NEEDS FURTHER
+   INVESTIGATION.** The exponential mechanism is closed by PR #3812.
    The remaining post-fix scaling has not yet been source-attributed;
    `state.assignments + (candidate_stl,)` tuple concatenation inside
-   the beam loop is a static-audit candidate.
+   the beam loop is a static-audit candidate that would need a
+   diagnostic profile before a prototype.
+
+4. **Workload-A n^1.45 scratchpad driver — NEEDS INSTRUMENTATION.**
+   Cross-workload difference is measured (linear on B, n^~1.45 on A).
+   The first source hypothesis (`_extern_kernel_in_live_range`
+   per-buffer range scan) was prototyped and refuted by measurement
+   — patched scratchpad time was within 1–2% of baseline at both b=32
+   and b=64. The real driver is elsewhere in `plan_allocation`;
+   substage instrumentation is the right next step before proposing
+   another prototype. See
+   [`notes/scratchpad-prototype.md`](notes/scratchpad-prototype.md).
 
 ## Open questions
 
