@@ -1,7 +1,11 @@
 {
   "verdict": "BACKEND_IMPACT_ONLY",
-  "verdict_note": "with sdsc_bundle_gen sub-stage regression documented. All Spyre custom-pass pipelines flat within run-to-run noise; sdsc_bundle_gen regressed at head due to added canonical-compile + json.dumps overhead; n_specs unchanged (cache never populated); dxp_standalone improved substantially at both points via canonical bundle representation. Net wall clock improves at both points.",
+  "verdict_note": "with sdsc_bundle_gen sub-stage regression documented. All Spyre custom-pass pipelines flat within run-to-run noise; sdsc_bundle_gen regressed at head due to added canonical-compile + json.dumps overhead; n_specs unchanged (cache never populated); dxp_standalone improved substantially at both points via canonical bundle representation. Net wall clock (first_call_wall inclusive) improves at both points by -11% (n=4) and -24% (n=8).",
   "confidence": "HIGH",
+  "timing_semantics": {
+    "note": "All numeric fields with names NOT ending in _self are inclusive_ns reductions. Fields ending in _self are self_ns (i.e. exclusive of nested children). See references/interpretation-guide.md 'Inclusive vs self'.",
+    "sanity_check": "All 12 sample JSONs pass scripts/check_timing_json.py invariants: parent-child containment, self_ns == inclusive_ns - Σchildren, leaves have self == inclusive."
+  },
   "samples": {
     "n_base_n4": 3,
     "n_head_n4": 3,
@@ -21,25 +25,27 @@
   "alignment_tier": "Tier 3 — isolated checkout at exact SHAs, C-extension rebuilt per revision",
   "primary_metrics": {
     "WB_n4": {
-      "sdsc_bundle_gen": {"base_median_s": 0.4891, "head_median_s": 0.8050, "delta_s": 0.3159, "ratio": 1.646, "base_spread": [0.4889, 0.4981], "head_spread": [0.7961, 0.8642]},
-      "sdsc_total_self": {"base_median_s": 0.1137, "head_median_s": 0.1198, "delta_s": 0.0061, "ratio": 1.053},
-      "dxp_standalone": {"base_median_s": 22.0426, "head_median_s": 13.2526, "delta_s": -8.7900, "ratio": 0.601, "base_spread": [21.9158, 22.1271], "head_spread": [12.9108, 13.8334]},
-      "compile_fx_wrapper": {"base_median_s": 12.6158, "head_median_s": 15.6173, "delta_s": 3.0015, "ratio": 1.238},
-      "first_call_wall": {"base_median_s": 1.3485, "head_median_s": 1.2621, "delta_s": -0.0864, "ratio": 0.936},
-      "pipeline_CustomPreSchedulingPasses": {"base_median_s": 10.4719, "head_median_s": 11.3855, "delta_s": 0.9135, "ratio": 1.087, "note": "wide spread on both, effect at edge of noise"},
-      "pipeline_CustomPreFusionPasses": {"base_median_s": 0.0382, "head_median_s": 0.0381, "ratio": 0.998},
-      "pipeline_CustomPostFusionPasses": {"base_median_s": 0.0192, "head_median_s": 0.0195, "ratio": 1.015},
+      "first_call_wall_inclusive": {"base_median_s": 47.8007, "head_median_s": 42.3879, "delta_s": -5.4128, "ratio": 0.887, "base_spread": [46.1976, 48.6391], "head_spread": [39.7673, 43.1444]},
+      "compile_fx_wrapper_inclusive": {"base_median_s": 46.4335, "head_median_s": 41.3751, "delta_s": -5.0584, "ratio": 0.891, "base_spread": [45.1744, 47.2906], "head_spread": [38.1634, 41.8823]},
+      "sdsc_total_inclusive": {"base_median_s": 22.6449, "head_median_s": 14.1685, "delta_s": -8.4764, "ratio": 0.626},
+      "sdsc_total_self": {"base_median_s": 0.1137, "head_median_s": 0.1198, "delta_s": 0.0061, "ratio": 1.053, "note": "recorder overhead of the sdsc wrapper; leaf-only reduction — retained for reference."},
+      "sdsc_bundle_gen_inclusive": {"base_median_s": 0.4891, "head_median_s": 0.8050, "delta_s": 0.3159, "ratio": 1.646, "base_spread": [0.4889, 0.4981], "head_spread": [0.7961, 0.8642]},
+      "dxp_standalone_inclusive": {"base_median_s": 22.0426, "head_median_s": 13.2526, "delta_s": -8.7900, "ratio": 0.601, "base_spread": [21.9158, 22.1271], "head_spread": [12.9108, 13.8334]},
+      "pipeline_CustomPreSchedulingPasses_inclusive": {"base_median_s": 10.4719, "head_median_s": 11.3855, "delta_s": 0.9135, "ratio": 1.087, "note": "wide spread on both, effect at edge of noise"},
+      "pipeline_CustomPreFusionPasses_inclusive": {"base_median_s": 0.0382, "head_median_s": 0.0381, "ratio": 0.998},
+      "pipeline_CustomPostFusionPasses_inclusive": {"base_median_s": 0.0192, "head_median_s": 0.0195, "ratio": 1.015},
       "spyre_pipelines_status": "flat within +/-9% (main pipeline slight regression at edge of noise; others tight)"
     },
     "WB_n8": {
-      "sdsc_bundle_gen": {"base_median_s": 1.1292, "head_median_s": 1.6441, "delta_s": 0.5149, "ratio": 1.456, "base_spread": [1.0794, 1.1460], "head_spread": [1.6415, 1.6894]},
-      "sdsc_total_self": {"base_median_s": 0.2920, "head_median_s": 0.3085, "delta_s": 0.0166, "ratio": 1.057},
-      "dxp_standalone": {"base_median_s": 46.6790, "head_median_s": 25.8991, "delta_s": -20.7799, "ratio": 0.555, "base_spread": [46.3027, 54.5118], "head_spread": [25.7768, 26.3921]},
-      "compile_fx_wrapper": {"base_median_s": 16.6451, "head_median_s": 15.1738, "delta_s": -1.4713, "ratio": 0.912},
-      "first_call_wall": {"base_median_s": 1.5207, "head_median_s": 1.2779, "delta_s": -0.2429, "ratio": 0.840},
-      "pipeline_CustomPreSchedulingPasses": {"base_median_s": 32.4508, "head_median_s": 31.7998, "delta_s": -0.6510, "ratio": 0.980},
-      "pipeline_CustomPreFusionPasses": {"base_median_s": 0.0631, "head_median_s": 0.0617, "ratio": 0.978},
-      "pipeline_CustomPostFusionPasses": {"base_median_s": 0.0308, "head_median_s": 0.0306, "ratio": 0.992},
+      "first_call_wall_inclusive": {"base_median_s": 101.5549, "head_median_s": 76.9702, "delta_s": -24.5847, "ratio": 0.758, "base_spread": [99.9424, 105.9215], "head_spread": [75.2060, 84.0583]},
+      "compile_fx_wrapper_inclusive": {"base_median_s": 100.1676, "head_median_s": 75.2971, "delta_s": -24.8706, "ratio": 0.752, "base_spread": [98.4217, 103.8795], "head_spread": [73.9614, 82.7805]},
+      "sdsc_total_inclusive": {"base_median_s": 48.1205, "head_median_s": 27.8522, "delta_s": -20.2683, "ratio": 0.579},
+      "sdsc_total_self": {"base_median_s": 0.2920, "head_median_s": 0.3085, "delta_s": 0.0166, "ratio": 1.057, "note": "recorder overhead of the sdsc wrapper; leaf-only reduction — retained for reference."},
+      "sdsc_bundle_gen_inclusive": {"base_median_s": 1.1292, "head_median_s": 1.6441, "delta_s": 0.5149, "ratio": 1.456, "base_spread": [1.0794, 1.1460], "head_spread": [1.6415, 1.6894]},
+      "dxp_standalone_inclusive": {"base_median_s": 46.6790, "head_median_s": 25.8991, "delta_s": -20.7799, "ratio": 0.555, "base_spread": [46.3027, 54.5118], "head_spread": [25.7768, 26.3921]},
+      "pipeline_CustomPreSchedulingPasses_inclusive": {"base_median_s": 32.4508, "head_median_s": 31.7998, "delta_s": -0.6510, "ratio": 0.980},
+      "pipeline_CustomPreFusionPasses_inclusive": {"base_median_s": 0.0631, "head_median_s": 0.0617, "ratio": 0.978},
+      "pipeline_CustomPostFusionPasses_inclusive": {"base_median_s": 0.0308, "head_median_s": 0.0306, "ratio": 0.992},
       "spyre_pipelines_status": "flat within +/-2%"
     }
   },
@@ -58,12 +64,12 @@
     "why_prediction_missed": "The static reading identified the added per-op canonical-compile + json.dumps(sort_keys=True) overhead on the frontend side but assumed cache hits would offset it. In practice, WB compiles into distinct OpSpec dicts (n_specs unchanged) despite Python-level structural repetition across chunks, so the cache never populated. Meanwhile, the canonical bundle representation shifts dxp_standalone by -40% at n=4 and -45% at n=8 — a mechanism not visible from the diff alone."
   },
   "wall_clock_impact": {
-    "WB_n4": {"base_first_call_wall_s": 1.3485, "head_first_call_wall_s": 1.2621, "delta_s": -0.086, "net": "improvement (small)"},
-    "WB_n8": {"base_first_call_wall_s": 1.5207, "head_first_call_wall_s": 1.2779, "delta_s": -0.243, "net": "improvement"},
-    "wall_clock_total_at_n8": {"base_elapsed_s_median": 136, "head_elapsed_s_median": 114, "delta_s": -22, "note": "wall-clock elapsed also drops substantially at n=8, matching the -20.8s dxp win"}
+    "WB_n4": {"base_first_call_wall_inclusive_s": 47.8007, "head_first_call_wall_inclusive_s": 42.3879, "delta_s": -5.4128, "ratio": 0.887, "net": "improvement (~11%)"},
+    "WB_n8": {"base_first_call_wall_inclusive_s": 101.5549, "head_first_call_wall_inclusive_s": 76.9702, "delta_s": -24.5847, "ratio": 0.758, "net": "improvement (~24%)"},
+    "note": "Corrected in this revision — earlier impact.json used self_ns for first_call_wall and compile_fx_wrapper, which excludes nested children. inclusive_ns is the correct reduction for enclosing wall-clock stages."
   },
   "retracted_marginal_patch_comparison": {
-    "note": "The earlier marginal-patch measurement (pod's older bundle.py as base, pod bundle.py + PR diff as head) is preserved in data/ but the Tier 3 rerun here supersedes it. Direction and rough magnitude agreed; the marginal-patch understated the backend win because pod's older bundle.py made dxp_standalone slower to begin with.",
+    "note": "The earlier marginal-patch measurement (pod's older bundle.py as base, pod bundle.py + PR diff as head) is preserved in data/ but the Tier 3 rerun here supersedes it. Direction and rough magnitude agreed on sub-stages; the marginal-patch understated the backend win because pod's older bundle.py made dxp_standalone slower to begin with.",
     "sdsc_bundle_gen_n4_delta_pct_marginal_vs_true": "65 vs 65",
     "dxp_standalone_n4_delta_pct_marginal_vs_true": "-33 vs -40",
     "sdsc_bundle_gen_n8_delta_pct_marginal_vs_true": "55 vs 46",

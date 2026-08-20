@@ -40,7 +40,7 @@ was applied to six cases. The current inventory is:
 | #3890 | HIGH | 3 → reduced to WB_scaling_pair | INSUFFICIENT_EVIDENCE (measurement blocked by tree drift + system-lib versions) | 100 s (shared reference) |
 | local-revadj-prototype | — | 1 | FRONTEND_IMPROVEMENT — **known-positive control**, not a novel test (measured 2.93× @ n=4, 3.68× @ n=8) | ~18 min (reused primary study) |
 | #3868 (attempts 1+2) | MEDIUM | 1 → Tier 3 (blocked) | INSUFFICIENT_EVIDENCE (marginal-patch retracted, old-pod Tier 3 blocked by system libs) | ~24 min (retracted) |
-| **#3868 (attempt 3, validated)** | MEDIUM | Tier 3 on new pod | **BACKEND_IMPACT_ONLY** — sdsc_bundle_gen +65% / +46%, dxp_standalone −40% / −45% at n=4 / n=8; every Spyre pipeline flat; n_specs unchanged. HIGH confidence. | ~15 min |
+| **#3868 (attempt 3, validated)** | MEDIUM | Tier 3 on new pod | **BACKEND_IMPACT_ONLY** — sdsc_bundle_gen +65% / +46%, dxp_standalone −40% / −45% at n=4 / n=8; every Spyre pipeline flat; n_specs unchanged. Net wall clock (`first_call_wall` inclusive) −11% / −24%. HIGH confidence. | ~15 min |
 
 **Total device time**: ~57 minutes across six cases (including one
 retracted attempt and one successful Tier 3 rerun).
@@ -95,13 +95,24 @@ Both are preserved in the case documents.
       **BACKEND_IMPACT_ONLY** with a documented `sdsc_bundle_gen`
       sub-stage regression (+65% / +46%), `dxp_standalone`
       improvement (−40% / −45%), `n_specs` unchanged, all Spyre
-      pipelines flat.
+      pipelines flat. Net wall clock (`first_call_wall` inclusive)
+      improves −11% at n=4 and −24% at n=8.
    The prediction (`FRONTEND_IMPROVEMENT` via cache hits, MEDIUM
    confidence) is preserved verbatim in `prediction.json` and
    `01-static-assessment.md`. The measurement disagreed with the
    prediction — cache never populated because OpSpecs are distinct
    across chunks — but the PR still improves wall clock via a
    backend representation shift. Both preserved.
+7. **Reduction bug caught and fixed**: the first pass of the
+   validated case reported `first_call_wall` and `compile_fx_wrapper`
+   from `self_ns`, which excludes nested children. Those columns
+   read 1.3 s / 12.6 s at n=4 (the residual after subtracting every
+   pass + sdsc + dxp), not the actual wall time (47.8 s / 46.4 s
+   inclusive). Fixed in this revision with a new interpretation-guide
+   rule "Inclusive vs self" and a sanity-check script
+   (`scripts/check_timing_json.py`) that validates every sample JSON
+   before reduction. Raw data was unchanged; only the reduction and
+   the docs were rewritten.
 
 ## Where the skill fell short
 
@@ -153,7 +164,15 @@ Both are preserved in the case documents.
    trusting cache-hit predictions.
 5. **[DONE]** `sdsc_bundle_gen`-moved-but-no-pass-did clause
    added to `references/interpretation-guide.md`.
-6. **[DONE]** SKILL.md version bumped to 0.2.0; documents the
+6. **[DONE]** Inclusive-vs-self rule added to
+   `references/interpretation-guide.md`: enclosing wall-clock
+   stages reduce with `inclusive_ns`; `self_ns` is only reported
+   when the column name ends in `_self`.
+   `scripts/check_timing_json.py` validates the invariants
+   (parent-child containment; `self == inclusive − Σchildren`;
+   leaves have `self == inclusive`) on every sample JSON before
+   reduction.
+7. **[DONE]** SKILL.md version bumped to 0.2.0; documents the
    isolated-checkout workflow and points at the six-case
    validation. Invocation section now includes the alignment gate
    check as an explicit step before device work.

@@ -370,6 +370,10 @@ error on the smoke import. Options in order of preference:
         run_isolated_sample.sh            — v0.2: orchestrator
         check_alignment.sh                — v0.2 fix: per-touched-file blob
                                             equality check (Tier 2 gate)
+        check_timing_json.py              — v0.2 fix: sanity-check a sample
+                                            JSON (parent-child containment,
+                                            self == inclusive − Σchildren,
+                                            leaves have self == inclusive)
 ```
 
 ## Where this skill knowledge came from

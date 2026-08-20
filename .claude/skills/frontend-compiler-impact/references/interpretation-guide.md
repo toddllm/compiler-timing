@@ -3,6 +3,44 @@
 How to read a base/head measurement and pick one of the seven
 verdicts.
 
+## Inclusive vs self — non-negotiable reduction rule
+
+Every timing event in the `timing_recorder` JSON carries BOTH
+`inclusive_ns` and `self_ns`. They mean different things:
+
+- **`inclusive_ns`** — wall time the event spanned, including all
+  nested child events. This is the wall-clock cost of the stage.
+- **`self_ns`** — wall time *not* accounted for by nested children.
+  For a leaf event (no children) `self_ns == inclusive_ns`. For an
+  enclosing event `self_ns` is usually much smaller than
+  `inclusive_ns`.
+
+The rule the skill must follow:
+
+- **Enclosing / wall-clock stages MUST be reduced using `inclusive_ns`.**
+  This includes: `first_call_wall`, `compile_fx_wrapper`, every
+  `pipeline:*`, and any stage that contains nested substages.
+- **`self_ns` is only reported when explicitly labeled.** If a
+  metric name ends in `_self` (e.g. `sdsc_total_self`), that column
+  is a `self_ns` reduction and the name discloses it. Any name
+  without a `_self` suffix is `inclusive_ns`.
+- **Never report a mixture without labeling which is which.** A
+  table row for `compile_fx_wrapper` reduced from `self_ns` is a
+  reporting bug — `compile_fx_wrapper.self_ns` excludes all Spyre
+  passes + sdsc + dxp, so the number looks like a small residual
+  that has nothing to do with total compile cost.
+
+Sanity check every reduction with the parent-child invariant:
+
+- For each event `e` with children `c1..cn`,
+  `sum(c.inclusive_ns for c in children) <= e.inclusive_ns`.
+- For any leaf event, `self_ns == inclusive_ns`.
+- If either check fails, the JSON is malformed or the reduction
+  code has a bug — do NOT proceed to interpretation.
+
+`scripts/check_timing_json.py` runs these checks over one or more
+sample JSON files.
+
 ## Metrics to collect
 
 For every timed sample, extract from the JSON at least:

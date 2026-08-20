@@ -84,6 +84,15 @@ that is NOT what static reading predicted.
   `dxp_standalone` required patching `bundle.generate_bundle` and
   `subprocess.run` (for the `dxp_standalone` argv). Both now in
   the shim.
+- The initial reduction script used `self_ns` for `first_call_wall`
+  and `compile_fx_wrapper`. `self_ns` excludes nested children, so
+  the reported "wall clock" numbers for those two stages were
+  1.3 s and 12.6 s at n=4 — the residual after subtracting every
+  Spyre pass, sdsc, dxp — not the actual wall time (which is
+  47.8 s and 46.4 s inclusive). Corrected here with a new
+  interpretation-guide rule and a sanity-check script
+  (`scripts/check_timing_json.py`). All 12 sample JSONs pass every
+  invariant.
 
 ## Lessons carried forward
 
@@ -107,3 +116,10 @@ that is NOT what static reading predicted.
    JSON that PR #3868 embeds makes `dxp_standalone` significantly
    faster (−40 to −45%) even when no spec dedup occurs on the
    frontend.
+6. **Enclosing wall-clock stages reduce with `inclusive_ns`; `self_ns`
+   is only reported when explicitly labeled.** Codified in
+   `references/interpretation-guide.md` "Inclusive vs self". The
+   sanity-check script validates the invariants
+   (parent-child containment; `self == inclusive − Σchildren`;
+   leaves have `self == inclusive`) on every sample JSON before
+   the reduction runs.
