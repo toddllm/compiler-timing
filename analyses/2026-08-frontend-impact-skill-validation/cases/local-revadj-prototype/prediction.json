@@ -1,0 +1,13 @@
+{
+  "verdict_class": "FRONTEND_IMPROVEMENT",
+  "confidence": "HIGH",
+  "expected_direction": {
+    "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_hints": "decrease (major, 3-4x expected on WB)",
+    "compile_fx_wrapper": "decrease by roughly the pass delta",
+    "sdsc_bundle_gen": "unchanged",
+    "sdsc_total": "unchanged",
+    "dxp_standalone": "unchanged"
+  },
+  "written_before_measurement": true,
+  "rationale": "The primary study's profiler traces on WB showed _patch_retiled_load_indexes doing repeated pairwise scans of a growing candidate list. The reverse-adjacency prototype restructures those into a single-pass forward-adjacency walk, keeping the same output edges. On WB_n4 (Lk=4096, kv_block=1024) and WB_n8 (Lk=4096, kv_block=512), we expected ~3x speedup at n=4 and larger at n=8 due to superlinear scaling of the old code."
+}

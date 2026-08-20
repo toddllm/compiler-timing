@@ -1,0 +1,15 @@
+{
+  "verdict_class": "FRONTEND_IMPROVEMENT",
+  "confidence": "MEDIUM",
+  "expected_direction": {
+    "sdsc_bundle_gen": "decrease (cache hits skip duplicate emissions on WB structural repetition)",
+    "sdsc_total": "small decrease",
+    "dxp_standalone": "maybe small decrease (smaller bundle handed to backend)",
+    "spyre_pipelines": "unchanged (change is inside sdsc_*)",
+    "n_specs": "may decrease (fewer distinct specs after dedup — if so, verdict shifts to STRUCTURAL_CHANGE_NEUTRAL)"
+  },
+  "written_before_measurement": true,
+  "rationale": "The PR caches canonical SDSC JSON per unique op-spec and reuses it on repeated identical specs. WB is KV-chunked with structurally identical scores/exp/weighted computations per chunk, so many cache hits were expected. The added overhead per op (canonical compile + json.dumps sort_keys) was expected to be outweighed by skipped emissions.",
+  "magnitude_class": "moderate",
+  "sourced_from": "cases/pr-3868/01-static-assessment.md (committed before running any measurement)"
+}

@@ -218,6 +218,28 @@ plumbing). Measured 6–11 s at all four points sampled — sublinear.
   changes `dxp_standalone` subprocess management, classify as
   **backend impact only**.
 
+### `torch_spyre/_inductor/codegen/bundle.py`
+
+- **Stage**: SDSC bundle emission (`sdsc_bundle_gen`).
+- **Measured role**: 0.5 s at WB_n4, 1.1 s at WB_n8. Small in
+  absolute terms compared to `dxp_standalone`, but on the timed
+  path for every compile.
+- **Triage rule**: Level ≥1. This file sits at the frontend/backend
+  boundary — changes here can move `sdsc_bundle_gen` independently
+  of every Spyre `pipeline:*`. Two mechanisms to check:
+  1. **Bundle-emission time** — added per-op work will show up in
+     `sdsc_bundle_gen` even without any pass moving. PR #3868's
+     canonical-compile + `json.dumps(sort_keys=True)` added +65% at
+     WB_n4 with no Spyre pass changed.
+  2. **Bundle content** — a change to what the bundle carries can
+     shift `dxp_standalone` substantially. Verify by comparing
+     head vs base `n_specs` at `sdsc_bundle_gen.meta`. If
+     `n_specs` unchanged and `dxp_standalone` moves, the bundle
+     representation (not the count) changed.
+- **Verdict guidance**: when `sdsc_bundle_gen` moves but Spyre passes
+  don't, use the "sdsc_bundle_gen moved but no Spyre pass did"
+  clause in `interpretation-guide.md`.
+
 ### `torch_spyre/runtime/` and other execution-time code
 
 - **Stage**: runtime (post-compile).

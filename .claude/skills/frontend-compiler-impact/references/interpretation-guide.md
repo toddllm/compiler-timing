@@ -21,6 +21,21 @@ For every timed sample, extract from the JSON at least:
 - `async_compile_wait` (usually ≈ 0)
 - Individual passes touched by the change (if any)
 
+### Boundary metrics — treat separately from Spyre pipelines
+
+`sdsc_bundle_gen` sits at the frontend/backend boundary. It emits the
+compiled bundle that gets handed to `dxp_standalone`. It can move
+independently of every Spyre pass pipeline — the PR #3868 validation
+case saw `sdsc_bundle_gen` regress +65% while every `pipeline:*` was
+flat within ±2%. Keep `sdsc_bundle_gen` on its own row in every
+result table. Never bucket it under "Spyre pipes total".
+
+Similarly, `dxp_standalone` is not a frontend pass — but a change to
+what `sdsc_bundle_gen` emits can shift `dxp_standalone` substantially
+without any pass moving. Record both, and interpret their joint
+movement using the `n_specs` and bundle-representation checks
+described below.
+
 Also structural counters:
 
 - `event['compile_fx_wrapper'].meta.fx_nodes_at_entry`
@@ -88,6 +103,22 @@ Is the change gated (feature flag, argument, layout state) and
 default-path is unchanged but the gated path moved?
 └── ACTIVATION-SPECIFIC IMPACT
 ```
+
+### `sdsc_bundle_gen` moved but no Spyre pass did
+
+If `sdsc_bundle_gen` moved AND all Spyre `pipeline:*` are flat:
+
+- If `n_specs` also moved → STRUCTURAL_CHANGE_NEUTRAL
+  (bundle emission changed because there's less/more to emit).
+- If `n_specs` unchanged AND `dxp_standalone` moved → the bundle
+  representation changed. Verdict: **BACKEND_IMPACT_ONLY** with a
+  documented `sdsc_bundle_gen` sub-stage delta note. This is what
+  PR #3868 looked like at WB_n4: `sdsc_bundle_gen` +65%, every
+  Spyre pass flat, `n_specs` unchanged, `dxp_standalone` −33%.
+- If `n_specs` unchanged AND `dxp_standalone` unchanged → the change
+  is doing extra bundle-emission work for no benefit at this
+  workload. Note the regression; test on a different sentinel
+  before generalizing.
 
 ## Structural change vs performance change
 

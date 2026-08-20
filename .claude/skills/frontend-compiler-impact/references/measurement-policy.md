@@ -3,6 +3,37 @@
 Non-negotiable rules for any timed measurement. Violation of any
 rule invalidates the result.
 
+## Pod-tree alignment gate — check BEFORE scheduling device work
+
+Before you consume any device time, decide whether the pod tree can
+serve as the base for this PR. There are three tiers, checked in order:
+
+1. **Cleanest — pod == PR base**: the pod's `HEAD` matches the PR's
+   `base_sha`. In-place patch swap between `.base` and `.head`
+   snapshots of the changed files is fine (pure-Python changes only).
+2. **Adequate — diff applies cleanly to pod tree**: `git apply --check
+   <pr>.diff` returns 0 on the pod tree even though its base is
+   different. Acceptable when the drifting files are NOT touched by
+   the PR. Note the drift and the SHAs in `02-experiment-plan.md`.
+3. **Requires isolated checkout**: `git apply --check` fails, or the
+   PR touches C-extension sources, or the PR's base needs newer
+   torch/AIupti/deeptools than the pod has. Then run
+   `.claude/skills/frontend-compiler-impact/scripts/setup_isolated_checkout.sh
+   <sha> <dest>` and use the timing shim
+   (`.claude/skills/frontend-compiler-impact/scripts/timing_shim.py`)
+   to instrument.
+
+If the isolated checkout fails to build (system libs too old for the
+PR's base), the correct verdict is `INSUFFICIENT_EVIDENCE` for the
+measurement attempt. Do NOT downgrade the science to run something
+that isn't actually the PR's base.
+
+The alignment tier belongs in `02-experiment-plan.md` in a
+`## Pod-tree alignment` section, along with the exact command used
+to verify and its output. This step comes BEFORE cache-dir setup,
+BEFORE sentinel selection — it decides whether device time can
+usefully happen at all.
+
 ## Isolation
 
 - The Spyre device is exclusive per process. Runs are strictly

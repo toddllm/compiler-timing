@@ -1,0 +1,47 @@
+{
+  "verdict": "BACKEND_IMPACT_ONLY",
+  "verdict_note": "with sdsc_bundle_gen sub-stage regression documented; Spyre custom-pass pipelines all flat within +/-1.5%",
+  "confidence": "HIGH",
+  "samples": {
+    "n_base_n4": 3,
+    "n_head_n4": 3,
+    "n_base_n8": 3,
+    "n_head_n8": 3,
+    "paired": true,
+    "sample_order": "base1 head1 base2 head2 base3 head3 within each point"
+  },
+  "pod_tree_alignment": "cleanly_appliable",
+  "primary_metrics": {
+    "WB_n4": {
+      "sdsc_bundle_gen": {"base_median_s": 0.4791, "head_median_s": 0.7901, "delta_s": 0.3110, "ratio": 1.649},
+      "sdsc_total_self": {"base_median_s": 0.0580, "head_median_s": 0.0617, "delta_s": 0.0037, "ratio": 1.063},
+      "dxp_standalone": {"base_median_s": 23.0845, "head_median_s": 15.3883, "delta_s": -7.6962, "ratio": 0.667},
+      "compile_fx_wrapper": {"base_median_s": 14.3687, "head_median_s": 17.0721, "delta_s": 2.7035, "ratio": 1.188, "note": "wide spread (12.4-16.8 vs 14.6-18.6) — driven by sdsc_bundle_gen + non-Spyre inductor work"},
+      "spyre_pipelines_status": "all flat within +/-1.5%"
+    },
+    "WB_n8": {
+      "sdsc_bundle_gen": {"base_median_s": 1.0679, "head_median_s": 1.6519, "delta_s": 0.5840, "ratio": 1.547},
+      "sdsc_total_self": {"base_median_s": 0.1149, "head_median_s": 0.1150, "delta_s": 0.0001, "ratio": 1.001},
+      "dxp_standalone": {"base_median_s": 67.9713, "head_median_s": 45.6980, "delta_s": -22.2733, "ratio": 0.672},
+      "compile_fx_wrapper": {"base_median_s": 12.6919, "head_median_s": 13.4429, "delta_s": 0.7510, "ratio": 1.059},
+      "spyre_pipelines_status": "all flat within +/-1.5%"
+    }
+  },
+  "structural_counters": {
+    "n_specs_bundle_1_amax_full_zeros_like_0": {"base": 5, "head": 5, "changed": false},
+    "n_specs_bundle_2_add_amax_unsqueeze_1": {"base": 1, "head": 1, "changed": false},
+    "interpretation": "cache never hit — every op-spec is distinct at this workload despite Python-level structural repetition across chunks"
+  },
+  "prediction_vs_measurement": {
+    "predicted_direction_sdsc_bundle_gen": "decrease",
+    "actual_direction_sdsc_bundle_gen": "increase +55 to +65%",
+    "predicted_verdict": "FRONTEND_IMPROVEMENT",
+    "actual_verdict": "BACKEND_IMPACT_ONLY",
+    "prediction_correct": false,
+    "why_prediction_missed": "The static reading identified the added canonical-compile + json.dumps(sort_keys=True) overhead on the frontend side but assumed cache hits would offset it. In practice, WB compiles into distinct OpSpec dicts (n_specs unchanged), so the cache never hit. Meanwhile, the canonical bundle representation shifted dxp_standalone by -33% at both points — a mechanism not visible from the diff alone."
+  },
+  "wall_clock_impact": {
+    "WB_n4": {"base_first_call_wall_s": 1.4316, "head_first_call_wall_s": 1.1952, "delta_s": -0.2363, "net": "improvement"},
+    "WB_n8": {"base_first_call_wall_s": 1.2602, "head_first_call_wall_s": 1.7769, "delta_s": 0.5167, "net": "regression at first-call-wall metric level, but dxp_standalone dominant total wall improvement"}
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "verdict": "FRONTEND_IMPROVEMENT",
+  "confidence": "HIGH",
+  "samples": {
+    "base_dir": "analyses/2026-08-frontend-scaling-cross-workload/data/workload-B-post-fix/",
+    "head_dir": "analyses/2026-08-frontend-scaling-cross-workload/data/workload-B-revadj/",
+    "n_base": 3,
+    "n_head": 3,
+    "paired": false,
+    "note": "base and head captured on the same pod tree back-to-back; not interleaved"
+  },
+  "primary_metrics": {
+    "WB_n4 (kv_block=1024)": {
+      "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_hints": {
+        "base_median_s": 4.1097,
+        "head_median_s": 1.4032,
+        "delta_s": -2.7065,
+        "ratio_head_over_base": 0.341,
+        "speedup": "2.93x"
+      },
+      "compile_fx_wrapper": {
+        "base_median_s": 10.7864,
+        "head_median_s": 7.0992,
+        "delta_s": -3.6872,
+        "ratio_head_over_base": 0.658
+      }
+    },
+    "WB_n8 (kv_block=512)": {
+      "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_hints": {
+        "base_median_s": 14.4637,
+        "head_median_s": 3.9331,
+        "delta_s": -10.5306,
+        "ratio_head_over_base": 0.272,
+        "speedup": "3.68x"
+      },
+      "compile_fx_wrapper": {
+        "base_median_s": 12.2500,
+        "head_median_s": 8.4394,
+        "delta_s": -3.8106,
+        "ratio_head_over_base": 0.689
+      }
+    }
+  },
+  "structural_counters": {
+    "note": "dxp_standalone unchanged (69.07 -> 69.07 s at n=8; 23.32 -> 23.01 s at n=4, <2% delta), so the backend was handed an equivalent bundle. Purely a frontend win."
+  },
+  "prediction_vs_measurement": {
+    "predicted_direction": "decrease on _maybe_coarse_tile_hints, 3-4x on WB",
+    "actual_direction": "matches — 2.93x at n=4, 3.68x at n=8",
+    "predicted_magnitude_class": "major",
+    "actual_magnitude_class": "major",
+    "predicted_verdict": "FRONTEND_IMPROVEMENT",
+    "actual_verdict": "FRONTEND_IMPROVEMENT",
+    "prediction_correct": true
+  },
+  "scaling_law_delta": {
+    "note": "Base growth from n=4 -> n=8 in _maybe_coarse_tile_hints: 4.11 -> 14.46 s (3.52x). Head growth: 1.40 -> 3.93 s (2.81x). Not just a constant-factor win — the scaling exponent has also improved on this pass."
+  }
+}

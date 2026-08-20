@@ -1,0 +1,17 @@
+{
+  "level": 1,
+  "stage": "pass:_maybe_coarse_tile_hints",
+  "pipeline": "CustomPreSchedulingPasses",
+  "rationale": "Single-file change in a well-known hot pre-scheduling pass. The pass's substages (_patch_retiled_load_indexes, _plan_tiling_propagation) show O(n^2)-ish behavior on WB from the primary study — reverse-adjacency turns pairwise scans into single-pass forward-adjacency walks.",
+  "expected_metric_movers": [
+    "pass:CustomPreSchedulingPasses:_maybe_coarse_tile_hints",
+    "compile_fx_wrapper (upper bound reflects the pass delta)"
+  ],
+  "expected_non_movers": [
+    "sdsc_bundle_gen",
+    "sdsc_total",
+    "dxp_standalone",
+    "all other pre-scheduling passes",
+    "fx_nodes_at_entry"
+  ]
+}

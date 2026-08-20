@@ -1,0 +1,28 @@
+{
+  "target": {
+    "kind": "pr",
+    "repo": "torch-spyre/torch-spyre",
+    "pr_number": 3868,
+    "base_ref": "main",
+    "base_sha": "2e935febe58bcf275accfaa4c960d972d7e6ce49",
+    "head_ref": "sdsc-cache",
+    "head_sha": "a7786ac8a6934645821b3698a9eb33ae2d3b590b",
+    "url": "https://github.com/torch-spyre/torch-spyre/pull/3868"
+  },
+  "changed_files": [
+    "torch_spyre/_inductor/codegen/bundle.py"
+  ],
+  "static_impact": [
+    {
+      "path": "torch_spyre/_inductor/codegen/bundle.py",
+      "stage": "codegen_subdir",
+      "hot_path_probability": "yes",
+      "confidence": "medium",
+      "rule": "R-codegen-subdir"
+    }
+  ],
+  "level_decision": {
+    "level": 1,
+    "rationale": "torch_spyre/_inductor/codegen/bundle.py \u2192 codegen_subdir \u2192 Level 1 ()"
+  }
+}

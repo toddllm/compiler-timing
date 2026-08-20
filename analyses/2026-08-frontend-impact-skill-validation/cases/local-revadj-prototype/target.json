@@ -1,0 +1,11 @@
+{
+  "target_type": "local_patch",
+  "identifier": "coarse-tile reverse-adjacency prototype",
+  "repo": "torch-spyre",
+  "base_sha": "a9316b3 (pod tree at study time)",
+  "head": "base + local reverse-adjacency patch (analyses/2026-08-frontend-scaling-cross-workload/patches/revadj.patch)",
+  "files_changed": [
+    "torch_spyre/_inductor/passes/_maybe_coarse_tile_hints.py"
+  ],
+  "note": "Local experimental patch — never opened as upstream PR. Serves as the 'obvious frontend case' clean A/B for skill v0.2 validation, standing in for the initially-planned PR #3890 (which is blocked by the pod tree needing newer torch/AIupti/deeptools)."
+}

@@ -1,7 +1,7 @@
 ---
 name: frontend-compiler-impact
 description: Evaluate the Torch-Spyre frontend compiler impact of a code change (GitHub PR, commit range, or local branch). Use when the user asks things like "what frontend compiler impact does PR #XXXX have?", "does this branch regress compile time?", "which frontend passes could this diff affect?", "what should I benchmark for this change?", "scan current PRs for frontend impact?", or "did this optimization actually improve the intended scaling law?". The skill enforces a discipline of static triage first, then targeted device measurement only when warranted, driven by the empirical knowledge captured in `analyses/2026-08-pr3806-frontend-timing/` and `analyses/2026-08-frontend-scaling-cross-workload/`.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Frontend Compiler Impact Skill
@@ -297,6 +297,44 @@ and the same cold-compile hygiene as the primary study
 (`analyses/2026-08-pr3806-frontend-timing/patches/sweep-driver.sh`
 is the reference implementation).
 
+## Isolated-checkout workflow (v0.2)
+
+When the pod tree does not align with a PR's base (older `main`
+snapshot, PR touches C-extension, PR needs newer system libs), the
+skill supports an isolated-checkout path:
+
+```
+# 1. Pod-tree alignment check
+git apply --check <pr>.diff              # in the pod tree
+# CLEAN  → in-place patch swap OK
+# FAIL   → isolated checkout required
+
+# 2. Create the isolated checkout at the PR's exact SHA
+.claude/skills/frontend-compiler-impact/scripts/setup_isolated_checkout.sh \
+    <sha> <dest-dir>
+# clones torch-spyre, fetches refs/pull/*/head if needed,
+# symlinks _C.so from the pod's baseline (if ABIs match),
+# smoke-tests the import.
+
+# 3. Run a sample with the timing shim
+.claude/skills/frontend-compiler-impact/scripts/run_isolated_sample.sh \
+    <tree-dir> <harness.py> <out.json> [harness args…]
+# The shim installs compile_fx_wrapper, pipeline:*, sdsc_*
+# instrumentation at import time — no tree modification needed.
+```
+
+If `_C.so` ABIs have diverged (e.g. the PR's base has newer C-extension
+symbols than the pod's shared `_C.so`), the isolated checkout will
+error on the smoke import. Options in order of preference:
+
+- Use the PR's OWN base commit as the isolated base (rather than a
+  shared `_C.so`) — build `_C.so` fresh in the isolated tree.
+- If the fresh build itself fails (system libs too old — profiler
+  headers, AIupti CBIDs, spyrecode-host-functions), the correct
+  verdict is `INSUFFICIENT_EVIDENCE` on that measurement attempt.
+  Do not compromise the science to run something that isn't
+  the PR's base.
+
 ## Files under this skill
 
 ```
@@ -305,7 +343,8 @@ is the reference implementation).
     references/
         compiler-stage-map.md             — stage-by-stage triage rules
         sentinel-workloads.md             — registry with commands
-        measurement-policy.md             — cold-compile hygiene, pairing
+        measurement-policy.md             — cold-compile hygiene, pairing,
+                                            pod-tree alignment gate (v0.2)
         interpretation-guide.md           — metric list + classification
         scan-mode.md                      — open-PR triage
         impact-report.schema.json         — machine-readable output
@@ -315,6 +354,12 @@ is the reference implementation).
         static_triage.py                  — diff → per-file stage tags
         scan_open_prs.sh                  — list + rank open PRs
         emit_impact_report.py             — construct impact.json
+        setup_isolated_checkout.sh        — v0.2: clone at SHA, symlink _C.so
+        timing_shim.py                    — v0.2: runtime monkey-patch
+                                            instrumentation for isolated tree
+        timing_recorder.py                — v0.2: bundled recorder impl
+        shim_runner.py                    — v0.2: shim-first harness runner
+        run_isolated_sample.sh            — v0.2: orchestrator
 ```
 
 ## Where this skill knowledge came from
@@ -328,6 +373,15 @@ is the reference implementation).
   out-of-sample generalization, scratchpad measured null, extra-timers
   closure of `compile_fx_wrapper`, measured coarse-tile
   reverse-adjacency prototype.
+- `analyses/2026-08-frontend-impact-skill-validation/` — validation
+  study for this skill. Static-triage cases: PR #3871 (test-only,
+  correct no-run), PR #3873 (activation-specific gated), PR #3849
+  (static-only, C-extension blocked), PR #3890 (isolated-checkout
+  blocked by system-lib drift). Empirical A/B cases:
+  `local-revadj-prototype` (coarse-tile reverse-adjacency — clean
+  FRONTEND_IMPROVEMENT verdict) and `pr-3868` (SDSC json caching —
+  in-place patch swap against pod tree, currently-open PR whose
+  diff applies cleanly).
 
 Read those studies' `SUMMARY.md` and `notes/findings.md` when a
 first-principles refresher is needed. The skill's `references/`
