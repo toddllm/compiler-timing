@@ -1,0 +1,36 @@
+{
+  "target": {
+    "kind": "pr",
+    "repo": "torch-spyre/torch-spyre",
+    "pr_number": 3890,
+    "base_ref": "main",
+    "base_sha": "be1328a867384dbea6fb83d1df38e36ce48b165f",
+    "head_ref": "issue-3613",
+    "head_sha": "148de44b9331adaa0dca3373c9e443610d629d2a",
+    "url": "https://github.com/torch-spyre/torch-spyre/pull/3890"
+  },
+  "changed_files": [
+    "tests/inductor/test_coarse_tile_e2e.py",
+    "torch_spyre/_inductor/wsr/coarse_tile.py"
+  ],
+  "static_impact": [
+    {
+      "path": "tests/inductor/test_coarse_tile_e2e.py",
+      "stage": "test_only",
+      "hot_path_probability": "no",
+      "confidence": "high",
+      "rule": "R-tests-only"
+    },
+    {
+      "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+      "stage": "coarse_tile",
+      "hot_path_probability": "yes",
+      "confidence": "high",
+      "rule": "R-coarse-tile"
+    }
+  ],
+  "level_decision": {
+    "level": 3,
+    "rationale": "torch_spyre/_inductor/wsr/coarse_tile.py \u2192 coarse_tile \u2192 Level 3 (known dominant WSR/KV pass; scaling law is the interesting axis)"
+  }
+}

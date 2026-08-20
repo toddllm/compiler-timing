@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-20T04:39:41.353213+00:00",
+  "target": {
+    "kind": "pr",
+    "repo": "torch-spyre/torch-spyre",
+    "pr_number": 3873,
+    "url": "https://github.com/torch-spyre/torch-spyre/pull/3873",
+    "base_ref": "main",
+    "head_ref": "constants_with_layout",
+    "pr_url": "https://github.com/torch-spyre/torch-spyre/pull/3873"
+  },
+  "base_sha": "be1328a867384dbea6fb83d1df38e36ce48b165f",
+  "head_sha": "8c5f9113736505a4db6865b88ff11dc5416784b4",
+  "diff_summary": {
+    "files_changed": 5,
+    "changed_files": [
+      "tests/inductor/test_restickify.py",
+      "torch_spyre/_inductor/customops.py",
+      "torch_spyre/_inductor/lowering.py",
+      "torch_spyre/_inductor/propagate_layouts.py",
+      "torch_spyre/_monkey_patch.py"
+    ]
+  },
+  "static_impact": [
+    {
+      "path": "tests/inductor/test_restickify.py",
+      "stage": "test_only",
+      "hot_path_probability": "no",
+      "confidence": "high",
+      "rule": "R-tests-only"
+    },
+    {
+      "path": "torch_spyre/_inductor/customops.py",
+      "stage": "other_torch_spyre",
+      "hot_path_probability": "uncertain",
+      "confidence": "low",
+      "rule": "R-other-torch-spyre"
+    },
+    {
+      "path": "torch_spyre/_inductor/lowering.py",
+      "stage": "ir_lowering",
+      "hot_path_probability": "yes",
+      "confidence": "medium",
+      "rule": "R-lowering"
+    },
+    {
+      "path": "torch_spyre/_inductor/propagate_layouts.py",
+      "stage": "layout_prop",
+      "hot_path_probability": "yes",
+      "confidence": "high",
+      "rule": "R-layout-prop"
+    },
+    {
+      "path": "torch_spyre/_monkey_patch.py",
+      "stage": "other_torch_spyre",
+      "hot_path_probability": "uncertain",
+      "confidence": "low",
+      "rule": "R-other-torch-spyre"
+    }
+  ],
+  "level_decision": {
+    "level": 1,
+    "rationale": "torch_spyre/_inductor/customops.py \u2192 other_torch_spyre \u2192 Level 1 (unclassified torch_spyre change; measure once conservatively); torch_spyre/_inductor/lowering.py \u2192 ir_lowering \u2192 Level 1 (); torch_spyre/_inductor/propagate_layouts.py \u2192 layout_prop \u2192 Level 1 (may alter candidate set feeding restickify); torch_spyre/_monkey_patch.py \u2192 other_torch_spyre \u2192 Level 1 (unclassified torch_spyre change; measure once conservatively)"
+  },
+  "measurements": {},
+  "structural_deltas": {},
+  "classification": "ACTIVATION_SPECIFIC_IMPACT",
+  "confidence": "medium",
+  "device_time_used_seconds": 0.0,
+  "device_time_avoided_seconds": 1620.0,
+  "notes": "See 03-results.md and 04-retrospective.md in the same directory.",
+  "prediction": {
+    "direction": "neutral",
+    "magnitude": "none",
+    "affected_passes": [
+      "propagate_spyre_tensor_layouts",
+      "optimize_restickify_locations"
+    ]
+  }
+}

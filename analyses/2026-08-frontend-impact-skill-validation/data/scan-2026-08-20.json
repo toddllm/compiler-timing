@@ -1,0 +1,2507 @@
+{
+  "prs": [
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_coarse_tile_e2e.py",
+          "additions": 98,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 124,
+          "deletions": 16,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3890,
+      "title": "Fix 2 bugs in coarse_tile related to dimensions of size 1",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3890",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "test_only"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "tests/inductor/test_sdsc_logging.py",
+          "additions": 0,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3889,
+      "title": "Drop use_symbols from test_sdsc_logging.py",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3889",
+      "rank": "NONE",
+      "stages": [
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "setup.py",
+          "additions": 2,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3887,
+      "title": "build: order SEN_COMMON_HEADERS after libaiupti includes",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3887",
+      "rank": "NONE",
+      "stages": [
+        "build"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_coarse_tile_e2e.py",
+          "additions": 0,
+          "deletions": 46,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 10,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3884,
+      "title": "Unskip copy_forced mutation tests; assert on multi-candidate mutation target layout",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3884",
+      "rank": "MEDIUM",
+      "stages": [
+        "layout_prop",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 10,
+      "files": [
+        {
+          "path": "repro_invoke_subgraph_split.py",
+          "additions": 80,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_subgraph_wrapper_config.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/torch_spyre_tests/test_nested_compile_region_guard_config.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_subgraph_wrapper.py",
+          "additions": 229,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/test_nested_compile_region_guard.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 28,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/graph_editor.py",
+          "additions": 12,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/split_multi_ops.py",
+          "additions": 39,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wrapper.py",
+          "additions": 83,
+          "deletions": 39,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_monkey_patch.py",
+          "additions": 140,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3883,
+      "title": "select buffer origin in the current graph for invoke_subgraph",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3883",
+      "rank": "MEDIUM",
+      "stages": [
+        "compile_fx_wrapper_setup",
+        "other_torch_spyre",
+        "scratchpad",
+        "split_multi_ops",
+        "test_only",
+        "unknown"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_indirect_access_scatter.py",
+          "additions": 30,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/enforce_indirect_access_layout.py",
+          "additions": 0,
+          "deletions": 8,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3882,
+      "title": "Check scatter destination layout compliance instead of shortcutting on it",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3882",
+      "rank": "MEDIUM",
+      "stages": [
+        "enforce_indirect_access",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_inductor_ops.py",
+          "additions": 125,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 19,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3881,
+      "title": "inductor/sdpa: canonicalize query layout in score matmul",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3881",
+      "rank": "MEDIUM",
+      "stages": [
+        "decompositions",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 4,
+      "files": [
+        {
+          "path": "tests/inductor/test_lx_context_switching.py",
+          "additions": 214,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 8,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 37,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/lx_context_switching.py",
+          "additions": 375,
+          "deletions": 0,
+          "changeType": "ADDED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3879,
+      "title": "Lx dump restore",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3879",
+      "rank": "MEDIUM",
+      "stages": [
+        "other_torch_spyre",
+        "scratchpad",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": ".github/scripts/ingest_xml.py",
+          "additions": 20,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3877,
+      "title": "fix(ingest): honour the threaded --run-id instead of always minting a new uuid",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3877",
+      "rank": "NONE",
+      "stages": [
+        "ci_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 4,
+      "files": [
+        {
+          "path": "tests/inductor/test_inductor_ops.py",
+          "additions": 34,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/codegen/superdsc.py",
+          "additions": 25,
+          "deletions": 12,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 2,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/dtype_ops.py",
+          "additions": 12,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3876,
+      "title": "Support int32<->fp32 conversion",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3876",
+      "rank": "MEDIUM",
+      "stages": [
+        "codegen_subdir",
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 14,
+      "files": [
+        {
+          "path": "tests/inductor/test_inductor_ops.py",
+          "additions": 24,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_inductor_transpose_edge.py",
+          "additions": 4,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_provenance_integration.py",
+          "additions": 0,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_restickify.py",
+          "additions": 1273,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/codegen/superdsc.py",
+          "additions": 45,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/dedup_constants.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/insert_restickify.py",
+          "additions": 117,
+          "deletions": 51,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/padding.py",
+          "additions": 535,
+          "deletions": 8,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/pass_utils.py",
+          "additions": 90,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/passes.py",
+          "additions": 2,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 349,
+          "deletions": 83,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 5,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 106,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 1,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3875,
+      "title": "fix(inductor): enable mid-stick torch.cat by sharing one mutation buffer layout",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3875",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "codegen_subdir",
+        "dedup",
+        "insert_restickify",
+        "kernel_codegen",
+        "layout_prop",
+        "other_torch_spyre",
+        "pass_utils",
+        "scratchpad",
+        "test_only"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 5,
+      "files": [
+        {
+          "path": "tests/inductor/test_restickify.py",
+          "additions": 84,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 39,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 31,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 8,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_monkey_patch.py",
+          "additions": 29,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3873,
+      "title": "feat(inductor): allow specifying STL on `torch.full`",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3873",
+      "rank": "MEDIUM",
+      "stages": [
+        "ir_lowering",
+        "layout_prop",
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/models/op_registry.py",
+          "additions": 4,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/oot_framework/oot_test_config_models.py",
+          "additions": 13,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3871,
+      "title": "fix(tests): repair two Gemma op-test helpers that fail at the CPU reference",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3871",
+      "rank": "NONE",
+      "stages": [
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": ".github/workflows/_test_matrix.yaml",
+          "additions": 7,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3869,
+      "title": "ci(perf): skip empty-matrix test job in perf mode so the run does not false-fail",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3869",
+      "rank": "NONE",
+      "stages": [
+        "ci_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "torch_spyre/_inductor/codegen/bundle.py",
+          "additions": 53,
+          "deletions": 17,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3868,
+      "title": "Cache and reuse sdsc json files during codegen",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3868",
+      "rank": "MEDIUM",
+      "stages": [
+        "codegen_subdir"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_restickify.py",
+          "additions": 155,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 3,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3866,
+      "title": "[DRAFT TESTING ONLY]   mutation layout bug exploration",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3866",
+      "rank": "MEDIUM",
+      "stages": [
+        "layout_prop",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp",
+          "additions": 2,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3860,
+      "title": "Profiler/fix stream id memcpy",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3860",
+      "rank": "MEDIUM",
+      "stages": [
+        "csrc"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": "tests/inductor/test_ktir_emitter.py",
+          "additions": 89,
+          "deletions": 15,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/codegen/ktir.py",
+          "additions": 67,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3859,
+      "title": "Emit unary math / opaque elementwise ops in the OpSpec\u2192KTIR emitter",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3859",
+      "rank": "MEDIUM",
+      "stages": [
+        "codegen_subdir",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 4,
+      "files": [
+        {
+          "path": "tests/configs/model_ops_tests/gemma-4-26B-A4B-it.yaml",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/gemma-4-26B-A4B-it_spyre.yaml",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/resource/models/gemma-4-26B-A4B-it.yaml",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/resource/models/gemma-4-26B-A4B-it_spyre.yaml",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3858,
+      "title": "fix(tests): bound torch.setitem.1 idx tensor to indexed dim size in gemma-4-26B-A4B-it op-tests",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3858",
+      "rank": "NONE",
+      "stages": [
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "torch_spyre/_inductor/enforce_indirect_access_layout.py",
+          "additions": 150,
+          "deletions": 7,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3852,
+      "title": "fix(inductor): gather the whole index when its sticks are not adjacent",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3852",
+      "rank": "MEDIUM",
+      "stages": [
+        "enforce_indirect_access"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 12,
+      "files": [
+        {
+          "path": "docs/source/user_guide/examples/scratchpad/profile_native_packer.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_perm_layout_solver.py",
+          "additions": 222,
+          "deletions": 50,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_solver.py",
+          "additions": 19,
+          "deletions": 21,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_simulated_annealing.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 2,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/exhaustive_search.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/firstfit_bestfit_solver.py",
+          "additions": 3,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/greedy_solver.py",
+          "additions": 2,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/ilp_solver_ortools.py",
+          "additions": 5,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/permutation_layout.py",
+          "additions": 108,
+          "deletions": 34,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/plan_solver.py",
+          "additions": 32,
+          "deletions": 25,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/perm_layout_native.cpp",
+          "additions": 38,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3849,
+      "title": "fix(scratchpad): follow-up review fixes for the native packer",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3849",
+      "rank": "MEDIUM",
+      "stages": [
+        "csrc",
+        "docs",
+        "scratchpad",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 5,
+      "files": [
+        {
+          "path": "tests/scripts/check_test_coverage.sh",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/test_interleave_thin_slice.py",
+          "additions": 349,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/csrc/module.cpp",
+          "additions": 41,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_allocator.cpp",
+          "additions": 115,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_allocator.h",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3848,
+      "title": "Thin-slice bring-up, copy-only interleaved round trip",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3848",
+      "rank": "MEDIUM",
+      "stages": [
+        "csrc",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 15,
+      "files": [
+        {
+          "path": "tests/inductor/test_coarse_tiling.py",
+          "additions": 42,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_codegen.py",
+          "additions": 60,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/test_launch_jobplan.py",
+          "additions": 160,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_C.pyi",
+          "additions": 42,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/codegen/bundle.py",
+          "additions": 27,
+          "deletions": 13,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 20,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wrapper.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/job_plan.cpp",
+          "additions": 54,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/job_plan.h",
+          "additions": 77,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/module.cpp",
+          "additions": 52,
+          "deletions": 9,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_kernel.cpp",
+          "additions": 6,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_kernel.h",
+          "additions": 6,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_stream.cpp",
+          "additions": 7,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_stream.h",
+          "additions": 3,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/execution/kernel_runner.py",
+          "additions": 6,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3846,
+      "title": "Inductor emits typed symbolic launch arguments (address kind)",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3846",
+      "rank": "MEDIUM",
+      "stages": [
+        "codegen_subdir",
+        "csrc",
+        "kernel_codegen",
+        "other_torch_spyre",
+        "runtime_exec",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 4,
+      "files": [
+        {
+          "path": "tests/inductor/test_cost_model_pass.py",
+          "additions": 105,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/cost_model.py",
+          "additions": 85,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/cost_model_pass.py",
+          "additions": 12,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/dump_cost_model.py",
+          "additions": 65,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3844,
+      "title": "feat(cost-model): price the LX relayout shuffle instead of charging zero",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3844",
+      "rank": "MEDIUM",
+      "stages": [
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 2,
+      "files": [
+        {
+          "path": ".github/actions/run-test-suite/action.yml",
+          "additions": 11,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": ".github/workflows/_test_matrix.yaml",
+          "additions": 24,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3843,
+      "title": "fix(ci): stop retries from erasing earlier attempts' JUnit reports",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3843",
+      "rank": "NONE",
+      "stages": [
+        "ci_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 8,
+      "files": [
+        {
+          "path": "docs/source/compiler/scratchpad_planning.md",
+          "additions": 8,
+          "deletions": 8,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "docs/source/compiler/work_division_planning.md",
+          "additions": 5,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_work_division.py",
+          "additions": 259,
+          "deletions": 19,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_work_division_hint.py",
+          "additions": 16,
+          "deletions": 17,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 1,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 43,
+          "deletions": 17,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division.py",
+          "additions": 266,
+          "deletions": 144,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division_constraints.py",
+          "additions": 88,
+          "deletions": 87,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3841,
+      "title": "[Refactor] Replace pinned splits with legal-split-domains in work division",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3841",
+      "rank": "MEDIUM",
+      "stages": [
+        "docs",
+        "other_torch_spyre",
+        "scratchpad",
+        "test_only",
+        "work_division"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 7,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_inductor_ops_lx_reduction_scalar_config.yaml",
+          "additions": 1,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_inductor_ops_reduction_scalar_config.yaml",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_inductor_ops.py",
+          "additions": 326,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/codegen/superdsc.py",
+          "additions": 28,
+          "deletions": 10,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 30,
+          "deletions": 15,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 58,
+          "deletions": 7,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 114,
+          "deletions": 24,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3838,
+      "title": "Enable conv1d operator from torch-spyre for granite-4-0-h-tiny model",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3838",
+      "rank": "MEDIUM",
+      "stages": [
+        "codegen_subdir",
+        "decompositions",
+        "ir_lowering",
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 7,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_subgraph_wrapper_config.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/torch_spyre_tests/test_nested_compile_region_guard_config.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_subgraph_wrapper.py",
+          "additions": 229,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/test_nested_compile_region_guard.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 28,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wrapper.py",
+          "additions": 83,
+          "deletions": 39,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_monkey_patch.py",
+          "additions": 140,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3831,
+      "title": "Spyre subgraph wrapper codegen + invoke_subgraph decomp threading",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3831",
+      "rank": "MEDIUM",
+      "stages": [
+        "compile_fx_wrapper_setup",
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 6,
+      "files": [
+        {
+          "path": ".github/workflows/model_ops_tests.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": ".github/workflows/model_ops_tests_nightly.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/bert-large-uncased.yaml",
+          "additions": 818,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/bert-large-uncased_spyre.yaml",
+          "additions": 799,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/bert-large-uncased.yaml",
+          "additions": 818,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/bert-large-uncased_spyre.yaml",
+          "additions": 799,
+          "deletions": 0,
+          "changeType": "ADDED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3829,
+      "title": "Added google-bert/bert-large-uncased yaml",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3829",
+      "rank": "NONE",
+      "stages": [
+        "ci_only",
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 6,
+      "files": [
+        {
+          "path": ".github/workflows/model_ops_tests.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": ".github/workflows/model_ops_tests_nightly.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/bert-base-uncased.yaml",
+          "additions": 818,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/bert-base-uncased_spyre.yaml",
+          "additions": 799,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/bert-base-uncased.yaml",
+          "additions": 818,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/bert-base-uncased_spyre.yaml",
+          "additions": 799,
+          "deletions": 0,
+          "changeType": "ADDED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3828,
+      "title": "Added google-bert/bert-base-uncased yaml",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3828",
+      "rank": "NONE",
+      "stages": [
+        "ci_only",
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 6,
+      "files": [
+        {
+          "path": ".github/workflows/model_ops_tests.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": ".github/workflows/model_ops_tests_nightly.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/roberta-base-squad2.yaml",
+          "additions": 1133,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/roberta-base-squad2_spyre.yaml",
+          "additions": 1103,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/roberta-base-squad2.yaml",
+          "additions": 1133,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/roberta-base-squad2_spyre.yaml",
+          "additions": 1103,
+          "deletions": 0,
+          "changeType": "ADDED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3827,
+      "title": "Added roberta-base-squad2_yaml",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3827",
+      "rank": "NONE",
+      "stages": [
+        "ci_only",
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 6,
+      "files": [
+        {
+          "path": ".github/workflows/model_ops_tests.yaml",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": ".github/workflows/model_ops_tests_nightly.yaml",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/granite-embedding-278m-multilingual.yaml",
+          "additions": 1059,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/configs/model_ops_tests/granite-embedding-278m-multilingual_spyre.yaml",
+          "additions": 1039,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/granite-embedding-278m-multilingual.yaml",
+          "additions": 1059,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/resource/models/granite-embedding-278m-multilingual_spyre.yaml",
+          "additions": 1039,
+          "deletions": 0,
+          "changeType": "ADDED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3825,
+      "title": "Added granite-embedding-278m-multilingual_yaml",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3825",
+      "rank": "NONE",
+      "stages": [
+        "ci_only",
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    },
+    {
+      "changedFiles": 39,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_expert_execution_config.yaml",
+          "additions": 11,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_coarse_tiling.py",
+          "additions": 545,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_core_mapping.py",
+          "additions": 19,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_expert_execution_planner.py",
+          "additions": 253,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_moe_ffn_semantics.py",
+          "additions": 183,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_perm_layout_solver.py",
+          "additions": 11,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_persistent_expert_loop_planning.py",
+          "additions": 401,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_persistent_expert_physical_plan.py",
+          "additions": 125,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_solver.py",
+          "additions": 47,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_use.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_work_division.py",
+          "additions": 187,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 102,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/__init__.py",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/custom_op.py",
+          "additions": 306,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/physical_plan.py",
+          "additions": 164,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/planner.py",
+          "additions": 411,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/semantics.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/ir.py",
+          "additions": 6,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/loop_info.py",
+          "additions": 83,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 250,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/pass_utils.py",
+          "additions": 8,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/passes.py",
+          "additions": 23,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_hints.py",
+          "additions": 17,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 109,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scheduler.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 92,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/exhaustive_search.py",
+          "additions": 1,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/plan_solver.py",
+          "additions": 15,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/utils.py",
+          "additions": 98,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 136,
+          "deletions": 20,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division.py",
+          "additions": 107,
+          "deletions": 13,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division_constraints.py",
+          "additions": 62,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 861,
+          "deletions": 77,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/propagate_named_dims.py",
+          "additions": 9,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/perm_layout_native.cpp",
+          "additions": 6,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3818,
+      "title": "Enable persistent expert execution behind a gate",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3818",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "compile_fx_wrapper_setup",
+        "csrc",
+        "decompositions",
+        "hint_prop",
+        "ir_lowering",
+        "kernel_codegen",
+        "layout_prop",
+        "named_dim_prop",
+        "other_torch_spyre",
+        "pass_utils",
+        "scheduler",
+        "scratchpad",
+        "test_only",
+        "work_division"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 37,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_expert_execution_config.yaml",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_coarse_tiling.py",
+          "additions": 545,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_core_mapping.py",
+          "additions": 19,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_expert_execution_planner.py",
+          "additions": 206,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_moe_ffn_semantics.py",
+          "additions": 183,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_perm_layout_solver.py",
+          "additions": 11,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_persistent_expert_loop_planning.py",
+          "additions": 401,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_solver.py",
+          "additions": 47,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_use.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_work_division.py",
+          "additions": 187,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 102,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/__init__.py",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/custom_op.py",
+          "additions": 306,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/planner.py",
+          "additions": 352,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/semantics.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/ir.py",
+          "additions": 6,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/loop_info.py",
+          "additions": 79,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 250,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/pass_utils.py",
+          "additions": 8,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/passes.py",
+          "additions": 6,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_hints.py",
+          "additions": 17,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 109,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scheduler.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 92,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/exhaustive_search.py",
+          "additions": 1,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/plan_solver.py",
+          "additions": 15,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/utils.py",
+          "additions": 98,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 136,
+          "deletions": 20,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division.py",
+          "additions": 107,
+          "deletions": 13,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/work_division_constraints.py",
+          "additions": 62,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 855,
+          "deletions": 77,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/propagate_named_dims.py",
+          "additions": 9,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/perm_layout_native.cpp",
+          "additions": 6,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3817,
+      "title": "Constrain persistent expert work division",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3817",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "compile_fx_wrapper_setup",
+        "csrc",
+        "decompositions",
+        "hint_prop",
+        "ir_lowering",
+        "kernel_codegen",
+        "layout_prop",
+        "named_dim_prop",
+        "other_torch_spyre",
+        "pass_utils",
+        "scheduler",
+        "scratchpad",
+        "test_only",
+        "work_division"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 30,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_expert_execution_config.yaml",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_coarse_tiling.py",
+          "additions": 514,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_expert_execution_planner.py",
+          "additions": 206,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_moe_ffn_semantics.py",
+          "additions": 183,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_perm_layout_solver.py",
+          "additions": 11,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_persistent_expert_loop_planning.py",
+          "additions": 329,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_scratchpad_solver.py",
+          "additions": 47,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 102,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/__init__.py",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/custom_op.py",
+          "additions": 306,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/planner.py",
+          "additions": 352,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/semantics.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/ir.py",
+          "additions": 6,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/loop_info.py",
+          "additions": 72,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 250,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/pass_utils.py",
+          "additions": 8,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_hints.py",
+          "additions": 17,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 32,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scheduler.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 82,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/exhaustive_search.py",
+          "additions": 1,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/plan_solver.py",
+          "additions": 15,
+          "deletions": 3,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/utils.py",
+          "additions": 98,
+          "deletions": 11,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 136,
+          "deletions": 20,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 784,
+          "deletions": 76,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/perm_layout_native.cpp",
+          "additions": 6,
+          "deletions": 6,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3816,
+      "title": "Keep persistent expert state in LX",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3816",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "compile_fx_wrapper_setup",
+        "csrc",
+        "decompositions",
+        "hint_prop",
+        "ir_lowering",
+        "kernel_codegen",
+        "layout_prop",
+        "other_torch_spyre",
+        "pass_utils",
+        "scheduler",
+        "scratchpad",
+        "test_only"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 22,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_expert_execution_config.yaml",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_coarse_tiling.py",
+          "additions": 96,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_expert_execution_planner.py",
+          "additions": 206,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_moe_ffn_semantics.py",
+          "additions": 183,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_persistent_expert_loop_planning.py",
+          "additions": 197,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 9,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 102,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/__init__.py",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/custom_op.py",
+          "additions": 306,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/planner.py",
+          "additions": 352,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/semantics.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/loop_info.py",
+          "additions": 47,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 250,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/pass_utils.py",
+          "additions": 8,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_hints.py",
+          "additions": 17,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 32,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scheduler.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/spyre_kernel.py",
+          "additions": 136,
+          "deletions": 20,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/wsr/coarse_tile.py",
+          "additions": 450,
+          "deletions": 43,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3815,
+      "title": "Form persistent expert loops with advancing operands",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3815",
+      "rank": "HIGH",
+      "stages": [
+        "coarse_tile",
+        "compile_fx_wrapper_setup",
+        "decompositions",
+        "hint_prop",
+        "ir_lowering",
+        "kernel_codegen",
+        "layout_prop",
+        "other_torch_spyre",
+        "pass_utils",
+        "scheduler",
+        "test_only"
+      ],
+      "level": 3,
+      "run_recommendation": "TARGETED_RUN or SCALING_RUN"
+    },
+    {
+      "changedFiles": 8,
+      "files": [
+        {
+          "path": "tests/inductor/test_cost_model_pass.py",
+          "additions": 5,
+          "deletions": 5,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "tests/inductor/test_work_division_hint.py",
+          "additions": 1,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/cost_model.py",
+          "additions": 84,
+          "deletions": 28,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/dump_cost_model.py",
+          "additions": 36,
+          "deletions": 17,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/allocator.py",
+          "additions": 50,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/exhaustive_search.py",
+          "additions": 4,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/ilp_solver_ortools.py",
+          "additions": 220,
+          "deletions": 32,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/scratchpad/plan_solver.py",
+          "additions": 45,
+          "deletions": 1,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3810,
+      "title": "Integrate cost model with ILP solver",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3810",
+      "rank": "MEDIUM",
+      "stages": [
+        "other_torch_spyre",
+        "scratchpad",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 3,
+      "files": [
+        {
+          "path": "tests/tensor/test_tensor_layout.py",
+          "additions": 42,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/propagate_layouts.py",
+          "additions": 44,
+          "deletions": 2,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/csrc/spyre_mem.cpp",
+          "additions": 44,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3809,
+      "title": "Reject a size-0 device dim instead of crashing with SIGFPE",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3809",
+      "rank": "MEDIUM",
+      "stages": [
+        "csrc",
+        "layout_prop",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 13,
+      "files": [
+        {
+          "path": "tests/configs/torch_spyre_tests/inductor/test_expert_execution_config.yaml",
+          "additions": 7,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_expert_execution_planner.py",
+          "additions": 206,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "tests/inductor/test_moe_ffn_semantics.py",
+          "additions": 111,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/__init__.py",
+          "additions": 21,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/config.py",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/constants.py",
+          "additions": 4,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/customops.py",
+          "additions": 5,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/decompositions.py",
+          "additions": 65,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/__init__.py",
+          "additions": 37,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/custom_op.py",
+          "additions": 186,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/planner.py",
+          "additions": 352,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/expert_execution/semantics.py",
+          "additions": 123,
+          "deletions": 0,
+          "changeType": "ADDED"
+        },
+        {
+          "path": "torch_spyre/_inductor/lowering.py",
+          "additions": 57,
+          "deletions": 0,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": true,
+      "number": 3807,
+      "title": "Add persistent dense expert execution planning",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3807",
+      "rank": "MEDIUM",
+      "stages": [
+        "compile_fx_wrapper_setup",
+        "decompositions",
+        "ir_lowering",
+        "other_torch_spyre",
+        "test_only"
+      ],
+      "level": 1,
+      "run_recommendation": "TARGETED_RUN"
+    },
+    {
+      "changedFiles": 1,
+      "files": [
+        {
+          "path": "tests/test_memory_pressure_gc.py",
+          "additions": 8,
+          "deletions": 4,
+          "changeType": "MODIFIED"
+        }
+      ],
+      "isDraft": false,
+      "number": 3805,
+      "title": "Fix: test_memory_pressure_gc failures",
+      "url": "https://github.com/torch-spyre/torch-spyre/pull/3805",
+      "rank": "NONE",
+      "stages": [
+        "test_only"
+      ],
+      "level": 0,
+      "run_recommendation": "NO_RUN"
+    }
+  ]
+}

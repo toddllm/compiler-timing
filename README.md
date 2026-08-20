@@ -40,6 +40,43 @@ carries its own README, instrumentation patches, raw data, and plots.
   and the full technical synthesis
   [`notes/findings.md`](analyses/2026-08-frontend-scaling-cross-workload/notes/findings.md).
 
+## Frontend compiler impact skill
+
+The repository ships a Claude Code skill at
+[`.claude/skills/frontend-compiler-impact/`](.claude/skills/frontend-compiler-impact/)
+that encodes the compiler-performance understanding from the two
+studies above into a reusable decision process.
+
+**What it does**: given a torch-spyre PR, commit range, or local
+branch, it (1) statically triages the diff onto compiler stages,
+(2) picks the smallest experiment that could confirm or refute the
+static hypothesis (Level 0/1/2/3/4), (3) commits its prediction
+BEFORE any measurement, (4) if warranted, runs a paired base/head
+sample, (5) classifies the result into one of seven verdicts.
+
+**How to invoke**:
+
+```bash
+# One-line static triage:
+.claude/skills/frontend-compiler-impact/scripts/resolve_target.sh 3890 \
+  | .claude/skills/frontend-compiler-impact/scripts/static_triage.py
+
+# Fast open-PR scan (no device time):
+.claude/skills/frontend-compiler-impact/scripts/scan_open_prs.sh \
+    torch-spyre/torch-spyre --limit 40
+```
+
+The skill's decision process, references, and scripts are
+self-contained; a fresh Claude Code session with no prior context
+can use it directly from this repo.
+
+**Empirical validation**:
+[`analyses/2026-08-frontend-impact-skill-validation/`](analyses/2026-08-frontend-impact-skill-validation/)
+applies the skill to four currently-open torch-spyre PRs and
+scores its triage accuracy, prediction calibration, and device-time
+efficiency. Start with
+[`SUMMARY.md`](analyses/2026-08-frontend-impact-skill-validation/SUMMARY.md).
+
 ## Layout of a study directory
 
 ```

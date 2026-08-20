@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-20T04:39:41.302943+00:00",
+  "target": {
+    "kind": "pr",
+    "repo": "torch-spyre/torch-spyre",
+    "pr_number": 3871,
+    "url": "https://github.com/torch-spyre/torch-spyre/pull/3871",
+    "base_ref": "main",
+    "head_ref": "jt/fix-gemma-op-helpers",
+    "pr_url": "https://github.com/torch-spyre/torch-spyre/pull/3871"
+  },
+  "base_sha": "3e23d180eec8640d261ffa55648715183cd80fc9",
+  "head_sha": "cdd9cf915a282e248af5f26f5243a1dcb617d6a6",
+  "diff_summary": {
+    "files_changed": 2,
+    "changed_files": [
+      "tests/models/op_registry.py",
+      "tests/oot_framework/oot_test_config_models.py"
+    ]
+  },
+  "static_impact": [
+    {
+      "path": "tests/models/op_registry.py",
+      "stage": "test_only",
+      "hot_path_probability": "no",
+      "confidence": "high",
+      "rule": "R-tests-only"
+    },
+    {
+      "path": "tests/oot_framework/oot_test_config_models.py",
+      "stage": "test_only",
+      "hot_path_probability": "no",
+      "confidence": "high",
+      "rule": "R-tests-only"
+    }
+  ],
+  "level_decision": {
+    "level": 0,
+    "rationale": "tests/models/op_registry.py \u2192 test_only \u2192 Level 0 (tests only); tests/oot_framework/oot_test_config_models.py \u2192 test_only \u2192 Level 0 (tests only)"
+  },
+  "measurements": {},
+  "structural_deltas": {},
+  "classification": "NO_RUN",
+  "confidence": "high",
+  "device_time_used_seconds": 0.0,
+  "device_time_avoided_seconds": 1620.0,
+  "notes": "See 03-results.md and 04-retrospective.md in the same directory.",
+  "prediction": {
+    "direction": "neutral",
+    "magnitude": "none",
+    "affected_passes": []
+  }
+}

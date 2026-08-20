@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "frontend-compiler-impact skill run report",
+  "description": "Machine-readable output of one skill run over a target (PR, commit range, or branch).",
+  "type": "object",
+  "required": ["schema_version", "target", "base_sha", "head_sha", "static_impact", "classification", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "ISO-8601 timestamp of when this report was produced."
+    },
+    "target": {
+      "type": "object",
+      "description": "What was analyzed.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["pr", "commit_range", "branch"]
+        },
+        "repo": {
+          "type": "string",
+          "description": "e.g. 'torch-spyre/torch-spyre'"
+        },
+        "pr_number": {"type": "integer"},
+        "pr_url": {"type": "string"},
+        "base_ref": {"type": "string"},
+        "head_ref": {"type": "string"},
+        "commit_range": {"type": "string"},
+        "branch": {"type": "string"}
+      }
+    },
+    "base_sha": {"type": "string", "description": "Exact resolved base SHA."},
+    "head_sha": {"type": "string", "description": "Exact resolved head SHA."},
+    "diff_summary": {
+      "type": "object",
+      "properties": {
+        "files_changed": {"type": "integer"},
+        "additions": {"type": "integer"},
+        "deletions": {"type": "integer"},
+        "changed_files": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "static_impact": {
+      "type": "array",
+      "description": "Per-file / per-region static classification produced by the triage.",
+      "items": {
+        "type": "object",
+        "required": ["path", "stage", "rule"],
+        "properties": {
+          "path": {"type": "string"},
+          "stage": {
+            "type": "string",
+            "description": "Compiler stage from the stage map (e.g. 'coarse_tile', 'dedup', 'scratchpad', 'restickify', 'csrc', 'test_only', 'docs')."
+          },
+          "rule": {
+            "type": "string",
+            "description": "Which triage rule fired."
+          },
+          "hot_path_probability": {
+            "type": "string",
+            "enum": ["yes", "gated", "no", "uncertain"]
+          },
+          "known_scaling_mechanism": {"type": "string"},
+          "confidence": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          }
+        }
+      }
+    },
+    "level_decision": {
+      "type": "object",
+      "properties": {
+        "level": {"type": "integer", "minimum": 0, "maximum": 4},
+        "rationale": {"type": "string"}
+      }
+    },
+    "selected_experiments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sentinel": {"type": "string"},
+          "points": {"type": "array", "items": {"type": "string"}},
+          "samples_per_point": {"type": "integer"},
+          "paired": {"type": "boolean"},
+          "rationale": {"type": "string"}
+        }
+      }
+    },
+    "measurements": {
+      "type": "object",
+      "description": "Per-metric summary at each (revision, point).",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base_median_ms": {"type": "number"},
+          "base_min_ms": {"type": "number"},
+          "base_max_ms": {"type": "number"},
+          "base_n": {"type": "integer"},
+          "head_median_ms": {"type": "number"},
+          "head_min_ms": {"type": "number"},
+          "head_max_ms": {"type": "number"},
+          "head_n": {"type": "integer"},
+          "delta_ms": {"type": "number"},
+          "delta_pct": {"type": "number"}
+        }
+      }
+    },
+    "structural_deltas": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {"type": ["number", "integer"]},
+          "head": {"type": ["number", "integer"]},
+          "changed": {"type": "boolean"}
+        }
+      }
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "FRONTEND_IMPROVEMENT",
+        "FRONTEND_REGRESSION",
+        "NO_MEASURABLE_FRONTEND_IMPACT",
+        "STRUCTURAL_CHANGE_NEUTRAL",
+        "BACKEND_IMPACT_ONLY",
+        "ACTIVATION_SPECIFIC_IMPACT",
+        "INSUFFICIENT_EVIDENCE",
+        "NO_RUN"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["none", "low", "medium", "high"]
+    },
+    "prediction": {
+      "type": "object",
+      "description": "The prediction written to 01-static-assessment.md BEFORE any run.",
+      "properties": {
+        "direction": {"type": "string", "enum": ["improvement", "regression", "neutral", "unknown"]},
+        "magnitude": {"type": "string", "enum": ["none", "small", "moderate", "potentially_large", "unknown"]},
+        "affected_passes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "device_time_used_seconds": {"type": "number"},
+    "device_time_avoided_seconds": {
+      "type": "number",
+      "description": "Device time a naive 'run everything on every PR' baseline would have consumed."
+    },
+    "followups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {"type": "string"},
+          "rationale": {"type": "string"}
+        }
+      }
+    },
+    "notes": {"type": "string"}
+  }
+}
