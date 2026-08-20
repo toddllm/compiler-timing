@@ -1,0 +1,162 @@
+{
+  "meta": {
+    "workload": "pr3812_kvchunk_flash",
+    "B": 1,
+    "H": 8,
+    "D": 128,
+    "Lq": 256,
+    "Lk": 4096,
+    "kv_block": 1024,
+    "n_chunks": 4,
+    "h_tiles": 4,
+    "lq_tiles": 0,
+    "TORCHINDUCTOR_CACHE_DIR": "/tmp/torchinductor_true_head_1024_r3",
+    "SENCORES": "<unset>",
+    "pod": "<sanitized>",
+    "recorder_version": 1,
+    "clock": "time.perf_counter_ns",
+    "python_pid": 0
+  },
+  "events": [
+    {
+      "name": "device_init_and_transfer",
+      "ordinal": 0,
+      "parent_ordinal": null,
+      "t_start_ns": 572859019602495,
+      "t_end_ns": 572859108132444,
+      "inclusive_ns": 88529949,
+      "self_ns": 88529949
+    },
+    {
+      "name": "first_call_wall",
+      "ordinal": 1,
+      "parent_ordinal": null,
+      "t_start_ns": 572859301894669,
+      "t_end_ns": 572899069178208,
+      "inclusive_ns": 39767283539,
+      "self_ns": 1603845392
+    },
+    {
+      "name": "compile_fx_wrapper",
+      "ordinal": 2,
+      "parent_ordinal": 1,
+      "t_start_ns": 572859865900029,
+      "t_end_ns": 572898029338176,
+      "inclusive_ns": 38163438147,
+      "self_ns": 14070320961,
+      "meta": {
+        "fx_nodes_at_entry": 105
+      }
+    },
+    {
+      "name": "pipeline:CustomPreSchedulingPasses",
+      "ordinal": 3,
+      "parent_ordinal": 2,
+      "t_start_ns": 572872481265717,
+      "t_end_ns": 572882650808075,
+      "inclusive_ns": 10169542358,
+      "self_ns": 10169542358,
+      "meta": {
+        "passes": 20
+      }
+    },
+    {
+      "name": "pipeline:CustomPreFusionPasses",
+      "ordinal": 4,
+      "parent_ordinal": 2,
+      "t_start_ns": 572882878876761,
+      "t_end_ns": 572882915735224,
+      "inclusive_ns": 36858463,
+      "self_ns": 36858463,
+      "meta": {
+        "passes": 3
+      }
+    },
+    {
+      "name": "pipeline:CustomPostFusionPasses",
+      "ordinal": 5,
+      "parent_ordinal": 2,
+      "t_start_ns": 572882920317367,
+      "t_end_ns": 572882939743255,
+      "inclusive_ns": 19425888,
+      "self_ns": 19425888,
+      "meta": {
+        "passes": 3
+      }
+    },
+    {
+      "name": "sdsc_total",
+      "ordinal": 6,
+      "parent_ordinal": 2,
+      "t_start_ns": 572883822597583,
+      "t_end_ns": 572884700185748,
+      "inclusive_ns": 877588165,
+      "self_ns": 12693550,
+      "meta": {
+        "kernel": "sdsc_fused_amax_full_zeros_like_0"
+      }
+    },
+    {
+      "name": "sdsc_bundle_gen",
+      "ordinal": 7,
+      "parent_ordinal": 6,
+      "t_start_ns": 572883822983193,
+      "t_end_ns": 572883869142412,
+      "inclusive_ns": 46159219,
+      "self_ns": 46159219,
+      "meta": {
+        "kernel": "sdsc_fused_amax_full_zeros_like_0",
+        "n_specs": 5
+      }
+    },
+    {
+      "name": "dxp_standalone",
+      "ordinal": 8,
+      "parent_ordinal": 6,
+      "t_start_ns": 572883874432948,
+      "t_end_ns": 572884693168344,
+      "inclusive_ns": 818735396,
+      "self_ns": 818735396,
+      "meta": {
+        "output_dir": "e0d790e6_sdsc_fused_amax_full_zeros_like_0_rrvme24r"
+      }
+    },
+    {
+      "name": "sdsc_total",
+      "ordinal": 9,
+      "parent_ordinal": 2,
+      "t_start_ns": 572885015395222,
+      "t_end_ns": 572898005097534,
+      "inclusive_ns": 12989702312,
+      "self_ns": 138801852,
+      "meta": {
+        "kernel": "sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1"
+      }
+    },
+    {
+      "name": "sdsc_bundle_gen",
+      "ordinal": 10,
+      "parent_ordinal": 9,
+      "t_start_ns": 572885015686886,
+      "t_end_ns": 572885774547403,
+      "inclusive_ns": 758860517,
+      "self_ns": 758860517,
+      "meta": {
+        "kernel": "sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1",
+        "n_specs": 1
+      }
+    },
+    {
+      "name": "dxp_standalone",
+      "ordinal": 11,
+      "parent_ordinal": 9,
+      "t_start_ns": 572885784351722,
+      "t_end_ns": 572897876391665,
+      "inclusive_ns": 12092039943,
+      "self_ns": 12092039943,
+      "meta": {
+        "output_dir": "2e886d18_sdsc_fused_add_amax_clone_div_exp_maximum_mul_sub_sum_transpose_unsqueeze_1_8h2ob7as"
+      }
+    }
+  ]
+}

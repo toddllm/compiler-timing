@@ -12,6 +12,7 @@ env/
 # Local scratch never meant for the repo
 scratch/
 *.local.*
+.pod-snapshots/
 
 # Large raw compiler artifacts are checked in from data/ subfolders explicitly;
 # ignore stray top-level dumps.

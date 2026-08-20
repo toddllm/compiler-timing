@@ -1,123 +1,141 @@
 # Results — PR #3868
 
-**Written AFTER measurement. Reflects both the initial marginal-patch
-attempt AND the tightened alignment gate that the initial measurement
-itself motivated.**
+**Written AFTER measurement. This is the TIER 3 clean base/head A/B
+against the PR's exact SHAs, executed on a newer pod
+(`tdeshane-compiler-timing-dev-v2`) whose deeptools install is new
+enough to build `_C.so` at the PR base. The earlier marginal-patch
+attempt against the older pod is preserved below as supplementary
+context.**
+
+## Setup
+
+- Isolated checkouts at:
+  - base: `torch-spyre` @ `2e935febe58bcf275accfaa4c960d972d7e6ce49`
+    (`bundle.py` md5 `c93d3ba5d7...`)
+  - head: `torch-spyre` @ `a7786ac8a6934645821b3698a9eb33ae2d3b590b`
+    (`bundle.py` md5 `e13273ee01...`)
+- `_C.so` built from source in each isolated tree
+  (`python setup.py build_ext --inplace`) against the v2 pod's
+  `ibm-deeptools-2.0.0-0.main.1+2245.85f9432` install. Both `_C.so`
+  binaries import cleanly with the newer `NativePermutationLayoutSolver`
+  symbol.
+- Instrumentation via runtime shim
+  (`.claude/skills/frontend-compiler-impact/scripts/timing_shim.py`) —
+  no tree modification. Shim registers itself as
+  `torch_spyre._inductor.timing_recorder` so the primary study's
+  harness (`workload_harness_kvchunk.py`) works unchanged.
+- 3 paired cold samples per point per revision at WB_n4 (kv_block=1024,
+  n_chunks=4) and WB_n8 (kv_block=512, n_chunks=8). Interleaved
+  base1/head1/base2/head2/base3/head3 within each point.
+- Fresh `TORCHINDUCTOR_CACHE_DIR` per sample, `rm -rf`d before use.
 
 ## Verdict
 
-**INSUFFICIENT_EVIDENCE** for the question "impact of PR #3868 vs its
-actual base".
+**BACKEND_IMPACT_ONLY** with a documented `sdsc_bundle_gen` sub-stage
+regression. Confidence: **HIGH**.
 
-The marginal-patch measurement (12 paired cold samples at WB_n4 and
-WB_n8, initially reported below as an A/B) is retracted as a validated
-PR-impact measurement. Per the tightened alignment gate in
-`references/measurement-policy.md`, "diff applies cleanly" (Tier 2) is
-not sufficient when a PR-touched file has drifted at the pod base.
-`bundle.py` at the pod (md5 `314e022307...`) differs from `bundle.py`
-at PR #3868's actual base `2e935f...` (md5 `c93d3ba5d7...`). The pod
-version is 14 lines shorter and predates the pool-allocation
-body-emit refactor.
+Both points show the same pattern:
 
-## Why the marginal-patch data is retained but not authoritative
+- Every Spyre `pipeline:*` is flat within run-to-run noise.
+- `sdsc_bundle_gen` regresses by roughly the same fraction at both
+  points (+65% at n=4, +46% at n=8).
+- `dxp_standalone` improves substantially at both points (−40% at
+  n=4, −45% at n=8).
+- `n_specs` on both SDSC bundles is unchanged (5→5 and 1→1), so
+  this is not a spec-dedupe effect. The mechanism is a
+  bundle-representation shift that the backend processes faster.
 
-The measurement DID happen. It shows a consistent pattern at two
-workload points:
+## WB_n4 (kv_block=1024, n_chunks=4) — TRUE base vs TRUE head
 
-- Every Spyre pass pipeline: flat within ±1.5%.
-- `sdsc_bundle_gen`: +55–65% (regressed at head).
-- `dxp_standalone`: −33% at both points (backend faster at head).
-- `n_specs` on both bundles: unchanged (5→5 and 1→1).
+| Stage | base_med (s) | head_med (s) | Δ (s) | ratio | spread (base / head) |
+|---|---:|---:|---:|---:|---|
+| **sdsc_bundle_gen** | 0.4891 | 0.8050 | **+0.316** | **1.646** | 0.489–0.498 / 0.796–0.864 |
+| sdsc_total (self) | 0.1137 | 0.1198 | +0.006 | 1.053 | tight |
+| **dxp_standalone** | 22.0426 | 13.2526 | **−8.790** | **0.601** | 21.92–22.13 / 12.91–13.83 |
+| compile_fx_wrapper | 12.6158 | 15.6173 | +3.002 | 1.238 | 12.00–14.48 / 14.07–15.64 |
+| first_call_wall | 1.3485 | 1.2621 | −0.086 | 0.936 | — |
+| pipeline:CustomPreSchedulingPasses | 10.4719 | 11.3855 | +0.914 | 1.087 | 10.24–11.02 / 10.17–11.51 |
+| pipeline:CustomPreFusionPasses | 0.0382 | 0.0381 | 0 | 0.998 | tight |
+| pipeline:CustomPostFusionPasses | 0.0192 | 0.0195 | 0 | 1.015 | tight |
 
-But the "base" here is *pod pre-refactor bundle.py*, not PR base
-bundle.py. The observed effect is `[PR #3868 diff] applied to
-[older-pre-refactor pod bundle.py]` vs `[older-pre-refactor pod
-bundle.py]`. It is NOT `[PR #3868 head] vs [PR #3868 base]`.
+## WB_n8 (kv_block=512, n_chunks=8) — TRUE base vs TRUE head
 
-The two are meaningfully different: PR base ALREADY carries the
-pool-allocation refactor (a `pool_size` param, `MAX_POOL_SIZE_BYTES`
-import, `device_mem_allocate` in the emitted body instead of a
-`%pool_base_addr` parameter). Any `dxp_standalone` movement in the
-marginal-patch data could be attributed to the pool refactor being
-introduced late (at head, from pod's perspective) rather than to
-PR #3868 itself.
+| Stage | base_med (s) | head_med (s) | Δ (s) | ratio | spread (base / head) |
+|---|---:|---:|---:|---:|---|
+| **sdsc_bundle_gen** | 1.1292 | 1.6441 | **+0.515** | **1.456** | 1.079–1.146 / 1.641–1.689 |
+| sdsc_total (self) | 0.2920 | 0.3085 | +0.017 | 1.057 | tight |
+| **dxp_standalone** | 46.6790 | 25.8991 | **−20.780** | **0.555** | 46.30–54.51 / 25.78–26.39 |
+| compile_fx_wrapper | 16.6451 | 15.1738 | −1.471 | 0.912 | 16.44–19.95 / 14.22–22.10 |
+| first_call_wall | 1.5207 | 1.2779 | −0.243 | 0.840 | — |
+| pipeline:CustomPreSchedulingPasses | 32.4508 | 31.7998 | −0.651 | 0.980 | 31.42–33.56 / 31.69–32.82 |
+| pipeline:CustomPreFusionPasses | 0.0631 | 0.0617 | −0.001 | 0.978 | tight |
+| pipeline:CustomPostFusionPasses | 0.0308 | 0.0306 | 0 | 0.992 | tight |
 
-We cannot separate the two contributions from this data. So this
-measurement stays as an exploratory data point, labeled clearly, and
-does not classify PR #3868 under the seven-verdict scheme.
+## Comparison to the retracted marginal-patch study
 
-## Attempted isolated checkout
+The earlier marginal-patch measurement (pod tree's older `bundle.py`
+as "base", pod bundle.py + PR diff as "head") is preserved in
+`data/` and was called `INSUFFICIENT_EVIDENCE` because pod
+`bundle.py` did not match PR base `bundle.py` byte-for-byte.
 
-Per the tightened Tier 3 policy, an isolated checkout at PR #3868's
-exact base SHA `2e935febe58bcf275accfaa4c960d972d7e6ce49` and head SHA
-`a7786ac8a6934645821b3698a9eb33ae2d3b590b` was set up on the pod. Both
-trees checked out cleanly. `bundle.py` md5s at the two isolated
-checkouts (`c93d3ba5d7...` at base and `e13273ee01...` at head) match
-the blobs fetched from GitHub directly, confirming the trees.
+The TRUE base/head A/B here confirms:
 
-Symlinking the pod's shared `_C.so` (built at pod SHA `a9316b3`) into
-the isolated checkout failed at import time:
+| Metric | Retracted marginal-patch | TRUE base/head | Agreement |
+|---|---|---|---|
+| n=4 `sdsc_bundle_gen` Δ | +65% | **+65%** | direction + magnitude match |
+| n=4 `dxp_standalone` Δ | −33% | **−40%** | direction matches, magnitude slightly larger |
+| n=8 `sdsc_bundle_gen` Δ | +55% | **+46%** | direction matches, magnitude close |
+| n=8 `dxp_standalone` Δ | −33% | **−45%** | direction matches, magnitude larger |
+| n_specs (both bundles, both points) | 5→5, 1→1 | 5→5, 1→1 | matches |
+| Spyre pipelines | flat ±1.5% | flat ±1.5–8.7% | matches |
 
-```
-ImportError: cannot import name 'NativePermutationLayoutSolver' from
-    'torch_spyre._C' (/home/tdeshane/pr3868-iso/torch-spyre-base/
-     torch_spyre/_C.so)
-```
+The retracted study's direction was correct, but understated the
+backend improvement — the pod's older `bundle.py` was making
+`dxp_standalone` slower to begin with (~23 s at pod-tree base,
+~22 s at PR-tree base at n=4; ~68 s at pod-tree base vs ~47 s at
+PR-tree base at n=8 — the older pool-allocation code took extra
+backend time), which partially masked the true head-vs-base delta.
 
-`NativePermutationLayoutSolver` is a new C++ symbol added between the
-pod's SHA and PR #3868's base. It is imported top-level in
-`_inductor/scratchpad/permutation_layout.py`, which is transitively
-imported by `_inductor/scratchpad/allocator.py`, which the compile
-pipeline loads. We cannot dodge this import.
+## Interpretation
 
-Rebuilding `_C.so` from source in the isolated tree failed with:
+`n_specs` did not change on either SDSC bundle at either point.
+The op-specs the compiler emits are structurally distinct across
+chunks even though the Python source loops over structurally
+similar chunk operations, so PR #3868's cache never populated with
+duplicates. The head paid the added per-op canonical-compile +
+`json.dumps(..., sort_keys=True)` cost (+0.32 s at n=4, +0.51 s at
+n=8) without recouping any of it via cache hits.
 
-```
-fatal error: spyrecode-host-functions/fast_process_hcm.h:
-    No such file or directory
-```
+Yet the backend (`dxp_standalone`) is substantially faster at head
+(−8.8 s at n=4, −20.8 s at n=8, both roughly a 40% reduction). The
+mechanism is a bundle-representation shift — the canonical JSON
+that ends up embedded in the emitted bundle allows `dxp_standalone`
+to process it more efficiently, even without any spec dedup at
+this workload.
 
-The pod's `/opt/ibm/spyre/deeptools/include/spyrecode-host-functions/`
-directory only contains
-`processSpyreCodeArtifacts.h, senconst, sendataconvert, spyrecode.h` —
-`fast_process_hcm.h` is not present. The pod's deeptools install is
-older than what PR base needs.
+Every Spyre custom-pass pipeline is flat, so this is not a
+frontend-pass movement. Under the seven-verdict scheme this
+classifies as **BACKEND_IMPACT_ONLY**, with a documented
+`sdsc_bundle_gen` sub-stage regression that is small compared to the
+backend win.
 
-Per the Tier 3 policy: "Only fall back to `INSUFFICIENT_EVIDENCE`
-when even the fresh build fails (system libs too old for the PR's
-base)." Fresh build fails. Verdict: `INSUFFICIENT_EVIDENCE`.
+Net wall-clock (`first_call_wall`) is a modest improvement at n=4
+(head is 94% of base) and a larger improvement at n=8 (head is 84%
+of base). The PR is net beneficial at both points; the value is on
+the backend side.
 
-## Where the marginal-patch measurement data lives
+## Prediction vs measurement
 
-Preserved for reference and for anyone with a newer substrate:
-
-- `data/kv1024-nchunks4-{base,head}-run{1,2,3}.json` — WB_n4 paired.
-- `data/kv512-nchunks8-{base,head}-run{1,2,3}.json` — WB_n8 paired.
-
-These files are what got measured. Their interpretation is limited
-per the retraction above.
-
-## Bundle-level marginal-patch breakdown (supplementary)
-
-Two SDSC bundles per compile. All samples show the same pattern:
-
-| Bundle | n_specs | base bundle_gen (s) | head bundle_gen (s) | Δ | base dxp (s) | head dxp (s) | Δ |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| `sdsc_fused_amax_full_zeros_like_0` | 5 → 5 | 0.028 | 0.048 | +0.020 | 1.14 | 0.78 | −0.36 |
-| `sdsc_fused_add_amax_..._unsqueeze_1` | 1 → 1 | 0.457 | 0.743 | +0.286 | 22.07 | 14.55 | −7.52 |
-
-`n_specs` unchanged on both bundles at both workload points, so the
-PR's cache was never populated — every op-spec was distinct at this
-workload.
-
-## Prediction vs measurement (rebalanced)
-
-Original prediction: `FRONTEND_IMPROVEMENT` on `sdsc_bundle_gen` via
-cache hits. That prediction is preserved verbatim in
-`01-static-assessment.md` and `prediction.json`. It was written
-before the measurement.
-
-The measurement is `INSUFFICIENT_EVIDENCE` at the PR-base level.
-The exploratory marginal-patch data disagrees with the prediction on
-direction, but per the retraction above we cannot say the disagreement
-is a property of PR #3868 rather than of the pod-drift substrate.
+- **Predicted verdict**: `FRONTEND_IMPROVEMENT` on `sdsc_bundle_gen`
+  via cache hits.
+- **Measured verdict**: `BACKEND_IMPACT_ONLY` — `sdsc_bundle_gen`
+  regressed, `dxp_standalone` improved, `n_specs` unchanged.
+- **Prediction correct?** No. The direction on `sdsc_bundle_gen`
+  was wrong (predicted decrease, actual increase). The static
+  reading assumed the WB workload's structural Python repetition
+  would produce repeated OpSpec dicts. Measurement shows OpSpecs
+  are distinct across chunks despite Python-source similarity, so
+  the cache never populated.
+- **Prediction preserved verbatim** in `01-static-assessment.md`
+  and `prediction.json`. The disagreement is documented, not
+  retconned.

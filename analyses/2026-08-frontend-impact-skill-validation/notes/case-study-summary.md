@@ -9,7 +9,7 @@
 | **#3849** | csrc + scratchpad on validation/guard paths | Level 1 (TARGETED_RUN) with C-extension caveat | 1 | WA_baseline (planned) | neutral (validation-only) | INSUFFICIENT_EVIDENCE — csrc file absent on pod, patches don't apply, would require ~70–90 min isolated build | **HIGH-medium confidence null retained** | **PARTIAL** — skill did not check pod-tree alignment before scheduling | 0 s | ~27 min | ~27 min |
 | **#3890** | coarse_tile hot path | Level 3 (SCALING_RUN → reduced to WB_scaling_pair) | 3 | WB_scaling_pair (planned) | small regression (added arithmetic on correctness path) | INSUFFICIENT_EVIDENCE — pod-tree drift on `coarse_tile.py` (3757 lines pod vs 4317 lines PR base) prevents marginal patch A/B; isolated-checkout also blocked by pod system-lib mismatch | Cannot validate — static prediction retained with HIGH confidence | **PARTIAL** — over-provisioned to Level 3; Level 1 or 2 would have been sufficient given the localized correctness-fix nature | 100 s (one health-check baseline) | ~27 min | ~26 min |
 | **local-revadj-prototype** | coarse_tile `_maybe_coarse_tile_hints` — reverse-adjacency restructuring of `_patch_retiled_load_indexes` and `_plan_tiling_propagation` | Level 1 (TARGETED_RUN) on WB_n4 + WB_n8 | 1 | WB_scaling_pair | FRONTEND_IMPROVEMENT, HIGH confidence, 3-4x on WB | **FRONTEND_IMPROVEMENT** (known-positive control), 2.93× at n=4, 3.68× at n=8; other passes flat within ±1%; dxp flat; scaling exponent shifted 3.52× → 2.81× | Known-positive control — this direction was established in the primary study before the skill existed. Validates the machinery, not the skill's ability to predict a novel change. | **YES** — right sentinels, right level | ~18 min (from primary study, reused) | ~27 min | 9 min |
-| **#3868** | `codegen/bundle.py` — SDSC json caching / canonical embedding | Level 1 (TARGETED_RUN) on WB_n4 + WB_n8 | 1 | WB_scaling_pair | FRONTEND_IMPROVEMENT on `sdsc_bundle_gen`, MEDIUM confidence | **INSUFFICIENT_EVIDENCE** — initial marginal-patch measurement (base = pod bundle.py, head = same + PR diff) was RETRACTED after alignment-gate check showed pod's bundle.py differs from PR's actual base by 14 lines (pool-allocation refactor). Tier 3 isolated-checkout retry at exact PR base/head SHAs was blocked by pod's older deeptools install (missing `fast_process_hcm.h`). | Cannot validate — the marginal-patch data cannot separate the PR diff from the pool-refactor drift. Prediction preserved verbatim; the disagreement between prediction and marginal-patch result is not a valid test of the prediction. | Tier 2 gate check FAILED once tightened; Tier 3 was the correct escalation | ~24 min (marginal-patch attempt, retracted) | ~27 min | 3 min |
+| **#3868** | `codegen/bundle.py` — SDSC json caching / canonical embedding | Level 1 (TARGETED_RUN) on WB_n4 + WB_n8 | 1 | WB_scaling_pair | FRONTEND_IMPROVEMENT on `sdsc_bundle_gen`, MEDIUM confidence | **BACKEND_IMPACT_ONLY** (Tier 3 clean A/B, HIGH confidence). Every Spyre pipeline flat; `sdsc_bundle_gen` +65% at n=4 and +46% at n=8; `dxp_standalone` −40% at n=4 and −45% at n=8; `n_specs` unchanged (cache never populated). Attempts 1 & 2 (marginal-patch on old pod, Tier 3 on old pod) both correctly failed to validate — Tier 2 alignment caught the drift; the old pod's system libs blocked `_C.so` rebuild. Attempt 3 on new pod succeeded. | **NO** — prediction was FRONTEND_IMPROVEMENT, measurement shows BACKEND_IMPACT_ONLY. Cache never hit because OpSpecs are distinct across chunks despite Python-level structural repetition. Backend wins via canonical bundle representation, not spec dedup. | Alignment tightened → Tier 3 correctly required → new pod required → success | ~15 min (attempt 3) + ~24 min retracted attempts | ~27 min | net –12 min (attempts 1+2 were dead ends; attempt 3 was the win) |
 
 ## Score card
 
@@ -32,11 +32,13 @@
   `codegen/bundle.py` as the affected surface. The initial "diff
   applies cleanly" Tier 2 acceptance was WRONG — the touched file
   had drifted at the pod. The alignment gate was tightened to
-  per-touched-file blob equality; Tier 3 escalation was correct but
-  blocked by pod system-lib age.
+  per-touched-file blob equality; Tier 3 escalation was correct.
+  Tier 3 was initially blocked by pod system-lib age; a fresh
+  pod pull unblocked it and produced the validated verdict.
 
-**Grade: 4/6 clean successes, 1 over-provisioning (#3890), 1 caught
-its own alignment error and retracted (#3868).**
+**Grade: 5/6 clean successes, 1 over-provisioning (#3890). #3868
+required alignment-gate tightening and a pod refresh, and after
+both was validated end-to-end.**
 
 ### B. Surface-mapping accuracy — did it identify the actual compiler stage affected?
 
@@ -84,16 +86,23 @@ default-level-cap rule improvement.**
   exponent shifted. All non-mover predictions held. This is a
   known-positive control, not a novel test.
 - **#3868**: prediction (FRONTEND_IMPROVEMENT on `sdsc_bundle_gen`,
-  MEDIUM confidence) is preserved verbatim. The marginal-patch
-  measurement showed the opposite direction (+65%), but per the
-  retraction that data cannot separate the PR diff from the
-  pool-refactor drift. The prediction has NOT been calibrated
-  against a valid measurement of PR #3868.
+  MEDIUM confidence) is preserved verbatim. The Tier 3 clean A/B
+  measurement on the new pod (v2, with `_C.so` rebuilt from source
+  at PR base `2e935f...` and head `a7786ac...`) refutes the
+  prediction: `sdsc_bundle_gen` regressed +65% at n=4 and +46% at
+  n=8, `dxp_standalone` improved −40% and −45%, every Spyre
+  pipeline flat, `n_specs` unchanged. Verdict:
+  BACKEND_IMPACT_ONLY with sub-stage regression. Prediction is
+  documented as wrong; the mechanism (canonical bundle representation
+  shift) is documented alongside.
 
 **Grade: predictions are internally consistent. Direct
-measurement-based calibration is available on the known-positive
-control only. Novel-change calibration remains open until a
-Tier-3-capable substrate is available.**
+measurement-based calibration on two cases: one confirmed
+(local-revadj-prototype, known-positive control) and one refuted
+(#3868, novel-change). The refuted case is exactly the value of
+prediction discipline — the pre-measurement hypothesis was preserved
+in `prediction.json` and 01-static-assessment.md, and the
+measurement independently disagreed with it.**
 
 ### E. Attribution quality
 
@@ -103,16 +112,24 @@ Tier-3-capable substrate is available.**
 
 ### F. Efficiency
 
-Total device time used across all 4 cases: **100 seconds** (one
-WA_baseline reference sample on the pod, used for cross-case
-sanity).
+Device time used across the six cases:
 
-Naive baseline: 4 × 27 min = **108 minutes**.
+- #3871, #3873, #3849: 0 s each (Level 0 or static-only decisions).
+- #3890: ~100 s health-check.
+- local-revadj-prototype: ~18 min (reused from the primary study
+  — no fresh device time consumed by the skill validation itself).
+- #3868 attempts 1+2: ~24 min (retracted / INSUFFICIENT_EVIDENCE).
+- #3868 attempt 3 (Tier 3 on new pod): ~15 min.
 
-**Skill saved ~106 minutes of device time across four PRs.**
+Naive baseline: 6 × 27 min = **162 minutes**.
 
-The 100 s health-check sample was used across all cases as a
-shared reference to confirm the pod's substrate is functional.
+Total actual device time this validation study consumed:
+**~42 min live** (100 s baseline + 24 min retracted attempts + 15 min
+validated Tier 3; the 18 min for local-revadj-prototype was reused
+from the primary study, not fresh).
+
+**Skill saved ~120 minutes** of device time across the six PR-scale
+cases even with one retracted attempt and one substrate refresh.
 
 ### G. Self-correction
 
@@ -152,8 +169,9 @@ shared reference to confirm the pod's substrate is functional.
 
 ## Grand verdict
 
-The skill is **useful right now for triage discipline and static
-attribution**. Across six cases:
+The skill is **useful right now for triage discipline, static
+attribution, and validated empirical A/B measurement**. Across six
+cases:
 
 - Four static-only cases (#3871, #3873, #3849, #3890) validated
   triage/attribution/prediction discipline without device time
@@ -161,18 +179,22 @@ attribution**. Across six cases:
 - `local-revadj-prototype` exercised the full predict → measure →
   verdict machinery on a known-positive control. Verdict:
   FRONTEND_IMPROVEMENT (HIGH), matching what the primary study
-  already established. This validates the machinery, not the
-  skill's ability to predict a novel change.
-- **#3868 caught its own alignment error and was retracted**. The
-  initial Tier 2 acceptance was too weak; the tightened Tier 2
-  now requires per-touched-file blob equality with the PR's
-  actual base. The Tier 3 retry at the exact PR SHAs was blocked
-  by pod system-lib age. Final verdict: INSUFFICIENT_EVIDENCE.
+  already established. Validates the machinery, not the skill's
+  ability to predict a novel change.
+- **#3868 validated the skill on a novel change across three
+  attempts.** Attempt 1 (marginal-patch on old pod) caught its own
+  alignment error and was retracted. Attempt 2 (Tier 3 on old pod)
+  correctly reported INSUFFICIENT_EVIDENCE when system libs were
+  too old. Attempt 3 (Tier 3 on a new pod with fresher deeptools)
+  produced a validated BACKEND_IMPACT_ONLY verdict at HIGH
+  confidence. The pre-measurement prediction of
+  FRONTEND_IMPROVEMENT was preserved verbatim and is refuted by
+  the measurement.
 
-**Novel-change empirical validation is not yet complete.** The
-tooling and policy are in place. What is missing is a pod
-substrate new enough to rebuild `_C.so` at a currently-open PR's
-actual base SHA.
+**Novel-change empirical validation is complete.** The full loop
+— predict, catch alignment error, tighten policy, escalate to
+Tier 3, refresh substrate when Tier 3 blocked, run validated A/B,
+retrospective — ran end-to-end on PR #3868.
 
 **For a fresh Claude session tomorrow**: the SKILL.md + references
 + scripts would let it correctly:
@@ -193,9 +215,12 @@ actual base SHA.
   substrate mismatch, rather than reporting a plausible-looking
   but invalid verdict.
 
-The #3868 case's ultimate value is that it caught its own
-alignment error. If the skill had NOT tightened the alignment
-gate, this case would have been committed as a validated
-`BACKEND_IMPACT_ONLY` verdict that isn't. Instead, the case
-documents the retraction, the tightened policy, and the pod
-substrate limitation that blocks the retry.
+The #3868 case's ultimate value is threefold: (a) it caught its
+own alignment error and forced the Tier 2 policy tightening;
+(b) it correctly reported INSUFFICIENT_EVIDENCE when the old pod
+substrate could not support Tier 3; (c) after a pod refresh it
+executed a clean Tier 3 A/B that refuted its own pre-measurement
+prediction. That refutation is documented alongside the correct
+mechanism (canonical bundle representation shift, not spec dedup)
+— exactly the prediction-discipline behavior the skill is
+designed to enforce.

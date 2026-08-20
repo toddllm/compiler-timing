@@ -1,6 +1,7 @@
 # Experiment plan — PR #3868
 
-**Written BEFORE any measurement.**
+**Written BEFORE any measurement. Updated to reflect the tightened
+Tier 2 alignment policy that this case itself motivated.**
 
 ## Level decision
 
@@ -11,21 +12,50 @@
   A single sentinel at moderate size should reveal the direction
   of impact.
 
-## A/B strategy
+## Pod-tree alignment (Tier 2 check)
 
-The diff applies cleanly to the pod tree (`git apply --check`
-returned no errors). Use in-place patch swap:
+**Tier 2 check on the pod at pod SHA `a9316b3` failed.** PR base
+`bundle.py` md5 is `c93d3ba5d7...`; pod `bundle.py` md5 is
+`314e022307...`. The pod's copy predates PR base by 14 lines (a
+pool-allocation refactor already at PR base). "Diff applies cleanly"
+via `git apply --check` returns 0, but that only checks the patch
+context — Tier 2 blob equality fails.
 
-- **Base**: pod tree as-is (`a9316b3` + our instrumentation).
-- **Head**: pod tree + PR #3868's diff applied.
-- Interleave samples base1/head1/base2/head2/base3/head3.
+→ **Escalate to Tier 3** (isolated checkout at exact PR SHAs).
+
+The initial marginal-patch attempt (which pre-dated the tightened
+Tier 2) is retained in `data/` as an exploratory finding, clearly
+labeled.
+
+## Tier 3 execution
+
+- **Isolated base checkout**: `torch-spyre` @
+  `2e935febe58bcf275accfaa4c960d972d7e6ce49` at
+  `~/pr3868-iso/torch-spyre-base` (v2 pod).
+- **Isolated head checkout**: `torch-spyre` @
+  `a7786ac8a6934645821b3698a9eb33ae2d3b590b` at
+  `~/pr3868-iso/torch-spyre-head` (v2 pod).
+- **`_C.so`**: rebuilt from source in each isolated tree via
+  `python setup.py build_ext --inplace`. Both build cleanly against
+  the v2 pod's `ibm-deeptools 2245.85f9432`. The old pod's
+  deeptools install (`2238.654a8d5`) lacks `fast_process_hcm.h`
+  and blocked this step; the new pod unblocks it.
+- **Instrumentation**: `timing_shim.py` monkey-patches
+  `torch._inductor.compile_fx.compile_fx`, all Spyre pipeline
+  classes, `bundle.generate_bundle`, and the subprocess call for
+  `dxp_standalone`. Registered as `torch_spyre._inductor.timing_recorder`
+  so unmodified harnesses import it directly.
+- **Correctness**: Both isolated trees smoke-tested to import
+  `NativePermutationLayoutSolver` and `scratchpad.allocator` cleanly.
+- **PATH discipline**: `PYTHONPATH="$tree:/tmp/shim-dir"` before
+  running the harness. `.venv` is the pod's shared torch install.
 
 ## Sentinels selected
 
 | Sentinel | Point | Samples | Paired | Rationale |
 |---|---|---:|:---:|---|
-| WB_n4 | n_chunks=4 | 3 base, 3 head | yes | KV-chunked has structural repetition — expect cache hits. |
-| WB_n8 | n_chunks=8 | 3 base, 3 head | yes | Doubles the number of repetitive ops, giving more cache hits. |
+| WB_n4 | n_chunks=4 | 3 base, 3 head | yes | KV-chunked baseline; expected cache hits if the mechanism holds |
+| WB_n8 | n_chunks=8 | 3 base, 3 head | yes | Doubled n; more repetitive ops give more expected cache hits |
 
 ## Metrics expected to move
 
@@ -41,19 +71,22 @@ returned no errors). Use in-place patch swap:
 
 ## Structural counters to record
 
-- `n_specs` at `sdsc_bundle_gen` — MAY change (fewer distinct
+- `n_specs` at `sdsc_bundle_gen.meta` — MAY change (fewer distinct
   specs). If it decreases at head, verdict is
   `STRUCTURAL_CHANGE_NEUTRAL` (fewer specs means less backend
   work, not the same work faster).
 
 ## C-extension rebuild required?
 
-No. Pure Python.
+Yes — Tier 3 path uses per-revision `_C.so` builds. The isolated
+head tree also contains `_inductor.scratchpad.permutation_layout`
+which top-level imports `NativePermutationLayoutSolver` from `_C`,
+so the pod's older `_C.so` cannot be symlinked. Both builds
+succeeded on the v2 pod.
 
 ## Estimated device time
 
-- Actual plan: (3×60s + 3×60s) at n=4 + (3×125s + 3×125s) at n=8
-  = 360 + 750 = 1110 seconds ≈ 18.5 minutes.
-- Naive baseline: ~27 minutes.
-- Savings: ~8 min (we could have run WA too but the mechanism is
-  KV-chunk-repetition-sensitive, so WB is targeted).
+- WB_n4: 3 base + 3 head, ~75 s each = ~7.5 min.
+- WB_n8: 3 base + 3 head, ~130 s each = ~13 min.
+- Total: ~20 min (actual: ~15 min).
+- `_C.so` build time (one-time setup): ~3 min per tree = ~6 min.

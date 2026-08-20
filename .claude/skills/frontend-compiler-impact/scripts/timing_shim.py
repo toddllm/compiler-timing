@@ -63,6 +63,15 @@ def install() -> None:
     # imported at module init to avoid a circular-import failure.
     import torch  # noqa: F401
 
+    # --- (0) register recorder into torch_spyre._inductor.timing_recorder --
+    # Harnesses from the primary study import
+    # `from torch_spyre._inductor import timing_recorder` directly. When the
+    # isolated tree doesn't ship that module, we alias the shim's own
+    # recorder into that name so the harness works unchanged.
+    import torch_spyre._inductor as _tsi_ns
+    _sys.modules["torch_spyre._inductor.timing_recorder"] = _tr
+    _tsi_ns.timing_recorder = _tr
+
     # --- (1) compile_fx_wrapper --------------------------------------------
     import torch_spyre._inductor as _tsi
     if hasattr(_tsi, "enable_spyre_compile_fx_wrapper"):
@@ -119,8 +128,17 @@ def install() -> None:
 
         @functools.wraps(_orig_call)
         def _timed_call(self, target):
-            if not self._has_spyre_device(target):
-                return _orig_call(self, target)
+            # Some tree revisions gate pipeline execution on
+            # `self._has_spyre_device(target)`; newer revisions do not carry
+            # that method and just execute. Only apply the gate when present,
+            # otherwise time unconditionally.
+            gate = getattr(self, "_has_spyre_device", None)
+            if callable(gate):
+                try:
+                    if not gate(target):
+                        return _orig_call(self, target)
+                except Exception:
+                    pass
             pipeline_name = type(self).__name__
             n_passes = len(getattr(self, "passes", []))
             with _tr.stage(f"pipeline:{pipeline_name}", passes=n_passes):
@@ -163,6 +181,60 @@ def install() -> None:
 
             cls.sdsc = _timed_sdsc
             cls._ts_shim_instrumented = True
+    except Exception:
+        pass
+
+    # --- (3a) bundle.generate_bundle → sdsc_bundle_gen ---------------------
+    try:
+        from torch_spyre._inductor.codegen import bundle as _bundle_mod
+        _orig_gb = getattr(_bundle_mod, "generate_bundle", None)
+        if _orig_gb is not None and not getattr(_bundle_mod, "_ts_shim_instrumented", False):
+            @functools.wraps(_orig_gb)
+            def _timed_generate_bundle(kernel_name, output_dir, specs, *a, **k):
+                try:
+                    n_specs = len(specs)
+                except Exception:
+                    n_specs = -1
+                with _tr.stage("sdsc_bundle_gen", kernel=kernel_name, n_specs=n_specs):
+                    return _orig_gb(kernel_name, output_dir, specs, *a, **k)
+            _bundle_mod.generate_bundle = _timed_generate_bundle
+            # Also update the imported reference in async_compile
+            try:
+                _ac.generate_bundle = _timed_generate_bundle
+            except Exception:
+                pass
+            _bundle_mod._ts_shim_instrumented = True
+    except Exception:
+        pass
+
+    # --- (3b) subprocess call to dxp_standalone binary → dxp_standalone ---
+    # Not a method we can patch cleanly across versions. Patch subprocess.run
+    # only when the argv[0] is "dxp_standalone".
+    try:
+        import subprocess as _sp
+        if not getattr(_sp, "_ts_shim_instrumented", False):
+            _orig_run = _sp.run
+
+            @functools.wraps(_orig_run)
+            def _timed_run(*args, **kwargs):
+                # Detect dxp_standalone invocation
+                is_dxp = False
+                argv = None
+                if args:
+                    argv = args[0]
+                elif "args" in kwargs:
+                    argv = kwargs["args"]
+                if isinstance(argv, (list, tuple)) and argv and argv[0] == "dxp_standalone":
+                    is_dxp = True
+                if is_dxp:
+                    # kernel name is not in argv, but output_dir is at position 2
+                    output_dir = argv[2] if len(argv) > 2 else "<unknown>"
+                    with _tr.stage("dxp_standalone", output_dir=output_dir):
+                        return _orig_run(*args, **kwargs)
+                return _orig_run(*args, **kwargs)
+
+            _sp.run = _timed_run
+            _sp._ts_shim_instrumented = True
     except Exception:
         pass
 

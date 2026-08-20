@@ -16,12 +16,19 @@ was applied to six cases. The current inventory is:
   predict→measure→verdict pipeline on data the skill's authors
   already knew the answer to, so it validates the machinery but is
   not a test of predicting a novel change.
-- **Novel-change empirical validation attempt**: **PR #3868**. This
-  is the case that would test the skill on a change the authors did
-  NOT know the answer to. The initial marginal-patch measurement was
-  RETRACTED after the alignment-gate policy was tightened; the Tier 3
-  isolated-checkout retry was blocked by pod system-lib age; final
-  verdict `INSUFFICIENT_EVIDENCE`.
+- **Novel-change empirical validation** (the case that tests the
+  skill on a change whose direction was NOT already known): **PR
+  #3868**. Three attempts:
+  1. Marginal-patch on old pod tree — RETRACTED after tightened
+     Tier 2 caught the pod-tree `bundle.py` drift.
+  2. Tier 3 on old pod (isolated checkouts at exact SHAs) — BLOCKED
+     by pod system-lib age; correct `INSUFFICIENT_EVIDENCE`.
+  3. Tier 3 on new pod `tdeshane-compiler-timing-dev-v2` (fresh
+     `:latest` pull with newer deeptools) — **SUCCESS**. `_C.so`
+     built at PR base and head, timing shim instrumented both,
+     3+3 paired samples at WB_n4 and WB_n8. Verdict:
+     **BACKEND_IMPACT_ONLY** with a documented `sdsc_bundle_gen`
+     sub-stage regression. HIGH confidence.
 
 ## Cross-case results
 
@@ -32,16 +39,18 @@ was applied to six cases. The current inventory is:
 | #3849 | MEDIUM | 1 | INSUFFICIENT_EVIDENCE (measurement blocked by tree drift + C-extension absence) | 0 s |
 | #3890 | HIGH | 3 → reduced to WB_scaling_pair | INSUFFICIENT_EVIDENCE (measurement blocked by tree drift + system-lib versions) | 100 s (shared reference) |
 | local-revadj-prototype | — | 1 | FRONTEND_IMPROVEMENT — **known-positive control**, not a novel test (measured 2.93× @ n=4, 3.68× @ n=8) | ~18 min (reused primary study) |
-| #3868 | MEDIUM | 1 → attempted Tier 2 → escalated Tier 3 → blocked | **INSUFFICIENT_EVIDENCE**; marginal-patch data retained but not authoritative | ~24 min (marginal-patch attempt, retracted) |
+| #3868 (attempts 1+2) | MEDIUM | 1 → Tier 3 (blocked) | INSUFFICIENT_EVIDENCE (marginal-patch retracted, old-pod Tier 3 blocked by system libs) | ~24 min (retracted) |
+| **#3868 (attempt 3, validated)** | MEDIUM | Tier 3 on new pod | **BACKEND_IMPACT_ONLY** — sdsc_bundle_gen +65% / +46%, dxp_standalone −40% / −45% at n=4 / n=8; every Spyre pipeline flat; n_specs unchanged. HIGH confidence. | ~15 min |
 
-**Total device time**: ~42 minutes across six cases.
+**Total device time**: ~57 minutes across six cases (including one
+retracted attempt and one successful Tier 3 rerun).
 
-**Novel-change empirical validation is not yet complete.** The v0.2
-skill design, prediction discipline, isolated-checkout tooling, and
-tightened alignment policy are all in place. What remains is running
-`PR #3868` — or another currently-open non-coarse-tile frontend PR
-— on a pod substrate that is new enough to build the PR's `_C.so`
-against its actual base.
+**Novel-change empirical validation is complete.** PR #3868's clean
+base/head A/B was executed against the exact PR SHAs on a substrate
+new enough to build `_C.so` at the PR base. The prediction
+(`FRONTEND_IMPROVEMENT` via cache hits) was refuted by the
+measurement (BACKEND_IMPACT_ONLY via bundle-representation shift).
+Both are preserved in the case documents.
 
 ## Where the skill worked
 
@@ -68,21 +77,31 @@ against its actual base.
    validates the machinery (the shim, the paired sweep, the
    verdict decision tree) but does not test the skill's ability to
    predict a change it did not already know the answer to.
-6. **PR #3868 caught its own alignment error and was retracted**.
-   The initial marginal-patch measurement produced a plausible
-   `BACKEND_IMPACT_ONLY` classification. Investigation showed the
-   pod's `bundle.py` differs from the PR's actual base
-   (`c93d3ba5d7...` at PR base vs `314e022307...` at pod), and the
-   pod predates a pool-allocation refactor that the PR base
-   already carries. The alignment policy was tightened to require
-   per-touched-file blob equality (see
-   `references/measurement-policy.md` Tier 2). The Tier 3 retry
-   at the exact PR base/head SHAs was blocked by pod system-lib
-   age — rebuilding `_C.so` fails on missing
-   `spyrecode-host-functions/fast_process_hcm.h`. Final verdict:
-   `INSUFFICIENT_EVIDENCE`. The prediction is preserved verbatim;
-   the marginal-patch data is preserved as an exploratory
-   supplementary finding, clearly labeled.
+6. **PR #3868 executed the whole predict→measure→learn loop with
+   a validated verdict on a novel change.** Three attempts:
+   1. Marginal-patch on old pod tree caught its own alignment error
+      when the tightened Tier 2 was applied — pod `bundle.py`
+      (`314e022307...`) is not the PR's base `bundle.py`
+      (`c93d3ba5d7...`).
+   2. Tier 3 retry on old pod correctly failed with
+      `INSUFFICIENT_EVIDENCE` when pod system libs were too old to
+      rebuild `_C.so` at the PR base.
+   3. Tier 3 on a new pod (`tdeshane-compiler-timing-dev-v2` built
+      from fresh `:latest` pull) succeeded. `_C.so` rebuilt at PR
+      base `2e935f...` and head `a7786ac...` (both 82 MB, both
+      import cleanly with `NativePermutationLayoutSolver`). Timing
+      shim instrumented both trees without tree modification. 3+3
+      paired cold samples at WB_n4 and WB_n8 produced the verdict:
+      **BACKEND_IMPACT_ONLY** with a documented `sdsc_bundle_gen`
+      sub-stage regression (+65% / +46%), `dxp_standalone`
+      improvement (−40% / −45%), `n_specs` unchanged, all Spyre
+      pipelines flat.
+   The prediction (`FRONTEND_IMPROVEMENT` via cache hits, MEDIUM
+   confidence) is preserved verbatim in `prediction.json` and
+   `01-static-assessment.md`. The measurement disagreed with the
+   prediction — cache never populated because OpSpecs are distinct
+   across chunks — but the PR still improves wall clock via a
+   backend representation shift. Both preserved.
 
 ## Where the skill fell short
 
@@ -109,42 +128,62 @@ against its actual base.
    **per-touched-file blob equality** with the PR's actual base,
    not just "diff applies cleanly". This is the fix motivated by
    the #3868 retraction.
-2. **[DONE]** Isolated-checkout scripts:
+2. **[DONE]** `scripts/check_alignment.sh` — implements the Tier 2
+   check: fetches each PR-touched file's base blob from GitHub via
+   `gh api` and byte-for-byte compares against the pod's copy.
+   Exits 0/1/3 per policy (Tier 2 passes / Tier 2 fails / pod
+   missing a touched file).
+3. **[DONE]** Isolated-checkout scripts:
    - `scripts/setup_isolated_checkout.sh` — clone at SHA,
      symlink `_C.so`, smoke-test import.
    - `scripts/timing_shim.py` + `scripts/timing_recorder.py` —
      runtime instrumentation for an isolated tree without
-     tree modification.
+     tree modification. Now also (a) defends against missing
+     `_has_spyre_device` on newer trees, (b) aliases into
+     `torch_spyre._inductor.timing_recorder` so unmodified
+     harnesses work, (c) instruments `bundle.generate_bundle`
+     (for `sdsc_bundle_gen`) and subprocess `dxp_standalone`
+     invocation (for the backend split).
    - `scripts/shim_runner.py` — shim-first harness runner.
    - `scripts/run_isolated_sample.sh` — end-to-end orchestrator.
-3. **[DONE]** `codegen/bundle.py` rule added to
+4. **[DONE]** `codegen/bundle.py` rule added to
    `references/compiler-stage-map.md`: file sits at the
    frontend/backend boundary and can move `sdsc_bundle_gen`
    independently of every Spyre pass. Verify `n_specs` before
    trusting cache-hit predictions.
-4. **[DONE]** `sdsc_bundle_gen`-moved-but-no-pass-did clause
+5. **[DONE]** `sdsc_bundle_gen`-moved-but-no-pass-did clause
    added to `references/interpretation-guide.md`.
-5. **[DONE]** SKILL.md version bumped to 0.2.0; documents the
+6. **[DONE]** SKILL.md version bumped to 0.2.0; documents the
    isolated-checkout workflow and points at the six-case
-   validation.
+   validation. Invocation section now includes the alignment gate
+   check as an explicit step before device work.
 
-## What's still needed for a full GO
+## Pod substrate story
 
-A **clean isolated-checkout base/head measurement of a currently-open
-frontend PR** requires a pod with system libraries new enough to
-build `_C.so` at the PR's base SHA. The current pod
-(`tdeshane-compiler-timing-dev`) is not new enough: `_C.so` rebuild
-fails on a missing `spyrecode-host-functions/fast_process_hcm.h`
-header. Options:
+The pod tree that ran the original primary study
+(`tdeshane-compiler-timing-dev`) uses
+`us.icr.io/wxpe-cicd-internal/amd64/torch-aiu-runtime-dev:latest`
+pulled on 2026-08-17. Its deeptools install is
+`ibm-deeptools 2238.654a8d5`, missing
+`spyrecode-host-functions/fast_process_hcm.h`, which PR #3868's
+base (2e935f, 2026-08-19) needs to rebuild `_C.so`.
 
-1. Refresh the compiler-timing dev pod's base image to a newer
-   `vllm-spyre-dev` snapshot that includes the newer deeptools
-   headers.
-2. Find a currently-open frontend PR whose base SHA is close enough
-   to the pod SHA (`a9316b3`) that Tier 2 alignment holds
-   byte-for-byte on every touched file. Given the age gap (pod
-   dated 2026-08-17, PRs typically branch from `main` at more
-   recent SHAs), this may not be possible without a pod refresh.
+The fix was to stand up a second pod,
+`tdeshane-compiler-timing-dev-v2`, from the same image reference
+but with `imagePullPolicy: Always` on a fresh spec, which pulled
+the newer daily rebuild of `:latest` (deeptools
+`2245.85f9432`, dated 2026-08-19, containing the missing header).
+The v2 pod scheduled on a different `spyre_pf` node
+(`p1-worker-23`) and shares the same PVC-backed `/home/tdeshane`
+as the original pod, so all pr3806 primary-study state was
+directly accessible. `_C.so` rebuilt cleanly in the isolated
+checkouts at both PR base and PR head.
+
+Both pods remain in the cluster. The v2 pod is where the validated
+Tier 3 measurement ran. The original pod is preserved with its
+primary-study baseline data. Snapshots of the original pod's
+scripts + data + iso trees are archived at `.pod-snapshots/`
+(gitignored).
 
 ## Improvements still open for v0.3
 
@@ -154,8 +193,9 @@ header. Options:
    level cap by one when found on a coarse_tile/scratchpad/
    restickify change (this would have downgraded #3890 from
    Level 3 to Level 1).
-3. Automate the tightened pod-tree alignment gate as a script step
-   that fetches each PR-touched file's base blob and cmps.
+3. Automate the "refresh pod image" step — a helper that spins up
+   a v2 pod from a fresh `:latest` pull, verifies newer deeptools,
+   and returns the pod name. Manual today; scripted for v0.3.
 
 ## Files
 
@@ -184,18 +224,21 @@ gated cases (which are the majority of PRs). The skill would
 correctly output NO_RUN or ACTIVATION_SPECIFIC_IMPACT with static
 reasoning and zero device time.
 
-**Partially**, for hot-path changes: the skill will correctly
-identify the affected compiler surface, select the right sentinel,
-and run the alignment gate. When the pod substrate can build the
-PR's `_C.so`, it will produce a valid A/B verdict. When the pod
-substrate cannot, it will halt at `INSUFFICIENT_EVIDENCE` — the
-correct answer, not a fabricated verdict. This was demonstrated
-end-to-end on PR #3868: the skill caught its own alignment error,
-tightened the policy, and reported `INSUFFICIENT_EVIDENCE` when
-the Tier 3 retry was blocked.
+**Yes**, for hot-path changes: the skill correctly identifies the
+affected compiler surface, selects the right sentinel, runs the
+alignment gate, and either (a) executes an in-place patch-swap
+A/B when Tier 2 blob equality passes, (b) executes Tier 3
+isolated-checkout with per-revision `_C.so` rebuild when
+Tier 2 fails and the pod substrate is new enough, or (c) reports
+`INSUFFICIENT_EVIDENCE` when the substrate cannot support Tier 3.
+Demonstrated end-to-end on PR #3868 across three attempts: the
+retracted marginal-patch, the old-pod Tier 3 that correctly
+reported `INSUFFICIENT_EVIDENCE`, and the new-pod Tier 3 that
+produced the validated `BACKEND_IMPACT_ONLY` verdict with HIGH
+confidence.
 
-**What's still needed for full GO**: a compiler-timing dev pod on
-a newer base image (or a currently-open PR whose base SHA aligns
-byte-for-byte with the pod on every touched file). Either
-condition would let the same skill run to a verdict on a novel
-change. The skill logic and tooling are in place.
+**The skill is validated end-to-end.** Prediction discipline
+preserved the pre-measurement `FRONTEND_IMPROVEMENT` hypothesis;
+measurement disagreed; the retrospective preserved both and
+documented the mechanism (canonical bundle representation shift
+rather than spec dedup).

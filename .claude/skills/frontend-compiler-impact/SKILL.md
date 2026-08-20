@@ -285,6 +285,14 @@ From this repo, given a PR number or range:
 # Static triage — reads the diff, emits per-file classification
 .claude/skills/frontend-compiler-impact/scripts/static_triage.py /tmp/target.json
 
+# BEFORE any device time — alignment gate check:
+# Verify per-touched-file blob equality with the PR's actual base.
+.claude/skills/frontend-compiler-impact/scripts/check_alignment.sh \
+    torch-spyre/torch-spyre 3890 /home/tdeshane/pr3806/torch-spyre
+# exit 0 → Tier 2 satisfied (in-place patch swap is scientifically valid)
+# exit 1 → Tier 2 fails, must escalate to Tier 3 isolated checkout
+# exit 3 → pod tree missing a PR-touched file, Tier 3 required
+
 # Scan mode (many PRs, no runs)
 .claude/skills/frontend-compiler-impact/scripts/scan_open_prs.sh torch-spyre/torch-spyre
 ```
@@ -360,6 +368,8 @@ error on the smoke import. Options in order of preference:
         timing_recorder.py                — v0.2: bundled recorder impl
         shim_runner.py                    — v0.2: shim-first harness runner
         run_isolated_sample.sh            — v0.2: orchestrator
+        check_alignment.sh                — v0.2 fix: per-touched-file blob
+                                            equality check (Tier 2 gate)
 ```
 
 ## Where this skill knowledge came from
