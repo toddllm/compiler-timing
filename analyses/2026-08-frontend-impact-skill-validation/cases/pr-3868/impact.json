@@ -1,47 +1,46 @@
 {
-  "verdict": "BACKEND_IMPACT_ONLY",
-  "verdict_note": "with sdsc_bundle_gen sub-stage regression documented; Spyre custom-pass pipelines all flat within +/-1.5%",
-  "confidence": "HIGH",
-  "samples": {
-    "n_base_n4": 3,
-    "n_head_n4": 3,
-    "n_base_n8": 3,
-    "n_head_n8": 3,
-    "paired": true,
-    "sample_order": "base1 head1 base2 head2 base3 head3 within each point"
-  },
-  "pod_tree_alignment": "cleanly_appliable",
-  "primary_metrics": {
-    "WB_n4": {
-      "sdsc_bundle_gen": {"base_median_s": 0.4791, "head_median_s": 0.7901, "delta_s": 0.3110, "ratio": 1.649},
-      "sdsc_total_self": {"base_median_s": 0.0580, "head_median_s": 0.0617, "delta_s": 0.0037, "ratio": 1.063},
-      "dxp_standalone": {"base_median_s": 23.0845, "head_median_s": 15.3883, "delta_s": -7.6962, "ratio": 0.667},
-      "compile_fx_wrapper": {"base_median_s": 14.3687, "head_median_s": 17.0721, "delta_s": 2.7035, "ratio": 1.188, "note": "wide spread (12.4-16.8 vs 14.6-18.6) — driven by sdsc_bundle_gen + non-Spyre inductor work"},
-      "spyre_pipelines_status": "all flat within +/-1.5%"
+  "verdict": "INSUFFICIENT_EVIDENCE",
+  "verdict_note": "Clean base/head A/B against PR #3868's TRUE base could not be executed on this pod. The pod substrate is older than the PR base and rebuilding _C.so failed on missing system headers (spyrecode-host-functions/fast_process_hcm.h). Marginal-patch data below is preserved as supplementary — it measures the effect of applying #3868's diff to the pod's older pre-refactor bundle.py, not the effect of PR #3868 vs its actual base.",
+  "confidence": "NONE",
+  "supplementary_marginal_patch_data": {
+    "note": "This ran base = pod bundle.py (md5 314e022307...), head = same + PR #3868 diff. But per the tightened alignment policy, pod bundle.py is NOT the PR's base (md5 c93d3ba5d7... at PR base 2e935f). The pod is 14 lines shorter and predates the pool-allocation body-emit refactor. So this is NOT a validated base-vs-head measurement of PR #3868. Kept as an exploratory finding only.",
+    "samples": {
+      "n_base_n4": 3,
+      "n_head_n4": 3,
+      "n_base_n8": 3,
+      "n_head_n8": 3,
+      "paired": true,
+      "sample_order": "base1 head1 base2 head2 base3 head3 within each point"
     },
-    "WB_n8": {
-      "sdsc_bundle_gen": {"base_median_s": 1.0679, "head_median_s": 1.6519, "delta_s": 0.5840, "ratio": 1.547},
-      "sdsc_total_self": {"base_median_s": 0.1149, "head_median_s": 0.1150, "delta_s": 0.0001, "ratio": 1.001},
-      "dxp_standalone": {"base_median_s": 67.9713, "head_median_s": 45.6980, "delta_s": -22.2733, "ratio": 0.672},
-      "compile_fx_wrapper": {"base_median_s": 12.6919, "head_median_s": 13.4429, "delta_s": 0.7510, "ratio": 1.059},
-      "spyre_pipelines_status": "all flat within +/-1.5%"
-    }
+    "primary_metrics": {
+      "WB_n4": {
+        "sdsc_bundle_gen": {"base_median_s": 0.4791, "head_median_s": 0.7901, "delta_s": 0.3110, "ratio": 1.649},
+        "sdsc_total_self": {"base_median_s": 0.0580, "head_median_s": 0.0617, "delta_s": 0.0037, "ratio": 1.063},
+        "dxp_standalone": {"base_median_s": 23.0845, "head_median_s": 15.3883, "delta_s": -7.6962, "ratio": 0.667},
+        "compile_fx_wrapper": {"base_median_s": 14.3687, "head_median_s": 17.0721, "delta_s": 2.7035, "ratio": 1.188},
+        "spyre_pipelines_status": "all flat within +/-1.5%"
+      },
+      "WB_n8": {
+        "sdsc_bundle_gen": {"base_median_s": 1.0679, "head_median_s": 1.6519, "delta_s": 0.5840, "ratio": 1.547},
+        "sdsc_total_self": {"base_median_s": 0.1149, "head_median_s": 0.1150, "delta_s": 0.0001, "ratio": 1.001},
+        "dxp_standalone": {"base_median_s": 67.9713, "head_median_s": 45.6980, "delta_s": -22.2733, "ratio": 0.672},
+        "compile_fx_wrapper": {"base_median_s": 12.6919, "head_median_s": 13.4429, "delta_s": 0.7510, "ratio": 1.059},
+        "spyre_pipelines_status": "all flat within +/-1.5%"
+      }
+    },
+    "why_this_is_not_a_verdict": "The measured effect combines: (1) the actual PR #3868 diff, (2) the ~14-line drift between pod's pre-refactor bundle.py and the PR's actual base (which already refactored pool-allocation into a body-emitted device_mem_allocate). We cannot separate these two contributions from this data. Any of the observed movement — sdsc_bundle_gen +65%, dxp_standalone -33% — could belong to either. In particular, the dxp_standalone improvement could be a consequence of the pool-allocation refactor already present at the PR base, which the marginal patch never applies."
   },
-  "structural_counters": {
-    "n_specs_bundle_1_amax_full_zeros_like_0": {"base": 5, "head": 5, "changed": false},
-    "n_specs_bundle_2_add_amax_unsqueeze_1": {"base": 1, "head": 1, "changed": false},
-    "interpretation": "cache never hit — every op-spec is distinct at this workload despite Python-level structural repetition across chunks"
+  "isolated_checkout_attempt": {
+    "base_sha": "2e935febe58bcf275accfaa4c960d972d7e6ce49",
+    "head_sha": "a7786ac8a6934645821b3698a9eb33ae2d3b590b",
+    "checkout_status": "both trees checked out cleanly",
+    "c_ext_status": "ABI mismatch — pod's older _C.so lacks NativePermutationLayoutSolver added in newer csrc; rebuilding _C.so from source in the isolated tree fails with 'spyrecode-host-functions/fast_process_hcm.h: No such file' because the pod's /opt/ibm/spyre/deeptools/include is too old for the PR base",
+    "verdict_per_tightened_alignment_policy": "INSUFFICIENT_EVIDENCE"
   },
   "prediction_vs_measurement": {
     "predicted_direction_sdsc_bundle_gen": "decrease",
-    "actual_direction_sdsc_bundle_gen": "increase +55 to +65%",
+    "actual_direction_marginal_patch_sdsc_bundle_gen": "increase +55 to +65% (on pod's pre-refactor substrate — not the PR's actual base)",
     "predicted_verdict": "FRONTEND_IMPROVEMENT",
-    "actual_verdict": "BACKEND_IMPACT_ONLY",
-    "prediction_correct": false,
-    "why_prediction_missed": "The static reading identified the added canonical-compile + json.dumps(sort_keys=True) overhead on the frontend side but assumed cache hits would offset it. In practice, WB compiles into distinct OpSpec dicts (n_specs unchanged), so the cache never hit. Meanwhile, the canonical bundle representation shifted dxp_standalone by -33% at both points — a mechanism not visible from the diff alone."
-  },
-  "wall_clock_impact": {
-    "WB_n4": {"base_first_call_wall_s": 1.4316, "head_first_call_wall_s": 1.1952, "delta_s": -0.2363, "net": "improvement"},
-    "WB_n8": {"base_first_call_wall_s": 1.2602, "head_first_call_wall_s": 1.7769, "delta_s": 0.5167, "net": "regression at first-call-wall metric level, but dxp_standalone dominant total wall improvement"}
+    "actual_verdict": "INSUFFICIENT_EVIDENCE (isolated checkout blocked; marginal-patch data is not a valid substitute)"
   }
 }

@@ -25,10 +25,11 @@ For every timed sample, extract from the JSON at least:
 
 `sdsc_bundle_gen` sits at the frontend/backend boundary. It emits the
 compiled bundle that gets handed to `dxp_standalone`. It can move
-independently of every Spyre pass pipeline — the PR #3868 validation
-case saw `sdsc_bundle_gen` regress +65% while every `pipeline:*` was
-flat within ±2%. Keep `sdsc_bundle_gen` on its own row in every
-result table. Never bucket it under "Spyre pipes total".
+independently of every Spyre pass pipeline. Keep `sdsc_bundle_gen` on
+its own row in every result table; never bucket it under "Spyre pipes
+total". Similarly separate `dxp_standalone` — a bundle-format change
+in `codegen/bundle.py` can shift it substantially without any pass
+moving.
 
 Similarly, `dxp_standalone` is not a frontend pass — but a change to
 what `sdsc_bundle_gen` emits can shift `dxp_standalone` substantially
@@ -112,9 +113,11 @@ If `sdsc_bundle_gen` moved AND all Spyre `pipeline:*` are flat:
   (bundle emission changed because there's less/more to emit).
 - If `n_specs` unchanged AND `dxp_standalone` moved → the bundle
   representation changed. Verdict: **BACKEND_IMPACT_ONLY** with a
-  documented `sdsc_bundle_gen` sub-stage delta note. This is what
-  PR #3868 looked like at WB_n4: `sdsc_bundle_gen` +65%, every
-  Spyre pass flat, `n_specs` unchanged, `dxp_standalone` −33%.
+  documented `sdsc_bundle_gen` sub-stage delta note. Verify the
+  alignment gate holds byte-for-byte on `codegen/bundle.py`
+  before trusting this interpretation — a drifted pod
+  `bundle.py` can carry an already-applied bundle-format change
+  whose effect gets attributed to the PR under measurement.
 - If `n_specs` unchanged AND `dxp_standalone` unchanged → the change
   is doing extra bundle-emission work for no benefit at this
   workload. Note the regression; test on a different sentinel

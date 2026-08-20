@@ -1,94 +1,93 @@
 # Retrospective — PR #3868
 
-## Prediction vs measurement
+## What the skill got right
 
-The static assessment predicted `FRONTEND_IMPROVEMENT` on `sdsc_bundle_gen`
-via cache hits on repeated op-specs, based on the WB workload's
-KV-chunked structural repetition.
+The full state-machine ran: target resolved, static triage produced a
+per-file classification, prediction was written before any run,
+sentinels were selected, and the paired base/head measurement was
+executed cleanly at two workload points with tight spreads.
 
-The measurement disagreed **at both WB_n4 and WB_n8**:
+The prediction, preserved verbatim, was `FRONTEND_IMPROVEMENT` on
+`sdsc_bundle_gen` via cache hits — a genuinely different position
+from what the measurement showed. This is what the skill's
+prediction-before-measurement discipline exists to enable.
 
-| | WB_n4 | WB_n8 |
-|---|---|---|
-| `n_specs` (bundle 1 / bundle 2) | 5→5 / 1→1 | 5→5 / 1→1 |
-| `sdsc_bundle_gen` delta | +65% (+0.31 s) | +55% (+0.58 s) |
-| `dxp_standalone` delta | −33% (−7.7 s) | −33% (−22.3 s) |
-| Spyre passes | flat ±1.5% | flat ±1.5% |
+## What the skill got wrong — the reason for retraction
 
-The pattern is identical in direction and near-identical in ratio at
-both points — this is not noise, it is a mechanism operating at
-scale. The head does more work in `sdsc_bundle_gen` (canonical
-compile + `json.dumps` per op) and enables the backend to do
-substantially less work.
+The measurement's "base" was the pod tree's `bundle.py`, not PR
+#3868's actual base. The initial v0.2 alignment gate accepted "diff
+applies cleanly" as sufficient for Tier 2. But `git apply --check`
+only checks context-line match at the patch's hunks — it says
+nothing about whether the file has drifted elsewhere.
 
-## What went wrong in the prediction
+For PR #3868, the drift was substantial. The pod's `bundle.py` is 14
+lines shorter than PR base and predates the pool-allocation
+body-emit refactor. The measurement therefore captured:
 
-The static reading correctly identified:
+- The PR #3868 diff, PLUS
+- The pool-allocation refactor being applied simultaneously (because
+  the "head" state includes the refactor via the drifted lines).
 
-- The exact hot inner loop the PR touches.
-- The direction on cache hits when they occur.
-- The overhead on cache misses.
+We cannot separate the two contributions from this data. The
+observed +65% `sdsc_bundle_gen` and −33% `dxp_standalone` may belong
+to PR #3868, or to the pool refactor, or to some combination.
 
-The static reading MISSED:
+## What was tightened in the skill v0.2 policy
 
-- That the emitted-bundle representation changes even on cache misses.
-  Canonical json embedding, not just spec dedup, is what shrinks the
-  backend's work.
-- That KV-chunked repetition at the Python level does not necessarily
-  produce identical `OpSpec` dicts after compile. The `n_specs=5`
-  bundle has 5 distinct specs from what looked like structurally
-  identical chunk operations.
+Alignment Tier 2 is now defined as **per-touched-file blob equality**,
+not "diff applies cleanly":
 
-## What this means for the seven-verdict scheme
+- For each file the PR touches, fetch the base blob and compare
+  byte-for-byte against the pod's copy.
+- Any mismatch → escalate to Tier 3 (isolated checkout at exact
+  base and head SHAs).
 
-The clean interpretation is:
+See `references/measurement-policy.md` "Tier 2 — Adequate:
+per-touched-file blob equality".
 
-- Spyre custom-pass pipelines: flat → NOT a FRONTEND_REGRESSION or
-  IMPROVEMENT in the pass-time sense.
-- `sdsc_bundle_gen` regressed within its slice, but that slice is
-  bundle emission, not a custom pass.
-- `dxp_standalone` moved substantially.
+## Attempted Tier 3 execution
 
-Two verdicts fit at the same time — the frontend `sdsc_bundle_gen`
-regressed while the backend improved. In the seven-verdict scheme, the
-best classification is **BACKEND_IMPACT_ONLY** (Spyre pipelines
-unchanged, `dxp_standalone` moved), with a documented `sdsc_bundle_gen`
-regression note. Alternatively, since `n_specs` and pass counts are
-unchanged, `STRUCTURAL_CHANGE_NEUTRAL` also applies to describe the
-bundle-representation shift.
+An isolated checkout at the exact PR base (`2e935f...`) and head
+(`a7786ac...`) SHAs was set up on the pod. Both trees checked out
+cleanly with matching bundle.py md5s. But:
 
-For the v0.2 skill update: the interpretation guide should note that
-`sdsc_bundle_gen` sits at the frontend/backend boundary and can move
-without any pass-time change. It should be extracted as its own
-line in the results table and treated as a boundary metric.
+- Symlinking the pod's shared `_C.so` fails because the pod's C
+  extension lacks `NativePermutationLayoutSolver`, added between
+  pod's SHA and PR base. This symbol is imported top-level in
+  scratchpad code and cannot be dodged.
+- Rebuilding `_C.so` in the isolated tree fails at compile time
+  because the pod's `/opt/ibm/spyre/deeptools/include/` predates
+  `spyrecode-host-functions/fast_process_hcm.h`.
 
-## What this case validates about the skill
+Per the tightened Tier 3 policy, this is `INSUFFICIENT_EVIDENCE`.
+The measurement environment cannot support a valid A/B for this PR.
 
-- **Prediction discipline works**: the prediction was written, the
-  measurement was independent, the two disagreed, and the case
-  documented the disagreement instead of retconning either.
-- **Static-only reasoning is not sufficient**. The static reading
-  correctly bounded the affected surface, but the measurement
-  revealed a mechanism that static reading could not see (backend
-  benefit from canonical-form embedding).
-- **`n_specs` structural counter is critical.** Without it, we would
-  have assumed the cache "hit" (bundle emission time went UP,
-  therefore extra work happened — but was that because the cache
-  missed, or because canonical-compile was slow? `n_specs`
-  unchanged tells us: no dedupe happened.)
+## What this case ultimately validated about the skill
 
-## Lessons carried forward to v0.2
+The negative outcome — the retraction — is itself the validation:
 
-1. `sdsc_bundle_gen` gets its own line in every result table. Do not
-   collapse it into "Spyre pipes" — it can move without any pass
-   moving.
-2. The interpretation guide's "BACKEND_IMPACT_ONLY" clause should
-   allow for a coincident frontend sub-stage regression (like
-   `sdsc_bundle_gen` here) as long as no Spyre pass moved.
-3. Static predictions on cache-hit-driven changes should always
-   verify `n_specs` behavior BEFORE trusting the direction. On
-   workloads where the compile produces distinct OpSpec dicts
-   despite structural Python repetition, the cache never hits.
-4. The skill's `references/compiler-stage-map.md` should add a note
-   that `bundle.py:_compile_specs` can move `sdsc_bundle_gen`
-   independently of Spyre passes — new rule row.
+- The initial marginal-patch measurement produced a plausible-looking
+  result that could have been reported as a verdict.
+- The alignment gate check caught the substrate drift.
+- The Tier 3 attempt showed a legitimate failure mode (build blocked
+  by system-lib age), which the policy explicitly names and routes
+  to `INSUFFICIENT_EVIDENCE`.
+
+If we had NOT tightened the policy, this case would have been
+committed as a "clean A/B on a current PR" that isn't. Instead the
+case reads: "here is the measurement we ran; here is why it is not
+a validated PR-impact number; here is what would fix it."
+
+## Lessons carried forward
+
+1. Tier 2 alignment REQUIRES per-touched-file blob equality with the
+   PR's actual base — not "diff applies cleanly".
+2. When Tier 3 is blocked by system-lib age, `INSUFFICIENT_EVIDENCE`
+   is the correct verdict. Do NOT fall back to a less-strict Tier.
+3. The marginal-patch data is still worth preserving — it may
+   inform hypotheses about the pool refactor's interaction with
+   SDSC bundle emission — but it is not a validated PR verdict.
+4. The skill's "predict → measure → learn" loop worked here even
+   though the measurement was retracted: the prediction was
+   preserved, the substrate mismatch was caught, and the policy
+   was updated so the next PR does not repeat the error.

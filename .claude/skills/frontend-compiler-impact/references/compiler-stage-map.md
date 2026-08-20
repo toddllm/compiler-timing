@@ -228,9 +228,7 @@ plumbing). Measured 6–11 s at all four points sampled — sublinear.
   boundary — changes here can move `sdsc_bundle_gen` independently
   of every Spyre `pipeline:*`. Two mechanisms to check:
   1. **Bundle-emission time** — added per-op work will show up in
-     `sdsc_bundle_gen` even without any pass moving. PR #3868's
-     canonical-compile + `json.dumps(sort_keys=True)` added +65% at
-     WB_n4 with no Spyre pass changed.
+     `sdsc_bundle_gen` even without any pass moving.
   2. **Bundle content** — a change to what the bundle carries can
      shift `dxp_standalone` substantially. Verify by comparing
      head vs base `n_specs` at `sdsc_bundle_gen.meta`. If
@@ -238,7 +236,13 @@ plumbing). Measured 6–11 s at all four points sampled — sublinear.
      representation (not the count) changed.
 - **Verdict guidance**: when `sdsc_bundle_gen` moves but Spyre passes
   don't, use the "sdsc_bundle_gen moved but no Spyre pass did"
-  clause in `interpretation-guide.md`.
+  clause in `interpretation-guide.md`. Also: this file is a Tier 2
+  alignment hotspot — bundle.py has churned recently (pool-allocation
+  refactors, etc.), so measurements comparing a drifted pod's
+  bundle.py against a PR that also touches bundle.py are at high
+  risk of conflating the two changes. Always verify per-touched-file
+  blob equality with the PR's actual base before trusting an
+  in-place-patch A/B for this file.
 
 ### `torch_spyre/runtime/` and other execution-time code
 

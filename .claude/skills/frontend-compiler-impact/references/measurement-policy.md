@@ -6,33 +6,98 @@ rule invalidates the result.
 ## Pod-tree alignment gate — check BEFORE scheduling device work
 
 Before you consume any device time, decide whether the pod tree can
-serve as the base for this PR. There are three tiers, checked in order:
+serve as the base for this PR. Three tiers, checked in order — each
+tier gated by a strictly stronger check than the last.
 
-1. **Cleanest — pod == PR base**: the pod's `HEAD` matches the PR's
-   `base_sha`. In-place patch swap between `.base` and `.head`
-   snapshots of the changed files is fine (pure-Python changes only).
-2. **Adequate — diff applies cleanly to pod tree**: `git apply --check
-   <pr>.diff` returns 0 on the pod tree even though its base is
-   different. Acceptable when the drifting files are NOT touched by
-   the PR. Note the drift and the SHAs in `02-experiment-plan.md`.
-3. **Requires isolated checkout**: `git apply --check` fails, or the
-   PR touches C-extension sources, or the PR's base needs newer
-   torch/AIupti/deeptools than the pod has. Then run
-   `.claude/skills/frontend-compiler-impact/scripts/setup_isolated_checkout.sh
-   <sha> <dest>` and use the timing shim
-   (`.claude/skills/frontend-compiler-impact/scripts/timing_shim.py`)
-   to instrument.
+### Tier 1 — Cleanest: pod == PR base
 
-If the isolated checkout fails to build (system libs too old for the
-PR's base), the correct verdict is `INSUFFICIENT_EVIDENCE` for the
-measurement attempt. Do NOT downgrade the science to run something
-that isn't actually the PR's base.
+The pod's `HEAD` matches the PR's `base_sha` exactly. In-place patch
+swap between `.base` and `.head` snapshots of the changed files is
+fine (pure-Python changes only).
+
+### Tier 2 — Adequate: per-touched-file blob equality
+
+**"Diff applies cleanly" is not sufficient.** `git apply --check`
+only checks whether the patch's context lines match the file's
+context — it says nothing about the rest of the file. A PR-touched
+file can have drifted heavily around the patched hunks and still
+apply cleanly. That drift means the "base" you measure against is
+not the PR's actual base.
+
+The correct check is **per-touched-file blob equality**:
+
+```
+# For each file the PR touches, fetch the base blob and compare
+# byte-for-byte against the pod's copy.
+for f in $(gh pr diff <pr> --name-only); do
+    gh api "repos/<owner>/<repo>/contents/$f?ref=$BASE_SHA" \
+        -q .content | base64 -d > /tmp/base_blob
+    if ! cmp -s /tmp/base_blob "$POD_TREE/$f"; then
+        echo "DRIFT: $f — pod copy is not the PR base"
+        # Tier 2 fails — must escalate to Tier 3
+    fi
+done
+```
+
+Tier 2 is only satisfied when EVERY touched file's pod copy matches
+the PR-base blob byte-for-byte. Otherwise the measurement would be
+"effect of applying the diff to a differently-drifted substrate",
+not "PR base vs PR head". Escalate to Tier 3.
+
+Record the verification in `02-experiment-plan.md` under
+`## Pod-tree alignment`: which SHAs, which files, blob md5s at
+pod-copy and at PR-base blob, and the cmp exit codes.
+
+### Tier 3 — Isolated checkout at exact SHAs
+
+Required when:
+
+- Tier 2 fails (any PR-touched file has drifted at the pod).
+- The PR touches C-extension sources (in-place patching cannot
+  swap `_C.so` symbols).
+- The PR's base needs newer torch/AIupti/deeptools than the pod
+  has.
+
+Run:
+
+```
+.claude/skills/frontend-compiler-impact/scripts/setup_isolated_checkout.sh \
+    <base_sha> <base-dir>
+.claude/skills/frontend-compiler-impact/scripts/setup_isolated_checkout.sh \
+    <head_sha> <head-dir>
+```
+
+Then use the timing shim
+(`.claude/skills/frontend-compiler-impact/scripts/timing_shim.py`)
+to instrument each tree. The shim is idempotent and requires no
+tree modification.
+
+If the isolated `_C.so` cannot be symlinked from a shared pod build
+(ABI mismatch — new C++ symbols like `NativePermutationLayoutSolver`
+appear in newer torch-spyre revisions), rebuild `_C.so` from source
+in each isolated tree with `python setup.py build_ext --inplace`.
+This takes ~10–20 minutes per tree on the pod but produces an ABI
+match. Only fall back to `INSUFFICIENT_EVIDENCE` when even the
+fresh build fails (system libs too old for the PR's base).
+
+Never symlink an older `_C.so` into a newer tree hoping the missing
+symbol is not exercised — the Spyre pass pipeline transitively
+imports scratchpad code that top-level imports newer C symbols, so
+the failure will surface at compile time, not at import.
+
+### Where the tier goes in the experiment plan
 
 The alignment tier belongs in `02-experiment-plan.md` in a
-`## Pod-tree alignment` section, along with the exact command used
-to verify and its output. This step comes BEFORE cache-dir setup,
-BEFORE sentinel selection — it decides whether device time can
-usefully happen at all.
+`## Pod-tree alignment` section, with:
+
+- The Tier 1 / Tier 2 / Tier 3 decision.
+- For Tier 2: the touched-file blob-cmp evidence.
+- For Tier 3: the isolated-checkout paths, whether `_C.so` was
+  symlinked or rebuilt, and the smoke-test import result.
+- The exact base and head SHAs.
+
+This step comes BEFORE cache-dir setup, BEFORE sentinel selection —
+it decides whether device time can usefully happen at all.
 
 ## Isolation
 

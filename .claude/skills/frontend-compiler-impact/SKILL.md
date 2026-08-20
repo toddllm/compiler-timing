@@ -377,16 +377,20 @@ error on the smoke import. Options in order of preference:
   study for this skill. Static-triage cases: PR #3871 (test-only,
   correct no-run), PR #3873 (activation-specific gated), PR #3849
   (static-only, C-extension blocked), PR #3890 (isolated-checkout
-  blocked by system-lib drift). Empirical A/B cases:
-  `local-revadj-prototype` (coarse-tile reverse-adjacency — clean
-  FRONTEND_IMPROVEMENT verdict) and `pr-3868` (SDSC json caching —
-  in-place patch swap against pod tree, currently-open PR whose
-  diff applies cleanly).
+  blocked by system-lib drift). Machinery-validation control:
+  `local-revadj-prototype` (coarse-tile reverse-adjacency — full
+  measurement flow on a known-positive change, verdict
+  FRONTEND_IMPROVEMENT). Novel-change attempt: `pr-3868` (SDSC
+  json caching — initial marginal-patch measurement was retracted
+  after the alignment gate was tightened; Tier 3 isolated-checkout
+  retry blocked by pod system-lib age; final verdict
+  INSUFFICIENT_EVIDENCE. The retraction motivated the current Tier 2
+  policy: per-touched-file blob equality with the PR's actual base).
 
 Read those studies' `SUMMARY.md` and `notes/findings.md` when a
-first-principles refresher is needed. The skill's `references/`
-files distill the reusable rules; those studies are the ground
-truth.
+compiler-timing refresher is needed. The skill's `references/`
+files distill the reusable rules; those studies are the source
+data.
 
 ## What this skill is NOT
 
