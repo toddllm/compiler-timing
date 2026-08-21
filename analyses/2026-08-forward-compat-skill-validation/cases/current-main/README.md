@@ -6,17 +6,30 @@ torch-spyre@a3128985 + PyTorch main @ 73961011 (resolved to nightly
 proxy `torch 2.15.0.dev20260821+cpu`), plus a SUPPORTED_CONTROL of
 `torch~=2.13.0` (pyproject-declared).
 
-## Outcomes
+## Outcomes (with post-review corrections)
 
-- SUPPORTED_CONTROL: Stage 0 fails with `C_EXTENSION_ABI_BREAK`
-  (undefined `c10d::Backend::incref_pyobject`). See
-  `failures/F1-supported-control-undefined-symbol/`.
-- FORWARD_BEFORE_FIX: Stage 0 succeeds against torch nightly (device
-  visible, eager works). Stage 1 fails with a ladder harness bug
-  (`NOT_TORCH_SPYRE`). See
-  `failures/F3-harness-triton-double-registration/`.
-- FORWARD_AFTER_FIX: not attempted. Skill policy forbids applying a
-  patch while SUPPORTED_CONTROL is broken.
+- **SUPPORTED_CONTROL: pipeline defect masqueraded as ABI break.**
+  Symptom: Stage 0 fails with undefined
+  `c10d::Backend::incref_pyobject`. Root cause: two builds against
+  different torch versions shared one source tree; the second build
+  overwrote `_C.so`, so Stage 0 loaded a nightly-linked `_C.so`
+  under torch 2.13. `01-observation.md` and
+  `02-diagnosis-hypothesis.md` were the pre-review analysis;
+  `03-root-cause.md` is the confirmed post-review root cause with
+  symbol/timestamp evidence in `03a-symbol-provenance.txt`.
+- **FORWARD_BEFORE_FIX: not a harness bug; real torch-spyre
+  re-entrancy issue.** Symptom: Stage 1 fails with `Only a single
+  TORCH_LIBRARY can be used to register the namespace triton`.
+  Root cause: torch_spyre's autoload entry point fires re-entrantly
+  before `__init__.py` finishes, when a caller imports `torch_spyre`
+  without importing `torch` first. `01-observation.md` labelled it
+  as a harness artifact; `02-import-matrix.md` disproves that with a
+  5-case matrix.
+- **FORWARD_AFTER_FIX: not attempted.** Skill policy forbids applying
+  a patch while SUPPORTED_CONTROL is broken. The corrected diagnoses
+  above open two v0.2 patches (pipeline separation for F1;
+  `torch_spyre/__init__.py` restructuring for F3) that a subsequent
+  run should apply hypothesis-first.
 
 ## Files
 

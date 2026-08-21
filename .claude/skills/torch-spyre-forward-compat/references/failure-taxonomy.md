@@ -475,6 +475,100 @@ a C-extension ABI mismatch (TORCH_SPYRE_BUILD_API_BREAK), a bad
 substrate library (SUBSTRATE_FAILURE), or a corrupt install
 (NOT_TORCH_SPYRE). → UNKNOWN until at least one is ruled out.
 
+### PIPELINE_DEFECT
+
+The failure is caused by the skill's own pipeline mixing state
+between two configurations (typically the SUPPORTED_CONTROL and
+FORWARD_BEFORE_FIX venvs). torch-spyre and torch are not to blame.
+
+**Typical evidence.**
+- Two builds against different torch versions were run in the same
+  shell / directory / source tree.
+- `stat -c "%y %n"` on the built artifact (`_C.so`, wheel, install
+  metadata) shows a timestamp later than one of the two build logs
+  but pointing at the wrong venv's editable install.
+- Symbol probe: `nm -uD` on the artifact shows undefined refs from
+  the *other* venv's torch (i.e. the artifact was built against a
+  different torch than the venv now trying to load it).
+
+**Response.** Do NOT edit torch-spyre. Fix the pipeline. Give each
+venv its own source tree (fresh clone or `git clone --reference`
+with `--dissociate`), rerun both configurations, then re-classify
+whatever failure remains.
+
+**Fast pre-flight probe** (add to Stage 0 as `SUPPORTED_CONTROL_PROBE`):
+
+```bash
+# The set difference must be empty. Any element that appears is a
+# real ABI mismatch. If the .so was contaminated by another venv's
+# build, this catches it before Stage 0 spends time.
+comm -23 \
+  <(nm -uD "$WORKDIR/torch-spyre/torch_spyre/_C.so" | awk '{print $NF}' | sort -u) \
+  <(nm -D  "$VENV/lib*/python3.12/site-packages/torch/lib/libtorch_cpu.so" \
+        | awk '$2=="T"{print $NF}' | sort -u)
+```
+
+**Example (this validation run, F1).** Two builds against
+`.venv-supported` (torch 2.13.0) and `.venv-latest` (torch 2.15.0.dev
+nightly) shared a single `torch-spyre/` clone. The second (nightly)
+build overwrote `torch-spyre/torch_spyre/_C.so`. When SUPPORTED_CONTROL
+Stage 0 later ran, its editable install pointed at the on-disk `_C.so`
+— nightly-built, referencing `c10d::Backend::incref_pyobject`, which
+`.venv-supported`'s libtorch (2.13.0) does not define.
+
+### REVERSE_ENTRYPOINT_HAZARD
+
+torch-spyre registers `torch_spyre._autoload` as a torch backend
+entry point in `pyproject.toml`. On modern torch, `import torch`
+triggers `_import_device_backends()` which invokes every registered
+entry point. If a caller imports `torch_spyre` **without importing
+`torch` first**, then torch_spyre's own `__init__.py` starts
+executing, imports torch, and torch's `_import_device_backends()`
+callback fires — but torch_spyre's `__init__.py` has not yet reached
+the definition of `_autoload`. The callback fails on a partially-
+initialized module, and any retry produces cascading errors like
+duplicate `TORCH_LIBRARY` registrations.
+
+**Typical evidence.**
+- `AttributeError: partially initialized module 'torch_spyre' has no
+  attribute '_autoload' (most likely due to a circular import)`.
+- Downstream: `RuntimeError: Only a single TORCH_LIBRARY can be used
+  to register the namespace <ns>` in the *same* python process.
+- Test: `python -c "import torch_spyre"` fails, but `python -c
+  "import torch; import torch_spyre"` succeeds.
+
+**Response.** Fix in torch-spyre-side, hypothesis first. Either
+restructure `torch_spyre/__init__.py` so `_autoload` is defined at
+the top of the module before any statement that might trigger a
+callback, or make the entry-point callable resilient to being
+called before initialization completes (e.g. cache a resolution
+promise; on re-entry, no-op or await).
+
+**Import-matrix diagnostic recipe.** Run this as Stage 0 probe on
+both venvs:
+
+```
+A) python -c "import torch"
+B) python -c "import torch; import torch._inductor"
+C) python -c "import torch_spyre"                 # no `torch` first, autoload on
+D) TORCH_DEVICE_BACKEND_AUTOLOAD=0 python -c "import torch_spyre"
+E) python -c "import torch; import torch_spyre"
+F) python -c "import torch_spyre; import torch_spyre._inductor.lowering"
+G) TORCH_DEVICE_BACKEND_AUTOLOAD=0 python -c "import torch_spyre; import torch_spyre._inductor.lowering"
+H) python -c "import torch; import torch._inductor; import torch_spyre; import torch_spyre._inductor.lowering"
+```
+
+If A, B, D, E, H pass and C, F fail with "partially initialized
+module" or a downstream `TORCH_LIBRARY` error, classify as
+`REVERSE_ENTRYPOINT_HAZARD`. If C or F fails with a different
+signature, this is not the right category.
+
+**Example (this validation run, F3).** Case C and F fail with the
+circular-import signature; A, B, D, E, H all pass. That
+disambiguates the underlying `TORCH_LIBRARY(triton)` double
+registration observed in Stage 1 as a downstream symptom of this
+re-entrancy, not an independent Triton compatibility issue.
+
 ## How to promote UNKNOWN to a real category
 
 Work the list top to bottom. Stop at the first step that

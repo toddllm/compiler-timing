@@ -1,11 +1,17 @@
 # Torch-spyre-forward-compat skill — validation summary
 
-**Status: v0.1.0 authored, first empirical case landed with material findings.**
+**Status: v0.1.0 authored; first empirical case landed with material
+findings; post-review follow-up probing corrected the initial diagnoses.**
+
 The primary case ran end-to-end on a fresh Spyre-capable pod on
-`2026-08-21`. Neither `SUPPORTED_CONTROL` nor `FORWARD_BEFORE_FIX`
-produced a clean green ladder — but the failures they produced are
-exactly the kind of substrate/declared-version signal the skill exists to
-surface. See the "Findings" section for the specifics.
+2026-08-21. Neither `SUPPORTED_CONTROL` nor `FORWARD_BEFORE_FIX`
+produced a clean green ladder. A post-review symbol-provenance and
+import-matrix probe of the persistent artifacts (in
+`cases/current-main/failures/F1-.../03-root-cause.md` and `F3-.../
+02-import-matrix.md`) then **falsified the original F1 diagnosis and
+upgraded F3 from harness bug to a real torch-spyre finding**. The
+skill's discipline of refusing to patch prevented both wrong
+patches from landing.
 
 ## The primary case
 
@@ -51,47 +57,60 @@ variable.
 
 ## Findings
 
-### F1 — SUPPORTED_CONTROL undefined symbol (highest-value finding)
+**Reader's note on revisions.** The findings below are the
+post-review state. F1's original hypothesis ("declared pyproject
+pin is stale / internal torch has a patch") was falsified by direct
+symbol/timestamp probing after the review. F3's original label
+("harness re-import bug, `NOT_TORCH_SPYRE`") was falsified by a
+5-case import matrix. The corrected root causes are in F1's
+`03-root-cause.md` and F3's `02-import-matrix.md`.
 
-torch-spyre@a3128985 builds cleanly against upstream `torch==2.13.0+cpu`
-(the version its own `pyproject.toml` declares via `torch~=2.13.0`) but
-its `_C.so` at runtime references `c10d::Backend::incref_pyobject()` — a
-symbol **not present in the upstream torch 2.13.0 CPU wheel** and not
-present in `Backend.hpp` on either `v2.13.0` or `main` (verified by
-fetching both from `raw.githubusercontent.com`).
+### F1 — SUPPORTED_CONTROL undefined symbol (pipeline defect, not a torch break)
 
-This means torch-spyre@main is being built and tested internally against
-a torch that carries an out-of-tree/staged patch adding
-`incref_pyobject` — most likely the torch shipped in newer
-`torch-aiu-runtime-dev` image layers. The pyproject pin `torch~=2.13.0`
-is therefore **not a self-sufficient install specification**: `pip
-install torch~=2.13.0` from the standard CPU index produces a torch that
-cannot resolve one of torch-spyre's C-symbol dependencies.
+**Post-review root cause** (see F1's `03-root-cause.md`): pipeline
+defect, NOT a torch-spyre or torch break.
 
-Failure taxonomy: **`C_EXTENSION_ABI_BREAK`** — the module builds and
-links but does not autoload because a runtime-referenced symbol is
-undefined. Category rules require classification before patching; no
-patch was applied.
+The pipeline builds torch-spyre against `.venv-supported` first
+(finished 17:09:26), then rebuilds against `.venv-latest`
+(finished 17:16:05) using the **same** `torch-spyre/` source tree.
+`pip install -e . --no-deps --no-build-isolation` writes an editable
+`.pth` in each venv pointing at `torch-spyre/torch_spyre/`. The
+second build overwrites `torch-spyre/torch_spyre/_C.so` at 17:16:05.
+Stage 0 for SUPPORTED then loads the nightly-built `_C.so` under
+torch 2.13.0's libtorch and hits the undefined symbol
+`c10d::Backend::incref_pyobject`.
 
-The three plausible root causes, in decreasing likelihood:
+Symbol evidence (verified with `nm -uD` / `nm -D` on-pod):
 
-1. **The declared pin is stale.** torch-spyre@main should declare its
-   dependency on a specific PyTorch build/lineage, not the vanilla
-   `torch~=2.13.0` CPU wheel. Fixing pyproject to point at the correct
-   internal wheel index (or documenting the assumed image torch) would
-   close this.
-2. **`_C.so` references a symbol via an accidental include path.** The
-   compile succeeded despite the pyproject pin because system-site
-   torch (2.11.0) headers are on the include path and one of them
-   references `incref_pyobject` unconditionally, producing an undefined
-   symbol at link time that only shows on import.
-3. **`incref_pyobject` was in a torch release candidate branch that
-   torch-spyre’s build environment tracks but the public wheel does
-   not.** Would require internal torch-aiu-runtime-dev sources to
-   confirm.
+- `_C.so` on disk: undefined refs to
+  `TensorImpl/StorageImpl::incref_pyobject` (4 symbols) plus
+  `Backend::incref_pyobject` and `Backend::try_incref_pyobject`.
+- venv-supported `libtorch_cpu.so` (torch 2.13.0+cpu): exports only
+  the four `TensorImpl/StorageImpl` symbols. The two `Backend::*`
+  are absent.
+- venv-latest `libtorch_cpu.so` (torch 2.15.0.dev nightly): exports
+  all six, with `Backend::incref_pyobject` and `try_incref_pyobject`
+  as defined `T` (text) symbols.
+- venv-supported `Backend.hpp` header: `grep -c incref_pyobject = 0`.
+- venv-latest `Backend.hpp` header: `grep -c incref_pyobject = 2`.
 
-Reproducible artifact: `data/supported_stage0.log` shows the full
-traceback and the `_C.so` symbol.
+The mismatch is not in the pyproject pin. The mismatch is that a
+single on-disk `_C.so` cannot serve two venvs with different torch
+ABIs.
+
+**Corrected failure taxonomy**: `PIPELINE_DEFECT` — a new category
+that needs to be added to `references/failure-taxonomy.md` for v0.2.
+The original `C_EXTENSION_ABI_BREAK` label was correct at the symptom
+level but did not identify the pipeline as the true actor.
+
+**Corrected fix**: separate source trees per venv. In canonical_build,
+each venv gets its own `torch-spyre-<venv>/` clone with its own
+`_C.so`. Details and pseudo-code in F1's `03-root-cause.md`.
+
+Whether the declared `torch~=2.13.0` pin is *itself* stale is now
+an **open question** rather than a finding — it needs a rerun with
+isolated source trees before the SUPPORTED_CONTROL result can be
+trusted.
 
 ### F2 — FORWARD_BEFORE_FIX Stage 0 actually works on nightly
 
@@ -102,21 +121,48 @@ outcome: torch-spyre@main survives its own future-torch better than its
 own supposedly-supported torch. Under the failure taxonomy this alone
 would count as **`NO_BREAK`** on Stage 0.
 
-### F3 — Stage 1 harness bug (`TORCH_LIBRARY(triton)` double registration)
+### F3 — Real torch-spyre re-entrancy bug, NOT a harness artifact
 
-Both configurations fail Stage 1 with `RuntimeError: Only a single
-TORCH_LIBRARY can be used to register the namespace triton`. The
-mechanism is that Stage 0's `import torch_spyre` autoloads and registers
-`triton` via torch's own `torch/__init__.py:3350` (nightly) / `:2899`
-(2.13.0), and then Stage 1 launches a fresh `python3 -c` where a
-subsequent `__import__("torch_spyre._inductor.lowering")` re-triggers a
-registration path that duplicates the entry. This is **not** a
-compatibility break — the current ladder harness serialises stage
-transitions across process boundaries incorrectly. It is a **v0.2
-harness fix**, tracked at Task #30.
+**Post-review root cause** (see F3's `02-import-matrix.md`): the
+`TORCH_LIBRARY(triton)` double-registration is a symptom, not the
+disease. Direct 5-case import matrix on the pod confirms:
+
+| case | imports | autoload | result |
+|---|---|---|---|
+| A | `torch` | on | PASS |
+| B | `torch; torch._inductor` | on | PASS |
+| C | `torch_spyre` (no `torch` first) | **on** | **FAIL** — circular import |
+| D | `torch_spyre` (no `torch` first) | off | PASS |
+| E | `torch; torch_spyre` | on | PASS |
+| F | `torch_spyre; torch_spyre._inductor.lowering` | on | FAIL |
+| G | same as F | off | FAIL (different chain) |
+| H | full canonical order (torch → inductor → torch_spyre → …) | on | PASS |
+
+The mechanism: torch_spyre's entry point registers
+`torch_spyre._autoload` before `torch_spyre/__init__.py` has finished
+executing. If any caller imports torch_spyre before torch has been
+imported, the entry point fires re-entrantly and the callback fails on
+a partially-initialized module. The
+`RuntimeError("Only a single TORCH_LIBRARY can be used to register
+the namespace triton")` from the original ladder is downstream of this
+same re-entrancy — when the failed autoload retries, torch's own
+`__init__.py` registration path runs twice in one process.
+
+**Corrected failure taxonomy**: `REVERSE_ENTRYPOINT_HAZARD` — an
+entry-point callback fires before the module registering the entry
+point has finished initializing. Also needs to be added to
+`references/failure-taxonomy.md`.
+
+The v0.2 change I originally proposed (merge Stage 0 and Stage 1)
+would have **masked** F3. Do not merge stages without first fixing
+the underlying torch_spyre re-entrancy issue. The corrected fix is
+inside torch-spyre — restructure `__init__.py` so `_autoload` is
+defined before any other statement, or make the entry-point callback
+resilient to being called before initialization completes.
 
 Reproducible artifacts: `data/forward_stage1.log`,
-`data/supported_stage1.log`.
+`data/supported_stage1.log`, plus the on-pod import matrix in F3's
+`02-import-matrix.md`.
 
 ### F4 — Substrate: `/opt/rh/gcc-toolset-*` no longer present
 
@@ -224,20 +270,50 @@ top-level and never invokes `python3` outside its venvs. Documented in
 
 ## Improvements open for v0.2
 
-1. Digest-pinning + node-affinity in `create_fresh_pod.sh`.
-2. Fix the pipeline's `{ } vs ( )` subshell bug in
-   `scripts/run_compat_smoke.sh` (currently only in the ad-hoc pipeline
-   used for this run; the skill script structure is correct).
-3. Rewrite Stage 1 harness to avoid the `TORCH_LIBRARY(triton)`
-   double-registration artifact.
-4. Add an `nm -D` symbol-vs-wheel cross-check to
-   `references/upstream-investigation.md` — would have flagged F1 as
-   `PIN_LIES` before Stage 0 ran.
-5. Add a `SUPPORTED_CONTROL_PROBE` sub-stage that runs *before*
-   `SUPPORTED_CONTROL` proper: `nm -uD torch_spyre/_C.so` intersected
-   with `nm -D <torch installed>/lib/libtorch*.so` should produce zero
-   undefined symbols. If not, escalate immediately without running the
-   full ladder — F1 would have surfaced in seconds instead of minutes.
+1. **Separate build trees per venv** in `canonical_build`. Root cause
+   of F1. Details in F1's `03-root-cause.md`.
+2. **`PIPELINE_DEFECT` and `REVERSE_ENTRYPOINT_HAZARD` categories** in
+   `references/failure-taxonomy.md`. Both are documented in the
+   respective root-cause files and need to be codified.
+3. **`SUPPORTED_CONTROL_PROBE` fast pre-flight**: `nm -uD
+   torch_spyre/_C.so` intersected with `nm -D <torch>/lib/libtorch*.so`
+   should produce zero undefined symbols. If not, escalate immediately
+   without running the full ladder. This is the check that would have
+   caught F1 in seconds; also catches PIPELINE_DEFECT.
+4. **Reverse-entrypoint hazard test at Stage 0**: before running the
+   ladder, run the 5-case import matrix from F3's `02-import-matrix.md`.
+   If cases C/F/G fail while A/B/E/H pass, flag REVERSE_ENTRYPOINT_HAZARD.
+5. **Digest-pinning + node-affinity** in `create_fresh_pod.sh`. Empirical
+   pod-provisioning added these because `:latest` on a cold node hung
+   for 66 minutes; skill script must default to digest-pin.
+6. **`{ } vs ( )` subshell bug** in the pipeline script (currently only
+   in the ad-hoc pipeline; the skill's own `run_compat_smoke.sh` needs
+   an audit for the same class of bug).
+7. **DECLARED_PUBLIC_CONTROL vs CANONICAL_INTERNAL_CONTROL split**
+   (Todd §2): even after F1 pipeline fix, if `pip install torch~=2.13.0`
+   still fails the ladder while a canonical internal image torch passes,
+   codify both controls in the skill so the forward-compat
+   investigation can proceed against the internal baseline rather than
+   being blocked by public-wheel misalignment.
+8. **Real `torch.compile(backend="spyre")` test** (Todd §4): once F1
+   and F3 are fixed, run actual Spyre compile with CPU correctness
+   oracle. Add reduction and a workload reaching layout/restickify or
+   WSR.
+9. **Distributed/CCL test** (Todd §5): instantiate SpyreCCL backend,
+   run a minimal two-rank collective if hardware permits. This is
+   exactly the c10d::Backend subclass whose ABI shifted; targeted
+   verification lives here.
+10. **Exact main SHA build** (Todd §6): decouple `NIGHTLY_PROXY` from
+    "current main". Either build the exact SHA or document the
+    diff-distance and which surfaces were touched.
+11. **Historical replay** (Todd §7): run against torch-spyre@immediately-
+    before-`754839c` on torch 2.13, verify the skill independently
+    finds the LX producer/consumer alignment break. This is the
+    proof-of-diagnose-fix-verify loop the skill has not yet
+    demonstrated.
+12. **Use `create_fresh_pod.sh` for real** (Todd §8): the empirical
+    run used a hand-written manifest. Prove the workflow, not just
+    the reasoning.
 
 ## Bottom-line answer
 

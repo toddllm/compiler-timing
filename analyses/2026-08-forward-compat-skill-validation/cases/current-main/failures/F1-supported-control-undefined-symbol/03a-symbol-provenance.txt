@@ -1,0 +1,34 @@
+=== 03a-symbol-provenance.md evidence ===
+--- torch-spyre _C.so undefined symbols matching incref_pyobject ---
+                 U _ZNK3c1010TensorImpl15incref_pyobjectEv
+                 U _ZNK3c1010TensorImpl19try_incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl15incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl19try_incref_pyobjectEv
+                 U _ZNK4c10d7Backend15incref_pyobjectEv
+                 U _ZNK4c10d7Backend19try_incref_pyobjectEv
+--- venv-supported (torch 2.13.0) libtorch_cpu.so ---
+                 U _ZNK3c1010TensorImpl15incref_pyobjectEv
+                 U _ZNK3c1010TensorImpl19try_incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl15incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl19try_incref_pyobjectEv
+--- venv-latest (torch nightly 2.15.0.dev) libtorch_cpu.so ---
+                 U _ZNK3c1010TensorImpl15incref_pyobjectEv
+                 U _ZNK3c1010TensorImpl19try_incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl15incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl19try_incref_pyobjectEv
+0000000006782590 T _ZNK4c10d7Backend15incref_pyobjectEv
+0000000006782560 T _ZNK4c10d7Backend19try_incref_pyobjectEv
+--- system torch (2.11.0) libtorch_cpu.so ---
+                 U _ZNK3c1010TensorImpl15incref_pyobjectEv
+                 U _ZNK3c1010TensorImpl19try_incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl15incref_pyobjectEv
+                 U _ZNK3c1011StorageImpl19try_incref_pyobjectEv
+--- venv-supported Backend.hpp grep incref_pyobject ---
+0
+--- venv-latest Backend.hpp grep incref_pyobject ---
+2
+
+=== timestamps (build sequence proof) ===
+2026-08-21 17:09:26.289462207 +0000 build_supported.log
+2026-08-21 17:16:06.216949670 +0000 build_latest.log
+2026-08-21 17:16:05.240427736 +0000 torch-spyre/torch_spyre/_C.so
