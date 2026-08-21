@@ -1,0 +1,3 @@
+torch = 2.12.1+cpu
+torch_spyre = /home/tdeshane/replay-pt213/torch-spyre-parent/torch_spyre/__init__.py
+spyre.device_count = 1

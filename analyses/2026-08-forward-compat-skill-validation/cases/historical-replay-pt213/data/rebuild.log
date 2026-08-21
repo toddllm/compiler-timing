@@ -1,0 +1,12 @@
+[2026-08-21T20:36:10Z] === Rebuild after cherry-picking bf1ddc05e header migration ===
+[2026-08-21T20:36:10Z] STEP 1: rebuild baseline (torch 2.12) with header-migration cherry-pick
+[2026-08-21T20:37:18Z]   baseline v2 build rc=0
+[2026-08-21T20:37:18Z] STEP 2: rebuild forward (torch 2.13) with header-migration cherry-pick
+[2026-08-21T20:37:28Z]   forward v2 build rc=1
+[2026-08-21T20:37:28Z] === rebuild summary ===
+[2026-08-21T20:37:28Z]   BASELINE (torch 2.12 + bf1ddc05e): rc=0
+[2026-08-21T20:37:28Z]   FORWARD  (torch 2.13 + bf1ddc05e): rc=1
+[2026-08-21T20:37:28Z] STEP 3-baseline: stage 0 (autoload + device enum)
+[2026-08-21T20:37:43Z]   baseline stage0_v2 rc=0
+[2026-08-21T20:37:43Z]   SKIP stage0 for fwd (build rc=1)
+[2026-08-21T20:37:43Z] === rebuild done ===

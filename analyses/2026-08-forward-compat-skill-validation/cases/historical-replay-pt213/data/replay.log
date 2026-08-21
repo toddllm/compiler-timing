@@ -1,0 +1,21 @@
+[2026-08-21T20:10:36Z] === Replay for torch-spyre@dd95ef44 (parent of 754839c 2.13-upgrade) ===
+[2026-08-21T20:10:36Z] GCC_CXX=c++
+[2026-08-21T20:10:36Z] STEP 1: create .venv-baseline with torch~=2.12.0
+[2026-08-21T20:14:36Z]   installed torch: /home/tdeshane/replay-pt213/.venv-baseline/lib64/python3.12/site-packages/torch/_subclasses/functional_tensor.py:362: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+2.12.1+cpu
+[2026-08-21T20:14:36Z] STEP 2: canonical build torch-spyre-parent against torch 2.12
+[2026-08-21T20:18:19Z]   baseline build rc=1
+[2026-08-21T20:18:19Z] STEP 3: create .venv-fwd with torch~=2.13.0
+[2026-08-21T20:21:08Z]   installed torch: /home/tdeshane/replay-pt213/.venv-fwd/lib64/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+2.13.0+cpu
+[2026-08-21T20:21:08Z] STEP 4: separate source tree for forward build
+[2026-08-21T20:21:14Z] STEP 5: canonical build torch-spyre-fwd against torch 2.13
+[2026-08-21T20:23:49Z]   forward build rc=1
+[2026-08-21T20:23:49Z] === summary ===
+[2026-08-21T20:23:49Z]   BASELINE (torch 2.12): build rc=1
+[2026-08-21T20:23:49Z]   FORWARD  (torch 2.13): build rc=1
+[2026-08-21T20:23:49Z]   SKIP stage0 for baseline (build rc=)
+[2026-08-21T20:23:49Z]   SKIP stage0 for fwd (build rc=)
+[2026-08-21T20:23:49Z] === done ===

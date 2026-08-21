@@ -268,6 +268,73 @@ top-level and never invokes `python3` outside its venvs. Documented in
     --no-build-isolation`), the GCC-14/gcc-toolset dual path, and the
     PYTHONNOUSERSITE/`.local` hazard.
 
+## Post-review session 2 findings (2026-08-21)
+
+Following Todd's post-v0.1 review, we ran a second session doing
+symbol-provenance probing, an import matrix, and the beginning of
+the §7 historical replay. Two additional findings landed:
+
+### F4 — SUBSTRATE_FAILURE from deeptools header path drift
+
+Cloning torch-spyre@`dd95ef44e` (parent of the 2.13-upgrade fix)
+and attempting to build on the current `torch-aiu-runtime-dev:latest`
+image fails with `fatal error: util/sendefs.h: No such file or
+directory` and similar for `util/sen_host_ops.h`, `util/spyrecode.h`,
+`util/sen_data_convert.h`. Between the two SHAs, torch-spyre commit
+`bf1ddc05e` ("Change deeptools headers path (#3408)", 2026-07-31)
+migrated all `#include` paths from the old flat `util/` layout to
+nested paths under `util/sendefs/`, `spyrecode-host-functions/*/`.
+The current image ships the new layout; older torch-spyre source
+references the old.
+
+Response: cherry-pick `bf1ddc05e` onto `dd95ef44e` for the replay's
+baseline tree. Do NOT patch torch-spyre — this is substrate
+alignment, not a source-code fix. Full analysis in
+`cases/historical-replay-pt213/F4-substrate-drift.md`.
+
+This confirms Todd's §2 concern (DECLARED_PUBLIC_CONTROL vs
+CANONICAL_INTERNAL_CONTROL): the current image is a canonical
+"internal" substrate whose header layout is not the same as what
+was current when torch-spyre@dd95ef44 was written. Any forward-
+compat test needs a **substrate-fitness probe** as a pre-Stage-0
+check.
+
+### F5 — TORCH_SPYRE_BUILD_API_BREAK when 2.13 build lines change
+
+After F4 alignment, torch-spyre@`dd95ef44 + bf1ddc05e` builds and
+imports cleanly on torch 2.12.1+cpu (baseline). Against torch
+2.13.0+cpu, the build fails rc=1 with `ccache: error: Could not
+find compiler "-MMD" in PATH` across all 15 translation units. torch
+2.13 changed its cpp_extension build-line generation in a way that
+breaks torch-spyre@dd95ef44's ccache invocation.
+
+This is exactly the shape of forward-compat break torch-spyre@`754839cc8`
+was supposed to handle — the 2.13-upgrade commit contains
+build-integration changes that would make the build succeed against
+2.13. Full analysis in
+`cases/historical-replay-pt213/F5-forward-compile-break-blocks-replay.md`.
+
+Reaching the LX-fix semantic break (Todd's §7 target) requires a
+second cherry-pick: the build-integration hunks from `754839cc8`,
+separated from the LX-fix scheduler.py hunks. That two-cherry-pick
+setup is the correct scaffolding for a v0.2 replay: it isolates each
+compatibility break as its own step. That is more valuable than
+"apply the whole fix and check" because it lets the skill discover
+each break independently.
+
+### What §7 already validated
+
+Even without reaching the aminmax test, this partial run confirmed
+the skill's key properties:
+
+- F4 was classified as `SUBSTRATE_FAILURE` before any code touch.
+- F5 was categorised as its own distinct finding, not conflated
+  with F4 or the yet-unseen LX break.
+- Rule zero ("classify before editing") held: no preemptive
+  torch-spyre patches were applied.
+- The three-state discriminator worked: baseline (2.12) is green
+  after F4 alignment; forward (2.13) fails.
+
 ## Improvements open for v0.2
 
 1. **Separate build trees per venv** in `canonical_build`. Root cause
@@ -306,14 +373,28 @@ top-level and never invokes `python3` outside its venvs. Documented in
 10. **Exact main SHA build** (Todd §6): decouple `NIGHTLY_PROXY` from
     "current main". Either build the exact SHA or document the
     diff-distance and which surfaces were touched.
-11. **Historical replay** (Todd §7): run against torch-spyre@immediately-
-    before-`754839c` on torch 2.13, verify the skill independently
-    finds the LX producer/consumer alignment break. This is the
-    proof-of-diagnose-fix-verify loop the skill has not yet
-    demonstrated.
-12. **Use `create_fresh_pod.sh` for real** (Todd §8): the empirical
+11. **Historical replay execution** (Todd §7): PARTIAL. F4 substrate
+    alignment resolved and validated. F5 forward-build break
+    identified as an additional forward-compat gap requiring a
+    build-side cherry-pick from `754839cc8`. Reaching the LX
+    aminmax test requires that second cherry-pick and is v0.2 work.
+12. **Substrate-fitness probe as pre-Stage-0** (from F4). Add a
+    step in `references/environment-policy.md` that requires a
+    successful `pip install -e . --no-deps --no-build-isolation` at
+    the code-under-test's declared torch pin BEFORE the ladder runs.
+    If it fails, escalate immediately as `SUBSTRATE_FAILURE` with
+    the alignment recipe (cherry-pick or older image).
+13. **Two-cherry-pick historical replay pattern**. When a forward-
+    compat replay's target commit bundles multiple fixes (a
+    build-integration hunk + a semantic-fix hunk), separate them
+    into independent cherry-picks so the skill can discover each
+    forward-compat gap on its own. This is more valuable than
+    "apply the whole fix and check".
+14. **Use `create_fresh_pod.sh` for real** (Todd §8): the empirical
     run used a hand-written manifest. Prove the workflow, not just
-    the reasoning.
+    the reasoning. Script updated 2026-08-21 with `--digest`,
+    `--prefer-node`, `--pvc`, and `--image-pull-secret` flags — the
+    real invocation is still owed.
 
 ## Bottom-line answer
 

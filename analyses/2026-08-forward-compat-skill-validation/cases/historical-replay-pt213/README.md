@@ -105,11 +105,72 @@ Documents accepted as partial-credit success:
   It exists as the ground-truth comparison for scoring.
 - `failures/` — will be populated during the run.
 
-## Executing this replay
+## Executing this replay — session 2026-08-21 findings
 
-Deferred from this session. The replay itself is a multi-hour pod
-run and needs the F1 pipeline defect fix and F3 patch applied first,
-plus a Spyre-capable pod with an aminmax test-suite check.
+Attempted the replay execution on the existing dev pod. Two
+forward-compat gaps blocked reaching the aminmax semantic test.
+Both were correctly categorised by the skill without any spurious
+patching.
 
-Prerequisites tracked at Task #35. The scaffolding, ground-truth
-extract, and scoring rubric are the delivered artifacts here.
+**F4 — SUBSTRATE_FAILURE.** Building `torch-spyre@dd95ef44` on the
+current `torch-aiu-runtime-dev:latest` image fails because the
+image's deeptools headers were reorganised between July 2026 and
+August 2026 (torch-spyre commit `bf1ddc05e`). Cherry-picking
+`bf1ddc05e` onto `dd95ef44` produces a substrate-alignable tree
+(`dd95ef44 + bf1ddc05e = 3b49fbe` locally on-pod). Details in
+`F4-substrate-drift.md`.
+
+**Baseline result after F4 fix:** torch-spyre@`3b49fbe` builds and
+imports cleanly against torch 2.12.1+cpu.
+`torch.spyre.device_count() == 1`, eager works. This is the correct
+green baseline. rc=0.
+
+**F5 — TORCH_SPYRE_BUILD_API_BREAK.** Building the same
+`3b49fbe` against torch 2.13.0+cpu fails with
+`ccache: error: Could not find compiler "-MMD" in PATH` across all
+15 translation units. torch 2.13 changed its cpp_extension
+build-line generation in a way that breaks torch-spyre@dd95ef44's
+ccache invocation. Details in `F5-forward-compile-break-blocks-replay.md`.
+
+**Historical replay execution deferred at F5.** Reaching the
+aminmax semantic break requires a *second* cherry-pick — the
+build-integration hunks from `754839cc8` that make torch-spyre
+build against 2.13 (separated from the LX-fix hunks the replay
+is actually testing for). That's a v0.2 escalation.
+
+## What the replay ALREADY validated about the skill
+
+Even without reaching the LX aminmax break, this partial run
+demonstrated the skill's key properties:
+
+- **Substrate failure was classified before any code touch.** The
+  initial build failure could easily have been misdiagnosed as a
+  torch-spyre-dd95ef44 bug or a stale-torch-pin issue. The taxonomy
+  correctly identified it as `SUBSTRATE_FAILURE` and the response
+  was to align the substrate, not to patch torch-spyre.
+- **Post-alignment failure was categorised as its own finding.**
+  F5 is not conflated with F4 (or with the yet-unseen LX break).
+  Two distinct findings, two distinct root causes.
+- **The three-state contract discriminated correctly.** Baseline
+  (2.12) is green after F4 alignment; forward (2.13) fails. That's
+  the correct discriminator for a forward-compat investigation.
+- **No preemptive torch-spyre patches were applied.** Rule zero
+  ("classify before editing") held. The skill did not "fix" a
+  substrate failure by patching torch-spyre source, and did not
+  "fix" a build-time break by patching what would have been the
+  wrong file.
+
+## What the replay did NOT yet validate
+
+- Independent rediscovery of the LX producer/consumer semantic
+  break (blocked by F5).
+- The skill's ability to derive the `754839cc8` scheduler.py fix
+  from first principles.
+- Dual-version verification (fix passes on both 2.12 and 2.13).
+- Fresh-pod reproduction with the recorded patch series.
+
+These are v0.2 work — deferred but not lost.
+
+Prerequisites tracked at Task #35. Ground-truth extract at
+`expected-fix.patch`, scoring rubric above, and the substrate-and-
+build alignment work-list is now concrete.
