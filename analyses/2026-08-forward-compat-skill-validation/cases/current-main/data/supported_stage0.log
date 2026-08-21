@@ -1,0 +1,31 @@
+torch_spyre backend autoload failed; underlying error follows:
+Traceback (most recent call last):
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/__init__.py", line 263, in _autoload
+    _autoload_impl()
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/__init__.py", line 291, in _autoload_impl
+    import torch_spyre.ops.eager  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/ops/eager.py", line 16, in <module>
+    from torch_spyre._C import fill_tensor, copy_tensor, SpyreTensorLayout
+ImportError: /home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/_C.so: undefined symbol: _ZNK4c10d7Backend15incref_pyobjectEv
+Traceback (most recent call last):
+  File "/home/tdeshane/forward-compat-2026-08-21/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3032, in _import_device_backends
+    entrypoint()
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/__init__.py", line 263, in _autoload
+    _autoload_impl()
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/__init__.py", line 291, in _autoload_impl
+    import torch_spyre.ops.eager  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/ops/eager.py", line 16, in <module>
+    from torch_spyre._C import fill_tensor, copy_tensor, SpyreTensorLayout
+ImportError: /home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/_C.so: undefined symbol: _ZNK4c10d7Backend15incref_pyobjectEv
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/tdeshane/forward-compat-2026-08-21/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3077, in <module>
+    _import_device_backends()
+  File "/home/tdeshane/forward-compat-2026-08-21/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3034, in _import_device_backends
+    raise RuntimeError(
+RuntimeError: Failed to load the backend extension: torch_spyre. You can disable extension auto-loading with TORCH_DEVICE_BACKEND_AUTOLOAD=0.

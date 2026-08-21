@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-08-21T16:56:46.281390+00:00",
+  "pod": {
+    "hostname": "tdeshane-forward-compat-2026-08-21"
+  },
+  "python": {
+    "version": "3.12.13",
+    "executable": "/usr/bin/python3"
+  },
+  "toolchain": {
+    "gcc": "gcc (GCC) 14.3.1 20251022 (Red Hat 14.3.1-4)",
+    "cxx_gcc_toolset": null,
+    "cmake": null,
+    "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
+    "ccache": "ccache version 4.11.3"
+  },
+  "image_paths": {
+    "sentient_runtime": true,
+    "sentient_deeptools": true
+  },
+  "system_torch": {
+    "error": "ModuleNotFoundError(\"No module named 'torch'\")"
+  },
+  "system_torch_spyre_present": false,
+  "user_site_stale_torch_spyre_pth": true,
+  "env_vars": {
+    "AIU_TIER_1_SET_0_SIZE": "1",
+    "DEEPTOOLS_PATH": "/opt/ibm/spyre/deeptools/share",
+    "PYTHONNOUSERSITE": "1",
+    "FLEX_COMPUTE": "SENTIENT",
+    "AIU_SETUP_MULTI_AIU": "1",
+    "SEN_PROJECT_PACKAGE": "/project_package",
+    "FLEX_DEVICE": "PF",
+    "AIU_TOPO_FILE": "/etc/ibm/spyre/topo.json",
+    "AIU_WORLD_RANK_0": "0000:1e:00.0",
+    "AIU_ENV_FILE": "/tmp/etc/ibm/spyre/aiu_env.sh",
+    "AIU_TIER_0_NUM_SETS": "1",
+    "DEEPTOOLS_INSTALL_DIR": "/opt/ibm/spyre/deeptools",
+    "TORCH_DEVICE_BACKEND_AUTOLOAD": "0",
+    "AIU_AUTOGEN_SENLIB_CONFIG_FILE": "/tmp/etc/ibm/spyre/senlib_config-autogen.json",
+    "SENTIENT_BASE_INSTALL_DIR": "/opt/ibm/spyre",
+    "AIU_TIER_0_SET_0_RANK_0": "0000:1e:00.0",
+    "AIU_TIER_1_NUM_SETS": "1",
+    "SENDNN_DIR": "/opt/ibm/spyre/runtime",
+    "SENDNN_INSTALL_DIR": "/opt/ibm/spyre/runtime",
+    "SEN_COMMON_HEADERS": "/opt/ibm/spyre/runtime/include",
+    "AIU_WORLD_SIZE": "1",
+    "AIU_TIER_1_SET_0_RANK_0": "0000:1e:00.0",
+    "AIU_TIER_0_SET_0_SIZE": "1"
+  }
+}

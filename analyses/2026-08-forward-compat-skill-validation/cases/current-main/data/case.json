@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "torch_spyre": {
+    "sha": "a31289852145a59099edccc3e506cf5336e8e2e0",
+    "branch": "main"
+  },
+  "pytorch_forward": {},
+  "declared_torch_pin": "torch~=2.13.0",
+  "substrate": {
+    "pod": {
+      "hostname": "tdeshane-forward-compat-2026-08-21"
+    },
+    "python": {
+      "version": "3.12.13",
+      "executable": "/usr/bin/python3"
+    },
+    "toolchain": {
+      "gcc": "gcc (GCC) 14.3.1 20251022 (Red Hat 14.3.1-4)",
+      "cxx_gcc_toolset": null,
+      "cmake": null,
+      "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
+      "ccache": "ccache version 4.11.3"
+    },
+    "image_paths": {
+      "sentient_runtime": true,
+      "sentient_deeptools": true
+    },
+    "system_torch": {
+      "error": "ModuleNotFoundError(\"No module named 'torch'\")"
+    },
+    "user_site_stale_torch_spyre_pth": true
+  },
+  "supported_control": {
+    "label": "supported",
+    "stage0": 1,
+    "stage1": 139,
+    "stage2": 1
+  },
+  "forward_before_fix": {
+    "label": "forward",
+    "stage0": 0,
+    "stage1": 139,
+    "stage2": 0
+  },
+  "failures": [],
+  "final_status": "OBSERVATION_ONLY_PATCHES_PENDING"
+}

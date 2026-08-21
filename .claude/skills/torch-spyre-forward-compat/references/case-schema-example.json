@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "case_id": "2026-08-21-fresh-pod-upstream-main-EXAMPLE",
+  "generated_at": "2026-08-21T14:00:00Z",
+  "operator": "Todd Deshane",
+
+  "torch_spyre": {
+    "sha": "a31289852145a59099edccc3e506cf5336e8e2e0",
+    "short_sha": "a3128985",
+    "branch": "main",
+    "declared_torch_spec": "torch~=2.13.0",
+    "pyproject_line": 42
+  },
+
+  "pytorch": {
+    "mode": "EXACT_UPSTREAM_MAIN",
+    "sha": "73961011bf64f1c04b3291bf90ac1dbbe197c2ca",
+    "version_string": "2.14.0a0+git7396101",
+    "install_source": "built-from-source at pytorch/pytorch@73961011"
+  },
+
+  "substrate": {
+    "kind": "fresh_pod",
+    "pod_name": "tdeshane-forward-compat-2026-08-21",
+    "namespace": "a5-deepview",
+    "base_image": "us.icr.io/wxpe-cicd-internal/amd64/torch-aiu-runtime-dev:latest",
+    "base_image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "python_version": "3.11.9",
+    "cpu_arch": "amd64",
+    "notes": "SYNTHETIC EXAMPLE. Digest above is a placeholder; a real case records the actual digest captured at pod-creation time."
+  },
+
+  "control_result": {
+    "status": "PASS",
+    "torch_version": "2.13.0",
+    "torch_sha": "0000000000000000000000000000000000000000",
+    "sentinels_run": [
+      "import_torch_spyre",
+      "sentinel_matmul_small",
+      "sentinel_attention_prefill"
+    ],
+    "notes": "SYNTHETIC. Control on declared-supported torch 2.13.0 clean; substrate healthy."
+  },
+
+  "forward_result_before_fix": {
+    "status": "FAIL",
+    "failing_stage": "import",
+    "first_traceback_head": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \".../torch_spyre/__init__.py\", line 17, in <module>\n    from torch.library import _register_fake\nImportError: cannot import name '_register_fake' from 'torch.library'\n(SYNTHETIC EXAMPLE traceback)",
+    "sentinels_pass": [],
+    "sentinels_fail": [
+      "import_torch_spyre",
+      "sentinel_matmul_small",
+      "sentinel_attention_prefill"
+    ]
+  },
+
+  "failures": [
+    {
+      "failure_id": "F1-torch_library-private-import",
+      "classification": "REMOVED_PRIVATE_API",
+      "torch_spyre_citation": "torch-spyre@a3128985:torch_spyre/__init__.py:17",
+      "pytorch_citation": "https://github.com/pytorch/pytorch/blob/73961011bf64f1c04b3291bf90ac1dbbe197c2ca/torch/library.py#L1",
+      "pytorch_change_pr": "pytorch/pytorch#999001",
+      "summary": "SYNTHETIC: torch-spyre imports the underscore-prefixed torch.library._register_fake, which was removed in favor of the public torch.library.register_fake.",
+      "detected_via": "import",
+      "traceback_excerpt": "ImportError: cannot import name '_register_fake' from 'torch.library'",
+      "fix": {
+        "strategy": "DUAL_COMPAT_SHIM",
+        "patch_ref": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/patch-01-register-fake-shim.diff",
+        "verifies_declared_supported": true,
+        "verifies_forward": true,
+        "notes": "SYNTHETIC. Shim tries public name first, falls back to underscore name on older torch. Passes on both 2.13.0 and 2.14.0a0."
+      }
+    },
+    {
+      "failure_id": "F2-dispatcher-key-cpu-autograd",
+      "classification": "DISPATCHER_KEY_CHANGE",
+      "torch_spyre_citation": "torch-spyre@a3128985:torch_spyre/ops/registrations.py:88",
+      "pytorch_citation": "https://github.com/pytorch/pytorch/blob/73961011bf64f1c04b3291bf90ac1dbbe197c2ca/aten/src/ATen/core/dispatch/DispatchKey.h#L1",
+      "summary": "SYNTHETIC: dispatcher key 'CPU' registration path no longer implies AutogradCPU fallthrough; explicit AutogradCPU registration now required.",
+      "detected_via": "sentinel_run",
+      "traceback_excerpt": "RuntimeError: Could not run 'torch_spyre::sentinel_matmul' with arguments from the 'AutogradCPU' backend. (SYNTHETIC)",
+      "fix": {
+        "strategy": "VERSION_GUARD",
+        "patch_ref": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/patch-02-autograd-cpu-guard.diff",
+        "verifies_declared_supported": true,
+        "verifies_forward": true,
+        "notes": "SYNTHETIC. Guarded on torch.__version__ >= 2.14."
+      }
+    }
+  ],
+
+  "forward_result_after_fix": {
+    "status": "PASS",
+    "sentinels_pass": [
+      "import_torch_spyre",
+      "sentinel_matmul_small",
+      "sentinel_attention_prefill"
+    ],
+    "sentinels_fail": [],
+    "notes": "SYNTHETIC. Rerun with both patches applied is green on both control and forward torch."
+  },
+
+  "final_status": "ALL_FIXED_DUAL_COMPAT",
+  "supported_version_regression": false,
+
+  "artifacts": {
+    "control_log_path": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/logs/control-torch-2.13.0.log",
+    "forward_log_before_fix_path": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/logs/forward-before-fix.log",
+    "forward_log_after_fix_path": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/logs/forward-after-fix.log",
+    "diff_path": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/patches/combined.diff",
+    "environment_capture_path": "cases/2026-08-21-fresh-pod-upstream-main-EXAMPLE/env/pip-freeze-and-torch-config.txt"
+  },
+
+  "notes": "SYNTHETIC EXAMPLE for schema illustration only. Failures, tracebacks, PR numbers, image digest, and pyproject line are invented. Do not treat any content of this file as ground truth about torch-spyre or pytorch."
+}

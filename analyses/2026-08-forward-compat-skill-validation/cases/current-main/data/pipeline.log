@@ -1,0 +1,66 @@
+[2026-08-21T16:56:46Z] canonical dev-flow pipeline start
+[2026-08-21T16:56:46Z] TS_SHA=a31289852145a59099edccc3e506cf5336e8e2e0 OUT=/home/tdeshane/forward-compat-2026-08-21 PYTHONNOUSERSITE=1
+[2026-08-21T16:56:46Z] STEP 0: substrate sanity
+[2026-08-21T16:56:46Z]   using system c++ (ccache-wrapped via /usr/lib64/ccache): /usr/lib64/ccache/c++, c++ (GCC) 14.3.1 20251022 (Red Hat 14.3.1-4)
+[2026-08-21T16:56:46Z]   OK: /opt/sentient
+[2026-08-21T16:56:46Z]   OK: /opt/sentient/runtime
+[2026-08-21T16:56:46Z]   OK: /opt/sentient/deeptools
+[2026-08-21T16:56:46Z]   system torch (pre-venv, autoload disabled):
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'torch'
+[2026-08-21T16:56:46Z] STEP 1: capture environment.json
+[2026-08-21T16:56:46Z] STEP 2: resolve live SHAs
+[2026-08-21T16:56:48Z] STEP 3: fetch torch-spyre@a312898521
+a312898 Assign DL16_TO_FP32 for bf16->fp32 cast (#2892)
+[2026-08-21T16:57:12Z]   declared torch pin: torch~=2.13.0
+[2026-08-21T16:57:12Z] STEP 5: create .venv-supported, install torch torch~=2.13.0
+[2026-08-21T16:57:46Z]   installing declared torch: torch~=2.13.0
+[2026-08-21T17:06:38Z]   installed torch: /home/tdeshane/forward-compat-2026-08-21/.venv-supported/lib64/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+2.13.0+cpu
+[2026-08-21T17:06:38Z] STEP 5b: canonical build torch-spyre against SUPPORTED torch
+[2026-08-21T17:09:26Z]   supported build rc=0
+[2026-08-21T17:09:26Z] STEP 6: create .venv-latest, install torch nightly (CPU)
+[2026-08-21T17:12:12Z]   installed nightly torch: /home/tdeshane/forward-compat-2026-08-21/.venv-latest/lib64/python3.12/site-packages/torch/_subclasses/functional_tensor.py:376: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+2.15.0.dev20260821+cpu (git=/home/tdeshane/forward-compat-2026-08-21/.venv-latest/lib64/python3.12/site-packages/torch/_subclasses/functional_tensor.py:376: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+cef373b344057d8ed91bcf05d7921b2ca1d0d13c)
+[2026-08-21T17:12:12Z] STEP 6b: canonical build torch-spyre against NIGHTLY torch
+[2026-08-21T17:16:06Z]   latest build rc=0
+[2026-08-21T17:16:06Z] STEP 7a: SUPPORTED_CONTROL ladder
+supported stage0 rc=1
+supported stage1 rc=139
+supported stage2 rc=1
+[2026-08-21T17:16:15Z] STEP 7b: FORWARD_NIGHTLY ladder
+forward stage0 rc=0
+forward stage1 rc=139
+forward stage2 rc=0
+[2026-08-21T17:17:04Z] STEP 8: emit case.json
+[2026-08-21T17:17:04Z] pipeline done
+total 256
+drwxr-xr-x.  5 tdeshane root   4096 Aug 21 17:17 .
+drwxr-xr-x. 33 tdeshane root   4096 Aug 21 16:56 ..
+drwxr-xr-x.  6 tdeshane root   4096 Aug 21 17:09 .venv-latest
+drwxr-xr-x.  6 tdeshane root   4096 Aug 21 16:58 .venv-supported
+-rw-r--r--.  1 tdeshane root 104914 Aug 21 17:16 build_latest.log
+-rw-r--r--.  1 tdeshane root 108001 Aug 21 17:09 build_supported.log
+-rw-r--r--.  1 tdeshane root   1131 Aug 21 17:17 case.json
+-rw-r--r--.  1 tdeshane root     14 Aug 21 16:57 declared_torch.txt
+-rw-r--r--.  1 tdeshane root   1732 Aug 21 16:56 environment.json
+-rw-r--r--.  1 tdeshane root     55 Aug 21 17:17 forward_ladder.json
+-rw-r--r--.  1 tdeshane root    230 Aug 21 17:16 forward_stage0.log
+-rw-r--r--.  1 tdeshane root  11043 Aug 21 17:16 forward_stage1.log
+-rw-r--r--.  1 tdeshane root     36 Aug 21 17:17 forward_stage2.log
+-rw-r--r--.  1 tdeshane root      0 Aug 21 16:57 git.log
+-rw-r--r--.  1 tdeshane root   3019 Aug 21 17:17 pipeline.log
+-rw-r--r--.  1 tdeshane root      0 Aug 21 17:12 pytorch_selection.json
+-rw-r--r--.  1 tdeshane root      0 Aug 21 17:09 setup_latest.log
+-rw-r--r--.  1 tdeshane root      0 Aug 21 16:57 setup_supported.log
+-rw-r--r--.  1 tdeshane root     57 Aug 21 17:16 supported_ladder.json
+-rw-r--r--.  1 tdeshane root   2237 Aug 21 17:16 supported_stage0.log
+-rw-r--r--.  1 tdeshane root  11127 Aug 21 17:16 supported_stage1.log
+-rw-r--r--.  1 tdeshane root   2237 Aug 21 17:16 supported_stage2.log
+drwxr-xr-x. 11 tdeshane root   4096 Aug 21 17:09 torch-spyre
+-rw-r--r--.  1 tdeshane root    486 Aug 21 16:56 versions.json

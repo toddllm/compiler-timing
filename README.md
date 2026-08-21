@@ -77,6 +77,38 @@ scores its triage accuracy, prediction calibration, and device-time
 efficiency. Start with
 [`SUMMARY.md`](analyses/2026-08-frontend-impact-skill-validation/SUMMARY.md).
 
+## Torch-spyre forward-compat skill (v0.1)
+
+The repository also ships a separate Claude Code skill at
+[`.claude/skills/torch-spyre-forward-compat/`](.claude/skills/torch-spyre-forward-compat/)
+for a different question: *does torch-spyre still build and import
+against a forward (newer) PyTorch main than the version it currently
+pins, and if not, what breaks, why, and what is the minimum patch?*
+
+**What it does**: on a fresh Spyre-capable pod, runs a three-state
+protocol (`SUPPORTED_CONTROL` → `FORWARD_BEFORE_FIX` →
+`FORWARD_AFTER_FIX`) through a six-stage validation ladder, categorises
+any failure via a compatibility-focused taxonomy, and produces a
+hypothesis-first minimum patch when the failure is attributable to
+torch-spyre. Deliberately distinct from `frontend-compiler-impact`:
+that skill measures compile-time impact of torch-spyre PRs; this one
+measures torch-spyre's own compatibility posture with respect to
+upstream PyTorch.
+
+**How to invoke**: see
+[`SKILL.md`](.claude/skills/torch-spyre-forward-compat/SKILL.md).
+
+**Empirical validation (v0.1, first case)**:
+[`analyses/2026-08-forward-compat-skill-validation/`](analyses/2026-08-forward-compat-skill-validation/)
+ran the skill against torch-spyre@a3128985 + torch nightly on a fresh
+pod on 2026-08-21. The first case surfaced two real findings: (F1) a
+`C_EXTENSION_ABI_BREAK` where the pyproject-declared torch pin does
+not exhibit the symbols torch-spyre's `_C.so` actually requires, and
+(F3) a Stage 1 harness double-registration bug in the skill itself.
+See
+[`SUMMARY.md`](analyses/2026-08-forward-compat-skill-validation/SUMMARY.md)
+for the full narrative and the v0.2 backlog.
+
 ## Layout of a study directory
 
 ```

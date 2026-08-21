@@ -1,0 +1,5 @@
+torch.__version__ = 2.15.0.dev20260821+cpu
+git_version = cef373b344057d8ed91bcf05d7921b2ca1d0d13c
+torch_spyre = ? /home/tdeshane/forward-compat-2026-08-21/torch-spyre/torch_spyre/__init__.py
+spyre.device_count = 1
+eager tensor: 6

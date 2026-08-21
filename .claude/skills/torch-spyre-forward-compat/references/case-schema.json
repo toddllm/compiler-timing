@@ -1,0 +1,329 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "torch-spyre-forward-compat case record",
+  "description": "Machine-readable record of one forward-compatibility empirical case: torch-spyre@<sha> exercised against a specific pytorch build (upstream main / nightly-proxy / declared-supported-version) on a specific substrate, with any resulting incompatibilities classified, patched, and re-verified. One JSON file per case. See SKILL.md §12 for prose framing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_id",
+    "generated_at",
+    "torch_spyre",
+    "pytorch",
+    "substrate",
+    "control_result",
+    "forward_result_before_fix",
+    "failures",
+    "final_status",
+    "supported_version_regression"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Bump only on breaking changes; add fields non-breakingly."
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Human-readable case slug, e.g. '2026-08-21-fresh-pod-upstream-main'. Unique within the skill's cases/ directory."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this record was finalized."
+    },
+    "operator": {
+      "type": "string",
+      "description": "Who ran the case (e.g. 'Todd Deshane'). Optional but recommended."
+    },
+
+    "torch_spyre": {
+      "type": "object",
+      "description": "The torch-spyre revision under test. Repo is PRIVATE; citation form elsewhere is torch-spyre@<short-sha>:<path>:<line>.",
+      "additionalProperties": false,
+      "required": ["sha", "declared_torch_spec"],
+      "properties": {
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-char commit SHA of torch-spyre main (or branch) exercised in this case."
+        },
+        "short_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,12}$",
+          "description": "Convenience short SHA for prose citation."
+        },
+        "branch": {
+          "type": "string",
+          "description": "Branch or ref name (e.g. 'main')."
+        },
+        "declared_torch_spec": {
+          "type": "string",
+          "description": "The torch version specifier as read from pyproject.toml at this SHA (e.g. 'torch~=2.13.0'). MUST be re-read from the repo at runtime, not hard-coded in scripts."
+        },
+        "pyproject_line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-indexed line number in pyproject.toml where declared_torch_spec was read."
+        }
+      }
+    },
+
+    "pytorch": {
+      "type": "object",
+      "description": "The PyTorch build the case was exercised against. Repo is PUBLIC; citation form is https://github.com/pytorch/pytorch/blob/<sha>/<path>#L<line>.",
+      "additionalProperties": false,
+      "required": ["mode", "sha", "version_string"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "EXACT_UPSTREAM_MAIN",
+            "NIGHTLY_PROXY",
+            "DECLARED_SUPPORTED_VERSION"
+          ],
+          "description": "Which forward-compat probe this case represents. EXACT_UPSTREAM_MAIN: pytorch built from a specific main SHA (highest signal). NIGHTLY_PROXY: an official nightly wheel whose SHA we resolved (proxy for main). DECLARED_SUPPORTED_VERSION: the version torch-spyre's pyproject.toml declares (control baseline)."
+        },
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-char pytorch/pytorch commit SHA the wheel or source build corresponds to. For DECLARED_SUPPORTED_VERSION this is the tagged release commit."
+        },
+        "version_string": {
+          "type": "string",
+          "description": "Value of torch.__version__ inside the environment (e.g. '2.13.0', '2.14.0.dev20260820+cpu', '2.14.0a0+git7396101')."
+        },
+        "nightly_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Only meaningful when mode == NIGHTLY_PROXY. The dev date embedded in the wheel version."
+        },
+        "install_source": {
+          "type": "string",
+          "description": "How torch was installed (e.g. 'pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu', 'built-from-source', 'pip install torch==2.13.0')."
+        }
+      }
+    },
+
+    "substrate": {
+      "type": "object",
+      "description": "Where the case ran. Fresh pods are preferred; note any pre-existing state.",
+      "additionalProperties": false,
+      "required": ["kind", "base_image_digest"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["fresh_pod", "reused_pod", "local", "ci"],
+          "description": "fresh_pod = ImageStream-based dev pod created for this case only."
+        },
+        "pod_name": {
+          "type": "string",
+          "description": "e.g. 'tdeshane-forward-compat-2026-08-21'."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "e.g. 'a5-deepview'."
+        },
+        "base_image": {
+          "type": "string",
+          "description": "e.g. 'us.icr.io/wxpe-cicd-internal/amd64/torch-aiu-runtime-dev:latest'."
+        },
+        "base_image_digest": {
+          "type": "string",
+          "description": "Immutable image digest (sha256:...) captured at pod-creation time. Recording the digest, not just the tag, is required so the case is reproducible after ':latest' moves."
+        },
+        "python_version": {"type": "string"},
+        "cpu_arch": {"type": "string", "enum": ["amd64", "arm64", "other"]},
+        "notes": {"type": "string"}
+      }
+    },
+
+    "control_result": {
+      "type": "object",
+      "description": "Result of running torch-spyre against its DECLARED_SUPPORTED_VERSION on the same substrate. Establishes that the substrate itself is healthy before we ascribe any forward-run failure to forward-incompat.",
+      "additionalProperties": false,
+      "required": ["status", "torch_version"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "SKIPPED"],
+          "description": "PASS = import + sentinel workloads green on declared-supported torch. FAIL invalidates the case (substrate broken). SKIPPED only when explicitly justified."
+        },
+        "torch_version": {"type": "string"},
+        "torch_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "sentinels_run": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Named workloads that formed the control set."
+        },
+        "notes": {"type": "string"}
+      }
+    },
+
+    "forward_result_before_fix": {
+      "type": "object",
+      "description": "Result of running the same torch-spyre SHA against the forward pytorch (mode = EXACT_UPSTREAM_MAIN or NIGHTLY_PROXY) BEFORE any compatibility patches are applied. This is the raw empirical signal.",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "PARTIAL"],
+          "description": "PASS: no incompatibilities found (rare but real; final_status will be NO_INCOMPATIBILITIES). PARTIAL: some sentinels pass, some fail. FAIL: import or all sentinels fail."
+        },
+        "failing_stage": {
+          "type": "string",
+          "enum": ["import", "device_init", "compile", "execute", "numerics", "other"],
+          "description": "Earliest stage at which the forward run breaks."
+        },
+        "first_traceback_head": {
+          "type": "string",
+          "description": "First ~10 lines of the earliest traceback, verbatim. Long tracebacks belong in the case's raw-logs file, not this field."
+        },
+        "sentinels_pass": {"type": "array", "items": {"type": "string"}},
+        "sentinels_fail": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "failures": {
+      "type": "array",
+      "description": "One entry per distinct incompatibility surfaced (deduped). Empty array iff forward_result_before_fix.status == PASS. Order: earliest-observed first.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["failure_id", "classification", "torch_spyre_citation", "pytorch_citation", "summary"],
+        "properties": {
+          "failure_id": {
+            "type": "string",
+            "description": "Short slug unique within the case, e.g. 'F1-torch_library-signature'."
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "REMOVED_PRIVATE_API",
+              "RENAMED_PUBLIC_API",
+              "CHANGED_SIGNATURE",
+              "CHANGED_DEFAULT_BEHAVIOR",
+              "CHANGED_DTYPE_OR_LAYOUT_CONTRACT",
+              "REGISTRATION_MECHANISM_CHANGE",
+              "DISPATCHER_KEY_CHANGE",
+              "AUTOGRAD_FORMULA_CHANGE",
+              "DYNAMO_OR_FX_INTERNALS_CHANGE",
+              "CPP_ABI_OR_HEADER_CHANGE",
+              "BUILD_OR_PACKAGING_CHANGE",
+              "NUMERIC_TOLERANCE_DRIFT"
+            ],
+            "description": "Which of the 12 taxonomy categories this failure fits. Pick the earliest-applicable category (an ABI change surfacing as a signature mismatch is CPP_ABI_OR_HEADER_CHANGE, not CHANGED_SIGNATURE)."
+          },
+          "torch_spyre_citation": {
+            "type": "string",
+            "description": "Where torch-spyre touches the incompatibility. Format: 'torch-spyre@<short-sha>:<path>:<line>'."
+          },
+          "pytorch_citation": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where pytorch changed. Format: 'https://github.com/pytorch/pytorch/blob/<sha>/<path>#L<line>'."
+          },
+          "pytorch_change_pr": {
+            "type": "string",
+            "description": "Optional: PR or issue that introduced the change, e.g. 'pytorch/pytorch#123456'."
+          },
+          "summary": {
+            "type": "string",
+            "description": "One-sentence description of the incompatibility."
+          },
+          "detected_via": {
+            "type": "string",
+            "enum": ["import", "static_grep", "sentinel_run", "unit_test", "runtime_traceback", "other"]
+          },
+          "traceback_excerpt": {
+            "type": "string",
+            "description": "Verbatim excerpt (may be empty for import-time or static-grep detections)."
+          },
+          "fix": {
+            "type": "object",
+            "description": "The patch applied. Omit if not yet fixed (in which case final_status must be UNRESOLVED or PARTIAL_FIX).",
+            "additionalProperties": false,
+            "properties": {
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "DUAL_COMPAT_SHIM",
+                  "VERSION_GUARD",
+                  "PIN_BUMP",
+                  "REWRITE_AGAINST_NEW_API",
+                  "DROP_FEATURE",
+                  "UPSTREAM_REVERT_PROPOSED"
+                ],
+                "description": "DUAL_COMPAT_SHIM keeps declared-supported working; REWRITE_AGAINST_NEW_API breaks it (moves supported_version_regression toward true)."
+              },
+              "patch_ref": {
+                "type": "string",
+                "description": "e.g. branch name, PR URL, or path to the diff artifact under the case's dir."
+              },
+              "verifies_declared_supported": {
+                "type": "boolean",
+                "description": "True iff the fix keeps the DECLARED_SUPPORTED_VERSION control still passing."
+              },
+              "verifies_forward": {
+                "type": "boolean",
+                "description": "True iff the fix makes the forward pytorch run pass this failure."
+              },
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "forward_result_after_fix": {
+      "type": "object",
+      "description": "Rerun of forward pytorch AFTER all fixes are applied. Omit iff final_status == NO_INCOMPATIBILITIES or UNRESOLVED.",
+      "additionalProperties": false,
+      "properties": {
+        "status": {"type": "string", "enum": ["PASS", "FAIL", "PARTIAL"]},
+        "sentinels_pass": {"type": "array", "items": {"type": "string"}},
+        "sentinels_fail": {"type": "array", "items": {"type": "string"}},
+        "notes": {"type": "string"}
+      }
+    },
+
+    "final_status": {
+      "type": "string",
+      "enum": [
+        "NO_INCOMPATIBILITIES",
+        "ALL_FIXED_DUAL_COMPAT",
+        "ALL_FIXED_LATEST_ONLY",
+        "PARTIAL_FIX",
+        "UNRESOLVED"
+      ],
+      "description": "Case-level verdict. NO_INCOMPATIBILITIES: forward_result_before_fix.status == PASS. ALL_FIXED_DUAL_COMPAT: every failure has a fix and every fix.verifies_declared_supported == true. ALL_FIXED_LATEST_ONLY: every failure fixed but at least one fix broke the declared-supported version. PARTIAL_FIX: some failures fixed, others not. UNRESOLVED: no forward failures fixed."
+    },
+
+    "supported_version_regression": {
+      "type": "boolean",
+      "description": "True iff any applied fix breaks the DECLARED_SUPPORTED_VERSION control. Equivalent to (final_status == ALL_FIXED_LATEST_ONLY) OR (any failure.fix.verifies_declared_supported == false). MUST be explicit; do not infer at read time."
+    },
+
+    "artifacts": {
+      "type": "object",
+      "description": "Pointers to raw evidence stored alongside this record (relative paths under the case dir).",
+      "additionalProperties": false,
+      "properties": {
+        "control_log_path": {"type": "string"},
+        "forward_log_before_fix_path": {"type": "string"},
+        "forward_log_after_fix_path": {"type": "string"},
+        "diff_path": {"type": "string"},
+        "environment_capture_path": {
+          "type": "string",
+          "description": "pip freeze / uname / torch.__config__.show() dump."
+        }
+      }
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Free-form operator notes. Keep verbatim command output in artifacts, not here."
+    }
+  }
+}

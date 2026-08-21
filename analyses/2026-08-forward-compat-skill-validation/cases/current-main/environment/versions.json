@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-08-21T16:56:46.438981+00:00",
+  "torch_spyre": {
+    "repo": "torch-spyre/torch-spyre",
+    "branch": "main",
+    "sha_live": "a31289852145a59099edccc3e506cf5336e8e2e0",
+    "sha_used": "a31289852145a59099edccc3e506cf5336e8e2e0"
+  },
+  "pytorch": {
+    "repo": "pytorch/pytorch",
+    "branch": "main",
+    "sha_live": "74ba29a248dc9073e6d4d43bd9367d20552e5988",
+    "sha_recorded_at_start": "73961011bf64f1c04b3291bf90ac1dbbe197c2ca"
+  }
+}
