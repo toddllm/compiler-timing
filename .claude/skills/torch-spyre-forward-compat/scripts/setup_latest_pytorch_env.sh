@@ -256,7 +256,11 @@ run_nightly_proxy() {
     echo "#       index is known. The kernel/device path is exercised via" >> "$nightly_log"
     echo "#       torch-spyre's own _C.so build, not via the torch wheel." >> "$nightly_log"
 
-    if ! pip install --pre --quiet torch \
+    # --force-reinstall to defeat --system-site-packages's "already
+    # satisfied" trap: without it, pip sees system-site torch 2.11 and
+    # skips installing nightly into the venv, and every downstream
+    # `import torch` reads the OLD version. Same F5-family lesson.
+    if ! pip install --pre --quiet --force-reinstall --no-deps torch \
              --index-url https://download.pytorch.org/whl/nightly/cpu \
              >> "$nightly_log" 2>&1; then
         echo "FATAL: torch nightly install failed; see $nightly_log" >&2
