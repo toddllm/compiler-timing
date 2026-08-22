@@ -1,0 +1,6 @@
+# torch nightly install (2026-08-22T06:06:02Z)
+# NOTE: using CPU nightly index — no Spyre-specific torch nightly
+#       index is known. The kernel/device path is exercised via
+#       torch-spyre's own _C.so build, not via the torch wheel.
+torch.__version__ = 2.15.0.dev20260821+cpu
+torch.version.git_version = cef373b344057d8ed91bcf05d7921b2ca1d0d13c
