@@ -1,25 +1,48 @@
 ---
 name: torch-spyre-forward-compat
-description: "Answer the empirical question of whether torch-spyre still builds and imports against a forward (newer) PyTorch main than the version torch-spyre currently pins, driving a fresh Spyre pod through a staged validation ladder — install → import → device presence → op registration → one small compile — and treating every deviation from a supported-torch control as a distinct, hypothesis-first case. Use when the user asks 'does torch-spyre work on pytorch main?', 'what breaks when we bump torch?', 'can we get ahead of the next torch bump?', 'characterize torch-spyre-vs-pytorch-main breakage', or 'produce a forward-compat matrix'. This skill does NOT chase compile-time regressions (see frontend-compiler-impact for that) — it answers the prior question of whether the stack survives the forward step at all."
-version: 0.1.0
+description: "Answer the empirical question of whether torch-spyre still builds and imports against a forward (newer) PyTorch than the version torch-spyre currently pins, driving a fresh Spyre pod through a staged validation ladder — install → import → device presence → op registration → one small compile — and treating every deviation from a supported-torch control as a distinct, hypothesis-first case. Use when the user asks 'does torch-spyre work on pytorch main?', 'what breaks when we bump torch?', 'can we get ahead of the next torch bump?', 'characterize torch-spyre-vs-pytorch-main breakage', or 'produce a forward-compat matrix'. This skill does NOT chase compile-time regressions (see frontend-compiler-impact for that) — it answers the prior question of whether the stack survives the forward step at all."
+version: 0.2.0
 ---
 
 # Torch-Spyre Forward-Compat Skill
 
-**Mission.** The prompt this skill answers is verbatim: *"Does
-torch-spyre still build and import against a forward (newer) PyTorch
-main than the version torch-spyre currently pins, and if not, what
-exactly breaks, why, and what is the minimum patch that unbreaks it?"*
-`frontend-compiler-impact` answers "did this torch-spyre change move
-compile time?" — assuming torch-spyre works. This skill answers the
-prior question: does torch-spyre work at all against a torch newer
-than the pinned range?
+**Mission.** *"Does torch-spyre still build and import against a
+forward (newer) PyTorch than the version torch-spyre currently pins,
+and if not, what exactly breaks, why, and what is the minimum patch
+that unbreaks it?"* `frontend-compiler-impact` answers "did this
+torch-spyre change move compile time?" — assuming torch-spyre works.
+This skill answers the prior question: does torch-spyre work at all
+against a torch newer than the pinned range?
 
 The primary output of a case is not a benchmark — it is a **case
-document** that records what torch we tried, what torch-spyre we
-tried, what supported-torch control we established, what broke first,
+document** that records what torch was tried, what torch-spyre was
+tried, what supported-torch control was established, what broke first,
 what the minimum hypothesis-first patch was, and where the next break
 would surface if the current break were papered over.
+
+## Status — v0.2 with two validated remediations
+
+- **F6** (`cases/historical-replay-pt213/`) — historical replay of the
+  torch 2.13 upgrade. The skill independently derived a
+  byte-identical fix for a real upstream C++ API break
+  (`c10::impl::PyObjectSlot::load_pyobj_interpreter` removed in torch
+  2.13; replaced with `c10::impl::getGlobalPyInterpreter()`). Verified
+  as `DUAL_COMPAT_FIX` — the same one-line change works cleanly on
+  both torch 2.12 and torch 2.13. See
+  `cases/historical-replay-pt213/F6-pyobj-slot-api-rename-independently-derived.md`.
+- **F3 live current-main** (`cases/live-current-main-F3/`) — the skill
+  diagnosed and fixed a **currently-live** re-entrancy bug in
+  `torch_spyre/__init__.py` at torch-spyre `main` (`8aba5bc...`, one
+  day old at time of run). All 7 import-matrix cases pass post-fix;
+  Stage 2 real `torch.compile(backend="inductor")` with Spyre-device
+  tensors produces correct output. See
+  `cases/live-current-main-F3/README.md`.
+
+Both cases followed rule zero (classify before editing), the
+hypothesis-first patch policy, and the three-state protocol. The
+skill has not yet reproduced a `SEMANTIC_COMPILER_BREAK` end-to-end
+(see F7 in the historical-replay case for the partial attempt and
+what a full reproduction would require).
 
 ## Distinct from `frontend-compiler-impact`
 
@@ -30,34 +53,43 @@ would surface if the current break were papered over.
 | target of change | a torch-spyre PR | a bumped pytorch commit |
 | primary artifact | `impact.json` + timing tables | `case.json` per break + patches |
 | device time | required at Level ≥1 | Stages 5-6 only |
-| verdict space | 7 timing verdicts | 6 failure categories + `NO_BREAK` |
+| verdict space | 7 timing verdicts | 12+ failure categories + `NO_BREAK` |
 
-The two skills will compose eventually — a torch bump that survives
-all six stages here becomes the input to a `frontend-compiler-impact`
-scaling comparison — but for v0.1 they are run independently. See the
-final section for the deferred integration.
+The two skills compose eventually — a torch bump that survives all
+six stages here becomes the input to a `frontend-compiler-impact`
+scaling comparison — but for v0.2 they are still run independently.
+See the final section for the deferred integration.
 
 ## Three-state control philosophy
 
 Every empirical case in this skill compares **three** builds, not two.
-Two builds cannot distinguish "torch-spyre is fundamentally broken" from
-"the newer torch broke it." Three builds can.
+Two builds cannot distinguish "torch-spyre is fundamentally broken"
+from "the newer torch broke it." Three builds can.
 
 ```
 SUPPORTED_CONTROL     — torch pinned per torch-spyre's pyproject.toml
                          (currently declares torch~=2.13.0; scripts
-                         re-read this at runtime, not hard-coded)
+                         re-read this at runtime, not hard-coded).
                          Must be GREEN through Stage 6 for the case
                          to have signal. If SUPPORTED_CONTROL is red,
-                         the pod or the pin itself is broken and the
-                         forward-compat question cannot be answered.
+                         the pod, the pin, or the pipeline itself is
+                         broken and the forward-compat question
+                         cannot be answered.
 
-FORWARD_BEFORE_FIX    — torch installed from pytorch main HEAD (e.g.
-                         73961011bf64f1c04b3291bf90ac1dbbe197c2ca as
-                         of 2026-08-21; scripts resolve HEAD at run
-                         time), torch-spyre UNPATCHED. This is the
-                         "does it break?" run and the honest baseline
-                         that later fixes are compared to.
+FORWARD_BEFORE_FIX    — forward torch, torch-spyre UNPATCHED. This is
+                         the "does it break?" run and the honest
+                         baseline that later fixes are compared to.
+                         Forward torch is one of two modes, recorded
+                         per-case:
+                           * EXACT_UPSTREAM_MAIN — torch built from a
+                             recorded pytorch main SHA (3h build; use
+                             when precision matters).
+                           * NIGHTLY_PROXY — torch from
+                             pytorch.org/whl/nightly at the run start.
+                             Records the embedded git SHA. Faster;
+                             used for the F6/F3 v0.2 runs. Both modes
+                             are legitimate; the mode is a required
+                             field in case.json.
 
 FORWARD_AFTER_FIX     — same forward torch, torch-spyre with the
                          minimum patch applied. This is the "did the
@@ -65,198 +97,204 @@ FORWARD_AFTER_FIX     — same forward torch, torch-spyre with the
 ```
 
 All three states are required. Without SUPPORTED_CONTROL, a Stage-N
-failure could be an environmental fluke (bad pod, missing NIXL, cache
-poisoning) rather than a forward-torch issue; green control rules
-that out. Without FORWARD_BEFORE_FIX, the FORWARD_AFTER_FIX result is
+failure could be an environmental fluke; green control rules that
+out. Without FORWARD_BEFORE_FIX, the FORWARD_AFTER_FIX result is
 unanchored — you cannot prove the patch was necessary if you never
-saw the unpatched break, and this is the most common shortcut the
-skill refuses. Without FORWARD_AFTER_FIX, a break is described but
-not addressed; the case is incomplete.
+saw the unpatched break. Without FORWARD_AFTER_FIX, a break is
+described but not addressed; the case is incomplete.
 
 The three states MUST use the same pod, same base image digest, and
 the same fresh `.venv`, differing only in (torch source, patched?).
-See `references/three-state-protocol.md`.
+See `references/environment-policy.md` for the enforcement details.
 
 ## Validation ladder — Stages 0-6
 
 Progression is ordered and terminates on the first stage that fails
 under FORWARD_BEFORE_FIX. Do not skip.
 
-- **Stage 0 — Environment capture.** Record pod name (e.g.
-  `tdeshane-forward-compat-2026-08-21`), namespace (`a5-deepview`),
-  base image digest (resolve `us.icr.io/wxpe-cicd-internal/amd64/
-  torch-aiu-runtime-dev:latest` to its immutable `@sha256:...` digest
-  at pod-creation time), kernel, glibc, python, pip, pytorch commit
-  SHA, torch-spyre commit SHA (currently `a3128985...` on main), the
-  `torch~=X.Y` declaration parsed from `pyproject.toml` at runtime
-  (never hard-coded), and NIXL plugin dir. Produces
-  `00-environment.json`. Runs for all three control states.
-
+- **Stage 0 — Environment capture.** Record pod name, namespace, base
+  image digest (resolve `us.icr.io/wxpe-cicd-internal/amd64/torch-aiu-runtime-dev:latest`
+  to its immutable `@sha256:...` digest at pod-creation time), kernel,
+  glibc, python, pip, pytorch commit SHA, torch-spyre commit SHA, and
+  the `torch~=X.Y` declaration parsed from `pyproject.toml` at
+  runtime (never hard-coded). Produces `00-environment.json`. Runs
+  for all three control states.
 - **Stage 1 — Torch install.** Under FORWARD state, install torch
-  from the current pytorch main HEAD. Success = `pip install` exits 0
-  AND `python -c 'import torch; print(torch.__version__,
-  torch.version.git_version)'` prints a version matching the requested
-  SHA. Failure taxonomy: `WHEEL_UNAVAILABLE`, `BUILD_FAILURE`,
-  `TORCH_ONLY_IMPORT_FAILURE`.
-
-- **Stage 2 — Torch-spyre install.** With forward torch already
-  present, run `pip install -e .` (or the equivalent editable install)
-  from the torch-spyre tree. Success = install exits 0. Common
-  failure: `PIN_CONFLICT` (pip refuses because torch-spyre's
-  `torch~=2.13.0` declaration excludes the forward wheel).
-
+  from the current pytorch main HEAD (EXACT_UPSTREAM_MAIN) or a
+  nightly wheel (NIGHTLY_PROXY). Success = `pip install` exits 0 AND
+  `import torch` prints a version matching the requested SHA.
+- **Stage 2 — Torch-spyre install.** With forward torch present,
+  build torch-spyre editable per `references/canonical-dev-flow.md`
+  (canonical form is `pip install -e . --no-deps
+  --no-build-isolation -vvv`).
 - **Stage 3 — Import.** `python -c 'import torch_spyre'` in a fresh
-  process. Success = exit 0 with no ImportError, no AttributeError, no
-  C-extension symbol errors. Failure categories: `PYTHON_API_BREAK`
-  (Python-level symbol torch removed/renamed),
-  `C_EXTENSION_ABI_BREAK` (`_C.so` cannot resolve a torch symbol),
-  `SIDE_EFFECT_BREAK` (something at import time — a decorator, a
-  registration call — raises).
-
+  process. Success = exit 0 with no ImportError, no AttributeError,
+  no C-extension symbol errors.
 - **Stage 4 — Device presence.** Verify the spyre device is
-  registered and enumerable — `torch.device('spyre')` constructs
-  without error and `torch_spyre` reports at least one device (or
-  reports the expected "no hardware present" state matching
-  SUPPORTED_CONTROL). This exercises the PrivateUse1 backend
-  registration path and catches a class of breaks that Stage 3 misses.
-
+  registered and enumerable — `torch.spyre.device_count()` returns a
+  non-negative int; `torch.tensor([1,2,3]).to("spyre").sum().item()`
+  succeeds.
 - **Stage 5 — Op registration / dispatcher sanity.** Enumerate the
-  ops that torch-spyre registers against the torch dispatcher and
-  verify they resolve. Do not compile anything yet; this stage is
-  cheap and separates dispatcher-level breaks from graph-level ones.
+  torch-spyre-registered ops and verify they resolve.
+- **Stage 6 — Smoke compile.** ONE small `torch.compile(...,
+  backend="inductor")` on the spyre device with a CPU correctness
+  oracle. This is the last stage and the only one that costs
+  meaningful device time. A green Stage 6 across SUPPORTED_CONTROL /
+  FORWARD_AFTER_FIX is the acceptance criterion for "forward-compat
+  restored for this bump."
 
-- **Stage 6 — Smoke compile.** ONE small `torch.compile(...)` of a
-  minimal function on the spyre device (or, if the pod has no
-  hardware, on CPU with the spyre backend selected as far as it can
-  be exercised). This is the last stage and the only one that costs
-  meaningful device time. A green Stage 6 across
-  SUPPORTED_CONTROL / FORWARD_AFTER_FIX is the acceptance criterion
-  for "forward-compat restored for this bump."
-
-At every stage: run under all three control states in order
-(SUPPORTED_CONTROL first, so a broken pod is caught before any
-forward-torch work); on failure DO NOT advance to the next stage
-under that control state (record the failure and enter the patching
-loop); record `stage_N.json` per state capturing exit code, stdout
-tail, stderr tail, traceback if any, and timing. Detailed stage
-recipes in `references/validation-ladder.md`.
+Detailed stage recipes in `references/validation-ladder.md`.
 
 ## Failure taxonomy
 
-See `references/failure-taxonomy.md` for the authoritative form
-(each category includes a diagnostic recipe and a canonical example).
-Summary:
+See `references/failure-taxonomy.md` for the authoritative list. v0.2
+expanded the taxonomy with categories learned from the v0.1 → v0.2
+transition:
 
-| category | stage that first surfaces it | example signature |
-|---|---|---|
-| `WHEEL_UNAVAILABLE` | 1 | no wheel for python/platform/CUDA combo at requested SHA |
-| `BUILD_FAILURE` | 1 | source build of torch main fails (usually C++ toolchain) |
-| `PIN_CONFLICT` | 2 | `torch-spyre` refuses to install because `torch~=2.13.0` excludes the forward version |
-| `PYTHON_API_BREAK` | 3 | `AttributeError`/`ImportError` on a torch Python symbol torch-spyre imports |
-| `C_EXTENSION_ABI_BREAK` | 3 | `_C.so` fails to resolve a torch C++ symbol (undefined symbol, ABI drift) |
-| `SIDE_EFFECT_BREAK` | 3 | import-time registration/decorator call raises against the newer torch |
-| `DEVICE_REGISTRATION_BREAK` | 4 | PrivateUse1 / backend registration API drift |
-| `DISPATCHER_BREAK` | 5 | op schema or dispatcher registration API changed |
-| `GRAPH_LEVEL_BREAK` | 6 | dynamo/inductor API drift; graph capture fails |
-| `NO_BREAK` | n/a | all six stages green under FORWARD_BEFORE_FIX; the case is "clean forward bump" |
+- **`PIPELINE_MISCONFIGURATION`** (from F5 retraction). When the
+  compile error involves an unusual toolchain invocation
+  (double-ccache, wrong-arg-to-compiler, missing include path),
+  suspect the pipeline env before suspecting torch. Diagnostic:
+  `env | grep -E "^(CXX|CC|CFLAGS)="` and inspect the actual
+  compile command line before assuming any torch-side responsibility.
+- **`REVERSE_ENTRYPOINT_HAZARD`** (from F3). A backend registered via
+  a `pyproject.toml` entry point can be invoked *while its own
+  `__init__.py` is still executing* — the resolving code path calls
+  `getattr(module, "_autoload")` before the module has finished
+  binding names. Diagnostic: run the 5-case import matrix in
+  `references/failure-taxonomy.md` under §REVERSE_ENTRYPOINT_HAZARD.
+- **`SEMANTIC_COMPILER_BREAK`** (from F7 attempt). A silent
+  wrong-output regression — code compiles and runs, but produces
+  incorrect values. Reproduction is harder than API breaks:
+  neutralising just the fix invocation may not be enough because
+  test-harness safeguards can mask the bad output. Full reproduction
+  requires a revert against the prior substrate.
+- **`PIPELINE_DEFECT`** (from F1). Two builds against different torch
+  versions cannot share a single torch-spyre source tree — editable
+  `.pth` installs point at the same on-disk `_C.so`, so the second
+  build overwrites the first and the first venv now points at a
+  wrong-torch-linked `_C.so`.
 
-`NO_BREAK` is a valid, valuable verdict — it means the current torch
-main is safe to point torch-spyre at with no code changes and only a
-pin bump.
+The `NO_BREAK` verdict remains valid and valuable — it means the
+current forward torch is safe to point torch-spyre at with only a pin
+bump.
 
 ## Patching policy
 
 Full policy in `references/patch-policy.md`. Non-negotiable rules:
 
-- **One break at a time.** When Stage N fails, patch ONLY that break.
-  Do not preemptively patch things you suspect might fail at Stage
-  N+1. Preemptive patches muddle attribution and make it impossible
-  to count how many independent breaks a torch bump introduces.
+- **One break at a time.** When Stage N fails, patch ONLY that
+  break. Do not preemptively patch things you suspect might fail at
+  Stage N+1.
 - **Hypothesis before fix.** Every patch is preceded by a written
-  hypothesis: "The break is X because Y; the minimum change is Z; I
-  expect Z to unblock Stage N and leave Stages N+1..6 untouched." The
-  hypothesis is written to the case document BEFORE the patch is
-  authored.
-- **Minimum patch.** Prefer a shim (`hasattr` fallback, try/except
-  import) over a rewrite. Prefer a rewrite of one call site over a
-  rewrite of a module. Never bundle unrelated cleanups into a
-  forward-compat patch.
-- **Revert-clean.** Every patch is applied to a clean checkout of
-  torch-spyre at the recorded SHA (`a31289985...` in the current
-  example), never onto a tree that already has unrelated changes.
-- **Cite verbatim.** Every claim about torch-spyre or pytorch source
-  cites the actual line. Torch-spyre is PRIVATE, so citations take
-  the form `torch-spyre@<short-sha>:<path>:<line>`. PyTorch is
-  public, so citations take the form
+  hypothesis in `NN-hypothesis.md`. The hypothesis names the
+  mechanism, the minimum change, and the expected outcome.
+- **Minimum patch.** Prefer a shim over a rewrite. Never bundle
+  unrelated cleanups into a forward-compat patch. For F3 the correct
+  form is the **defer-and-invoke-at-end** pattern: define the
+  entry-point target early so the early call succeeds cleanly (as a
+  no-op if state isn't ready), and invoke at the end of the module
+  once state is ready.
+- **Revert-clean.** Every patch is applied to a clean checkout at
+  the recorded SHA.
+- **Cite verbatim.** Torch-spyre is PRIVATE — citations take the
+  form `torch-spyre@<short-sha>:<path>:<line>`. PyTorch is public —
+  citations take the form
   `https://github.com/pytorch/pytorch/blob/<sha>/<path>#L<line>`.
 
 If a patch's FORWARD_AFTER_FIX run passes Stage N but reveals a
 DIFFERENT break at Stage N+1, that is a **new case**, not a
-continuation of the current one. Close the current case with the
-Stage-N patch as its remediation and open the next case for Stage
-N+1.
+continuation of the current one.
 
-## What NOT to do
+## Learned rules from v0.1 → v0.2
 
-The following are explicitly not acceptable as remediation, from the
-prompt:
+Codified from the F1/F3/F4/F5/F6/F7 investigation:
 
-- **Pinning around the break.** Editing torch-spyre's `pyproject.toml`
-  to declare `torch<2.14` so pip refuses the install is not a fix; it
-  is a re-statement of the pin and hides the question the skill
-  exists to answer.
-- **Skipping stages.** Jumping from Stage 3 to Stage 6 because "the
-  interesting break is at compile time" abandons the discipline; the
-  earlier stages are cheap and their state matters for attribution.
-- **Bundling patches.** One patch per break; never a forward-compat
-  patch alongside a refactor.
-- **Skipping FORWARD_BEFORE_FIX.** Going straight from
-  SUPPORTED_CONTROL to FORWARD_AFTER_FIX because "we know the patch
-  works" — the failure signature at FORWARD_BEFORE_FIX is the primary
-  evidence the case exists to record.
-- **Simulating on a stale pod.** Reusing a pod whose base image
-  digest predates the recorded environment, or whose `.venv` has been
-  mutated across cases. Every case gets a fresh `.venv`.
-- **Guessing torch's HEAD.** Every case resolves pytorch and
-  torch-spyre HEADs at runtime via `git ls-remote` and records the
-  resolved SHA. Never hard-code a SHA into a script.
-- **Declaring `NO_BREAK` from CI green.** `NO_BREAK` requires all six
-  stages green in this skill's ladder, on the recorded pod, with the
-  recorded environment. CI passing is not evidence.
+- **F1 — separate build trees per venv.** Editable installs and
+  shared source trees do not compose across two different torch
+  versions. The `setup_supported_env.sh` and
+  `setup_latest_pytorch_env.sh` scripts must produce independent
+  torch-spyre working trees, not two venvs pointing at one tree.
+  Details: `cases/current-main/failures/F1-*/03-root-cause.md`.
+- **F4 — substrate-fitness probe before Stage 0.** Before running the
+  ladder, confirm that the code under test can build against the
+  current substrate at its own declared torch pin. If it cannot, the
+  case is either a stale-substrate problem or a stale-code problem;
+  either way the ladder proper has no signal. Details:
+  `cases/historical-replay-pt213/F4-substrate-drift.md`.
+- **F5 — check `CXX`/`CC` before assuming torch break.** Toolchain
+  env vars from an outer shell can silently corrupt an inner build
+  (double-ccache is the concrete case; `CXX="ccache c++"` with
+  `/usr/lib64/ccache` already on `PATH` produces `ccache 'ccache c++'
+  -MMD`). Diagnostic: `env | grep -E "^(CXX|CC|CFLAGS)="` before
+  assuming any torch-side responsibility. Details:
+  `cases/historical-replay-pt213/F5-forward-compile-break-blocks-replay.md`.
+- **F6 — `nm -uD` symbol-vs-wheel cross-check.** When Stage 3 (import)
+  fails with an undefined symbol from `_C.so`, run `nm -uD` on the
+  built `.so` and cross-reference against the target libtorch. This
+  identifies whether the missing symbol is a torch internal that was
+  renamed. Then locate the replacement in the newer libtorch's
+  headers. Details:
+  `cases/historical-replay-pt213/F6-pyobj-slot-api-rename-independently-derived.md`.
+- **F3 — 5-case import matrix diagnostic.** For any suspected
+  `REVERSE_ENTRYPOINT_HAZARD`, run the canonical 5-case matrix (A:
+  `import torch`; B: `+ torch._inductor`; C: `import torch_spyre`
+  alone with autoload ON; D: `import torch_spyre` alone with autoload
+  OFF; E: `import torch; import torch_spyre`; F: `torch_spyre +
+  torch_spyre._inductor.lowering`; H: full canonical order). If C and
+  F fail while A/B/D/E/H pass, the diagnosis is confirmed. Details:
+  `cases/current-main/failures/F3-*/02-import-matrix.md` and
+  `cases/live-current-main-F3/README.md`.
 
 ## How to invoke — quick start
 
 Fresh compatibility experiment against current pytorch main and
 current torch-spyre main:
 
-```
-# 0. Environment capture (records pod, image digest, resolves both
-#    HEADs from GitHub, parses torch-spyre's pyproject.toml pin at
-#    runtime — nothing hard-coded).
-scripts/00_capture_env.sh tdeshane-forward-compat-2026-08-21 a5-deepview
+```bash
+# 0. Provision a fresh Spyre-capable pod. Resolves image :latest to
+#    an immutable @sha256:... digest and prints the recipe for exec.
+scripts/create_fresh_pod.sh tdeshane-forward-compat-YYYY-MM-DD a5-deepview
 
-# 1. Establish SUPPORTED_CONTROL at torch-spyre's declared pin.
-#    Must reach Stage 6 green or the experiment is void.
-scripts/01_run_supported_control.sh
+# 1. Capture environment (pod, image digest, kernel, python,
+#    toolchain). Also emits 00-environment.json.
+scripts/capture_environment.py > 00-environment.json
 
-# 2. FORWARD_BEFORE_FIX — reinstall torch from pytorch main HEAD,
-#    keep torch-spyre unpatched, walk the ladder until it breaks.
-scripts/02_run_forward_before_fix.sh
+# 2. Resolve pytorch main HEAD and torch-spyre main HEAD via
+#    git ls-remote — never hard-code SHAs.
+scripts/resolve_versions.sh > 01-versions.json
 
-# 3. Author the hypothesis-first patch under patches/case-NNNN/ and
-#    write the case document. (Manual — no script writes patches.)
+# 3. SUPPORTED_CONTROL — install torch at the pyproject-declared pin
+#    (currently torch~=2.13.0; script re-reads pyproject.toml at
+#    runtime). Build torch-spyre editable per canonical-dev-flow.md
+#    (--no-deps --no-build-isolation, CXX=c++ NOT "ccache c++").
+scripts/setup_supported_env.sh <torch-spyre-tree> <venv-dir>
 
-# 4. FORWARD_AFTER_FIX — patched torch-spyre against the same
-#    forward torch. Expected to advance at least one stage past
-#    the FORWARD_BEFORE_FIX break.
-scripts/03_run_forward_after_fix.sh patches/case-NNNN/
+# 4. FORWARD environment — same torch-spyre tree in a SEPARATE
+#    working directory (F1 rule), forward torch installed as
+#    NIGHTLY_PROXY or EXACT_UPSTREAM_MAIN.
+scripts/setup_latest_pytorch_env.sh <torch-spyre-tree-forward> <venv-latest> [--exact-main SHA]
 
-# 5. Emit machine-readable case record.
-scripts/04_emit_case_json.py cases/case-NNNN/ > cases/case-NNNN/case.json
+# 5. Run the compat smoke — walks Stages 0-6 under each control
+#    state, records per-stage results. Terminates on first
+#    FORWARD_BEFORE_FIX failure.
+scripts/run_compat_smoke.sh <case-dir>
+
+# 6. Author the hypothesis-first patch and record the case.
+#    First: NN-hypothesis.md (mechanism, minimum change, prediction).
+#    Then apply patch. Then re-run.
+scripts/record_failure.py --case-dir <case-dir> --stage N --category REVERSE_ENTRYPOINT_HAZARD
+
+# 7. Verify: rerun the ladder under FORWARD_AFTER_FIX. The verify
+#    script asserts the fix moves the ladder at least one stage past
+#    the FORWARD_BEFORE_FIX break, and that SUPPORTED_CONTROL is
+#    unaffected.
+scripts/verify_patch.sh <case-dir>
 ```
 
 Every script re-reads `torch-spyre/pyproject.toml` at runtime to
-recover the currently-declared torch pin. Do not hard-code the pin.
+recover the currently-declared torch pin. Do not hard-code the pin
+in scripts or cases.
 
 ## Machine-readable case format
 
@@ -266,47 +304,71 @@ image digest; pytorch and torch-spyre SHAs at the time of the case;
 the parsed pin from `pyproject.toml`; per-stage results under all
 three control states; the first-break stage under FORWARD_BEFORE_FIX
 and its failure-taxonomy category; the patch (or `null` if
-`NO_BREAK`); the FORWARD_AFTER_FIX outcome; and verbatim citations
-for every source claim. `case.json` is the durable artifact —
-Markdown case documents may paraphrase, but `case.json` is the
-primary record.
+`NO_BREAK`); the FORWARD_AFTER_FIX outcome; verbatim citations for
+every source claim; and the FORWARD torch mode (EXACT_UPSTREAM_MAIN or
+NIGHTLY_PROXY). See `references/case-schema-example.json` for a
+filled example.
 
-## Empirical validation
+## Empirical validation status — v0.2
 
-This skill is **v0.1** and its correctness has not yet been
-validated by a real case. The acceptance test is
-`analyses/2026-08-forward-compat-skill-validation/`, which drives
-one real compatibility experiment against pytorch main
-`7396101...` and torch-spyre main `a3128985...` end-to-end and
-checks whether all six stages are exercised in order under all
-three control states, the first FORWARD_BEFORE_FIX break is
-categorised via the taxonomy and cited to specific torch-spyre and
-pytorch lines, the hypothesis-first patching policy produces a
-small revert-clean patch (shim-first where possible),
-FORWARD_AFTER_FIX advances at least one stage past
-FORWARD_BEFORE_FIX, and `case.json` validates against
-`references/case-schema.json`. Failures encountered during the
-validation study drive the v0.2 revision. No claim in this
-SKILL.md should be read as validated until the validation study
-lands.
+Two full cases validated:
+
+**F6 — Historical replay of torch 2.13 upgrade**
+(`analyses/2026-08-forward-compat-skill-validation/cases/historical-replay-pt213/`)
+
+- Target: torch-spyre@`dd95ef44` (parent of the maintainer's 2.13 fix
+  `754839cc8`) forward-compat against torch 2.13.0+cpu.
+- Skill independently derived the exact one-line fix
+  (`pyobj_slot_.load_pyobj_interpreter()` →
+  `(*c10::impl::getGlobalPyInterpreter())`). Byte-identical to the
+  maintainer's fix.
+- Verified as `DUAL_COMPAT_FIX`: the same patch works cleanly on
+  torch 2.12.1+cpu and torch 2.13.0+cpu with no version-conditional
+  code needed.
+- Real Spyre `torch.compile(backend="inductor")`: pointwise 0.023,
+  reduction 0.031, aminmax 0.002 (all fp16-noise deltas).
+
+**F3 — Live current-main remediation**
+(`analyses/2026-08-forward-compat-skill-validation/cases/live-current-main-F3/`)
+
+- Target: torch-spyre@`8aba5bc` (Aug 2026 main tip) — a currently-live
+  bug, not a historical replay.
+- Skill diagnosed via 5-case import matrix; classified as
+  `REVERSE_ENTRYPOINT_HAZARD`; produced the defer-and-invoke-at-end
+  fix in `torch_spyre/__init__.py`.
+- Post-fix: 7/7 import-matrix cases pass; Stage 0 device enum
+  (`spyre.device_count() == 1`) works; Stage 2 real Spyre compile
+  produces correct output within fp16 tolerance.
+
+**Not yet validated in v0.2:**
+
+- End-to-end `SEMANTIC_COMPILER_BREAK` reproduction. F7 (LX aminmax
+  replay) attempted this and reached partial success — the exact
+  historical test collects and runs under `LX_PLANNING=1`, but
+  neutralising `align_lx_producer_loop_order` alone did not
+  reproduce wrong values on current main. See
+  `cases/historical-replay-pt213/F7-lx-aminmax-replay-attempt.md`.
+  Full reproduction is a v0.3 target.
+- Fresh-pod-only run using solely the skill scripts (no hand
+  intervention). The current cases used a mix of scripts and manual
+  steps.
 
 ## Future composition with `frontend-compiler-impact` (deferred)
 
-Once this skill produces a `NO_BREAK` verdict for a given
-(pytorch_sha, torch_spyre_sha) pair, that pair becomes a candidate
-input to `frontend-compiler-impact`: measure whether the forward
-torch bump moves compile time, using the same three-state
-philosophy adapted to timing (SUPPORTED_CONTROL / FORWARD (no
-change to torch-spyre) / FORWARD_WITH_TORCH_SPYRE_UPGRADE). The
-composed skill would answer both "does it work?" and "does it
-still perform?" in one workflow.
+Once this skill produces a `NO_BREAK` verdict — or a green
+`FORWARD_AFTER_FIX` — for a given (pytorch_sha, torch_spyre_sha)
+pair, that pair becomes a candidate input to
+`frontend-compiler-impact`: measure whether the forward torch bump
+moves compile time, using the same three-state philosophy adapted to
+timing (SUPPORTED_CONTROL / FORWARD (no torch-spyre change) /
+FORWARD_WITH_TORCH_SPYRE_UPGRADE). The composed skill would answer
+both "does it work?" and "does it still perform?" in one workflow.
 
-**For v0.1 this composition is NOT integrated.** The two skills are
-invoked independently. `case.json` from this skill will be
-readable by a future `frontend-compiler-impact` extension, but
-that extension is not written and no script in this skill imports
-from `frontend-compiler-impact`. Getting v0.1 correct in isolation
-matters more than a premature contract between the two.
+**For v0.2 this composition is NOT integrated.** The two skills are
+invoked independently. `case.json` from this skill will be readable
+by a future `frontend-compiler-impact` extension, but that extension
+is not written and no script in this skill imports from
+`frontend-compiler-impact`.
 
 ## Files under this skill
 
@@ -314,25 +376,33 @@ matters more than a premature contract between the two.
 .claude/skills/torch-spyre-forward-compat/
     SKILL.md                          — this file
     references/
-        three-state-protocol.md       — SUPPORTED / FORWARD_BEFORE /
-                                        FORWARD_AFTER discipline
         validation-ladder.md          — Stages 0-6 detailed recipes
-        failure-taxonomy.md           — categories, diagnostics
+        failure-taxonomy.md           — categories + diagnostic recipes
+                                        (includes v0.2 additions:
+                                        PIPELINE_MISCONFIGURATION,
+                                        REVERSE_ENTRYPOINT_HAZARD,
+                                        SEMANTIC_COMPILER_BREAK,
+                                        PIPELINE_DEFECT)
         patch-policy.md               — one-break, hypothesis-first,
                                         minimum-patch, revert-clean
+        environment-policy.md         — three-state enforcement
+        canonical-dev-flow.md         — torch-spyre install flow
+                                        (--no-deps --no-build-isolation,
+                                        CXX guidance, F5 rule)
+        upstream-investigation.md     — how to find upstream cause
+        verification-policy.md        — FORWARD_AFTER_FIX acceptance
         case-schema.json              — machine-readable case format
-        case-templates/               — per-stage case doc templates
+        case-schema-example.json      — filled example
     scripts/
-        00_capture_env.sh             — record pod, image digest,
-                                        resolve both HEADs, parse pin
-        01_run_supported_control.sh   — ladder under SUPPORTED_CONTROL
-        02_run_forward_before_fix.sh  — ladder under FORWARD_BEFORE_FIX
-        03_run_forward_after_fix.sh   — ladder under FORWARD_AFTER_FIX
-        04_emit_case_json.py          — assemble case.json
-        resolve_pytorch_head.sh       — git ls-remote pytorch main
-        resolve_torch_spyre_head.sh   — git ls-remote torch-spyre main
-        parse_torch_pin.py            — read pyproject.toml at runtime
-        ladder_runner.py              — Stage-0..6 harness
+        create_fresh_pod.sh           — provision Spyre-capable pod,
+                                        record image digest
+        capture_environment.py        — emit 00-environment.json
+        resolve_versions.sh           — git ls-remote pytorch + torch-spyre
+        setup_supported_env.sh        — SUPPORTED_CONTROL venv+build
+        setup_latest_pytorch_env.sh   — FORWARD venv+build (separate tree)
+        run_compat_smoke.sh           — Stages 0-6 harness
+        record_failure.py             — case scaffolding
+        verify_patch.sh               — FORWARD_AFTER_FIX acceptance
 ```
 
 ## What this skill is NOT
@@ -342,8 +412,9 @@ matters more than a premature contract between the two.
 - **Not a performance tool.** Stage 6 is a smoke compile, not a
   benchmark. Compile-time regression is `frontend-compiler-impact`.
 - **Not authoritative on pytorch internals.** When a failure
-  implicates a pytorch commit, the skill cites the commit and reports
-  the diagnosis; it does not propose changes to pytorch.
-- **Not a substitute for CI.** The skill runs one pod, one time, per
-  case. CI can and should run this ladder on schedule; this skill's
-  discipline is what a CI job should encode, not what it replaces.
+  implicates a pytorch commit, the skill cites the commit and
+  reports the diagnosis; it does not propose changes to pytorch.
+- **Not a substitute for CI.** The skill runs one pod, one time,
+  per case. CI can and should run this ladder on schedule; this
+  skill's discipline is what a CI job should encode, not what it
+  replaces.
