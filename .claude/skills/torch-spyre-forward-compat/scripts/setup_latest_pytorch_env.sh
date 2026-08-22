@@ -265,10 +265,17 @@ run_nightly_proxy() {
         exit 4
     fi
 
-    # Read the wheel's embedded torch.version.git_version.
+    # Read the wheel's embedded torch.version.git_version. Isolate from
+    # ~/.local PVC contamination (F4) by disabling autoload and user-site.
     local version git_sha
-    version="$(python -c 'import torch; print(torch.__version__)')"
-    git_sha="$(python -c 'import torch; print(torch.version.git_version or "")')"
+    version="$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 \
+        python -c 'import torch; print(torch.__version__)' 2>/dev/null || \
+        TORCH_DEVICE_BACKEND_AUTOLOAD=0 \
+        python -c 'import torch; print(torch.__version__)')"
+    git_sha="$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 \
+        python -c 'import torch; print(torch.version.git_version or "")' 2>/dev/null || \
+        TORCH_DEVICE_BACKEND_AUTOLOAD=0 \
+        python -c 'import torch; print(torch.version.git_version or "")')"
     echo "torch.__version__ = $version" >> "$nightly_log"
     echo "torch.version.git_version = $git_sha" >> "$nightly_log"
 
@@ -409,8 +416,9 @@ PYEOF
 
     unset CXX
 
-    # Import smoke — record but do not gate. The ladder's Stage 3 is
-    # the authority on import success.
+    # Import smoke — record but do not gate. Isolate from PVC .local
+    # contamination (F4) so we test the venv, not what ~/.local injects.
+    TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 \
     python - >> "$log" 2>&1 <<'PYEOF' || true
 try:
     import torch
@@ -551,7 +559,10 @@ run_exact_upstream_main() {
     install_torch_spyre_editable
 
     local version
-    version="$(python -c 'import torch; print(torch.__version__)')"
+    version="$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 \
+        python -c 'import torch; print(torch.__version__)' 2>/dev/null || \
+        TORCH_DEVICE_BACKEND_AUTOLOAD=0 \
+        python -c 'import torch; print(torch.__version__)')"
 
     emit_selection_json "EXACT_UPSTREAM_MAIN" "$PYTORCH_SHA" "$resolved" \
         "$version" "$build_seconds" "null"
