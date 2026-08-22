@@ -250,9 +250,15 @@ pip --version
 # system-site-packages, but re-pinning them into the venv guarantees
 # the versions the docs prescribe).
 
-log_step "installing basic_install.md prerequisites (expecttest wheel psutil pytest)"
+log_step "installing basic_install.md prerequisites (expecttest wheel psutil pytest typing_extensions)"
 
-if ! pip install expecttest wheel psutil pytest; then
+# typing_extensions is a torch runtime dep. Normally pip pulls it in from
+# torch's dependency chain, but with --index-url .../whl/cpu it sees
+# typing_extensions "already satisfied" from /usr/local/lib/... which is
+# NOT on the venv's sys.path when we set PYTHONNOUSERSITE=1 or invoke
+# strictly. Installing it explicitly puts it into the venv site-packages
+# so post-install `import torch` works under any user-site policy.
+if ! pip install expecttest wheel psutil pytest typing_extensions; then
     fail 4 "pip install expecttest wheel psutil pytest failed"
 fi
 
@@ -422,13 +428,30 @@ echo "declared torch spec (verbatim): $TORCH_SPEC"
 # supported control installs torch at whatever the checked-out
 # torch-spyre says it wants, not at whatever we remember it wanting.
 
-log_step "installing torch at declared spec: $TORCH_SPEC"
+log_step "installing torch at declared spec: $TORCH_SPEC (from CPU index)"
 
-if ! pip install "$TORCH_SPEC"; then
-    fail 7 "pip install '$TORCH_SPEC' failed — Stage-1 SUPPORTED_CONTROL cannot proceed"
+# Force the CPU wheel index. Without --index-url, `pip install torch~=X.Y`
+# pulls the CUDA build (with nvidia-cudnn, cuBLAS, cusolver, etc.) — ~2GB
+# of GPU deps that are useless on a Spyre pod and can wedge downstream
+# torch-spyre linking. Forcing the CPU index avoids the trap.
+if ! pip install "$TORCH_SPEC" --index-url https://download.pytorch.org/whl/cpu; then
+    fail 7 "pip install '$TORCH_SPEC' from CPU index failed — Stage-1 SUPPORTED_CONTROL cannot proceed"
 fi
 
-INSTALLED_TORCH_VERSION=$(python -c 'import torch; print(torch.__version__)' 2>/dev/null || true)
+# Import torch with autoload OFF and user-site OFF, so a stale
+# torch_spyre from ~/.local (PVC contamination hazard, F4 lesson) doesn't
+# break the sanity check. We're not testing autoload here — we're just
+# confirming torch imports cleanly in the venv. Autoload validity is a
+# Stage-0 concern that run_compat_smoke.sh will test properly.
+INSTALLED_TORCH_VERSION=$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 \
+    python -c 'import torch; print(torch.__version__)' 2>/dev/null || true)
+if [ -z "$INSTALLED_TORCH_VERSION" ]; then
+    # Retry with autoload OFF but user-site ON in case the venv needs a
+    # system package (like typing_extensions) that isn't in .venv but is
+    # in system-site.
+    INSTALLED_TORCH_VERSION=$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 \
+        python -c 'import torch; print(torch.__version__)' 2>/dev/null || true)
+fi
 if [ -z "$INSTALLED_TORCH_VERSION" ]; then
     fail 7 "torch installed but import failed — cannot report version"
 fi
@@ -489,7 +512,11 @@ unset CXX
 
 log_step "sanity import"
 
-SANITY_OUT=$(python - <<'PYEOF'
+# Sanity import must isolate from ~/.local/ PVC contamination (F4 lesson).
+# Autoload OFF because we're just checking imports, not backend
+# registration; PYTHONNOUSERSITE=1 to prevent the stale .local/
+# torch_spyre .pth from shadowing the venv install.
+SANITY_OUT=$(TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONNOUSERSITE=1 python - <<'PYEOF'
 import sys
 try:
     import torch
