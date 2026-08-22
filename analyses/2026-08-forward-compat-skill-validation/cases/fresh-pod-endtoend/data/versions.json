@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-08-22T02:35:47Z",
+  "torch_spyre": {
+    "repo": "torch-spyre/torch-spyre",
+    "branch": "main",
+    "sha": "8aba5bcad158ce67434c8b15f6e43e9bb75556a2",
+    "declared_pytorch_dep": "torch~=2.13.0"
+  },
+  "pytorch": {
+    "repo": "pytorch/pytorch",
+    "branch": "main",
+    "sha": "e8eff463c3e0c82a5c4b7e6439ab36fe869eac68"
+  }
+}
