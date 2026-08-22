@@ -71,6 +71,14 @@
 
 set -euo pipefail
 
+# Source /etc/profile.d/ibm-aiu-setup.sh if present. See
+# setup_supported_env.sh for the full rationale — Spyre runtime env vars
+# only get set by login shells, and `oc exec -- bash -c` skips them.
+if [ -f /etc/profile.d/ibm-aiu-setup.sh ]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/ibm-aiu-setup.sh
+fi
+
 # --- Argument parsing -------------------------------------------------------
 
 TORCH_SPYRE_SHA=""

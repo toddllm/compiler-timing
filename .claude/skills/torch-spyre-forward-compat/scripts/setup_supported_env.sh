@@ -88,6 +88,18 @@
 
 set -uo pipefail
 
+# Source /etc/profile.d/ibm-aiu-setup.sh if present. It sets the Spyre
+# runtime env vars (SPYRE_COMMS_INSTALL_DIR, SENLIB_INSTALL_DIR,
+# DEEPTOOLS_INSTALL_DIR, RUNTIME_INSTALL_DIR, SEN_COMMON_HEADERS) that
+# torch-spyre's setup.py requires. Normally sourced by login shells;
+# scripts invoked via `oc exec -- bash -c` (non-login) don't get it.
+# Fresh-pod v0.2 run on 2026-08-22 caught this trap: setup.py errored
+# with "SPYRE_COMMS_INSTALL_DIR not set" during metadata generation.
+if [ -f /etc/profile.d/ibm-aiu-setup.sh ]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/ibm-aiu-setup.sh
+fi
+
 # ---------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------
