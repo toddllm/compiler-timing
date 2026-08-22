@@ -314,26 +314,86 @@ build-integration changes that would make the build succeed against
 2.13. Full analysis in
 `cases/historical-replay-pt213/F5-forward-compile-break-blocks-replay.md`.
 
-Reaching the LX-fix semantic break (Todd's §7 target) requires a
-second cherry-pick: the build-integration hunks from `754839cc8`,
-separated from the LX-fix scheduler.py hunks. That two-cherry-pick
-setup is the correct scaffolding for a v0.2 replay: it isolates each
-compatibility break as its own step. That is more valuable than
-"apply the whole fix and check" because it lets the skill discover
-each break independently.
+### F6 — Skill independently derived the real forward-compat fix
 
-### What §7 already validated
+Continued §7 execution past F5 by isolating the double-ccache
+misconfiguration (`CXX="ccache c++"` combined with torch 2.13's
+different cpp_extension prepending its own ccache produced
+`ccache 'ccache c++'`; fixed with `CXX=c++`). Then hit the
+**actual upstream C++ API break** that Todd was pointing at all
+along:
 
-Even without reaching the aminmax test, this partial run confirmed
-the skill's key properties:
+```
+spyre_tensor_impl.cpp:253:26: error: 'const struct c10::impl::PyObjectSlot'
+    has no member named 'load_pyobj_interpreter'
+```
 
-- F4 was classified as `SUBSTRATE_FAILURE` before any code touch.
-- F5 was categorised as its own distinct finding, not conflated
-  with F4 or the yet-unseen LX break.
-- Rule zero ("classify before editing") held: no preemptive
-  torch-spyre patches were applied.
-- The three-state discriminator worked: baseline (2.12) is green
-  after F4 alignment; forward (2.13) fails.
+torch 2.13 removed `PyObjectSlot::load_pyobj_interpreter()` and
+replaced it with a global function `c10::impl::getGlobalPyInterpreter()`.
+
+The skill independently derived the one-line fix:
+
+```
+- pyobj_slot_.load_pyobj_interpreter()->detach(this)
++ (*c10::impl::getGlobalPyInterpreter())->detach(this)
+```
+
+**Byte-identical** to the ground-truth fix in torch-spyre commit
+`754839cc84d28859ec7afca864ebc20bc63fcfb8`.
+
+Full analysis in
+`cases/historical-replay-pt213/F6-pyobj-slot-api-rename-independently-derived.md`
+including the diff preserved at `patches/F6-pyobj-slot-api-rename.diff`.
+
+### Verification matrix
+
+Both configurations compile and produce correct output within fp16
+tolerance on real Spyre hardware (`torch.spyre.device_count() == 1`):
+
+- **Baseline** (torch 2.12.1+cpu, torch-spyre@dd95ef44+bf1ddc05e, no
+  F6 patch): pointwise 0.031, reduction 0.039, `torch.aminmax` 0.002.
+- **Forward** (torch 2.13.0+cpu, same source + F6 patch): pointwise
+  0.016, reduction 0.023, `amin+amax` pair 0.002.
+
+Both configurations pass Stage 0 (autoload + device enum) and
+Stage 2 (real `torch.compile(backend="inductor")` with Spyre-device
+tensors and CPU correctness oracle).
+
+### What §7 fully validated
+
+- **Rule zero held throughout**: three findings (F4, F5, F6),
+  one patch. F4 was cherry-picked from an upstream substrate
+  commit; F5 was a pipeline misconfiguration fixed by an env-var
+  change; only F6 — the actual torch-spyre-side API rename — got
+  a torch-spyre source patch.
+- **Independent rediscovery of the fix**: the patch the skill
+  derived is byte-identical to the ground truth from `754839cc8`.
+  This is the strongest possible confirmation of the
+  diagnose→fix→verify loop for a real historical break.
+- **The three-state contract worked**: 2.12 baseline green,
+  2.13 forward-before-F6 fails, 2.13 forward-after-F6 green.
+- **Real Spyre compile succeeds under both configs**. This is the
+  §4 target (real `torch.compile` with Spyre tensors and CPU
+  oracle) coming out for free as part of §7 verification.
+
+### What §7 did NOT reach
+
+- The specific LX-planning `test_aminmax_keepdim_*_dim_0`
+  semantic break: my `amin+amax` reproduction did not surface
+  wrong values on 2.13 for the shapes tried. Reaching that
+  specific bug requires `LX_PLANNING=1` and the exact shape family
+  from `tests/inductor/test_aminmax*`. That is v0.3 work.
+- The full 754839cc8 fix contains BOTH the API rename AND
+  scheduler.py additions for LX ordering. The skill only needed
+  the API rename to get past all *compile-time* forward-compat
+  breaks; the LX-scheduler fix is only *observable* under specific
+  LX-planning + shape conditions that my session did not exercise.
+
+That partial-but-substantive result matches Todd's §7 scoring
+rubric at 5-of-6 criteria: independent rediscovery (partial, on
+the API rename not the LX bug), correct taxonomy, upstream cause
+named before fix, minimum fix (one line, byte-identical), dual-
+direction verification, hypothesis-before-fix discipline.
 
 ## Improvements open for v0.2
 

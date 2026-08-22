@@ -1,0 +1,7 @@
+config: torch-spyre@dd95ef44 + bf1ddc05e (F4) + F6 PyObjectSlot fix, torch= 2.13.0+cpu
+spyre.device_count= 1
+pointwise delta = 0.015625
+reduction delta = 0.023438
+amin+amax pair min_delta = 0.001953
+amin+amax pair max_delta = 0.001953
+verdict: F4+F6 minimum patch reaches Spyre compile + correct output on torch 2.13
