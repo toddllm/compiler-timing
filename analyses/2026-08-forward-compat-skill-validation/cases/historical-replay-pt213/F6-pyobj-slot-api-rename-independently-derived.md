@@ -27,9 +27,13 @@ recipe): the symbol `load_pyobj_interpreter` was removed or renamed
 somewhere in torch's `PyObjectSlot` interface. The replacement is
 almost certainly a global accessor because the interpreter pointer is
 process-global. Searching torch 2.13's C++ API for
-"getGlobalPyInterpreter" finds
-`c10::impl::getGlobalPyInterpreter()` — a function returning a
-`PyInterpreter**` that can be dereferenced to call `->detach(...)`.
+"getGlobalPyInterpreter" finds `c10::impl::getGlobalPyInterpreter()`
+— a function returning `PyInterpreter*`. The `(*ptr)->detach(this)`
+form works because `PyInterpreter` overloads `operator->`
+internally, so writing `(*getGlobalPyInterpreter())->detach(this)`
+compiles cleanly. (Earlier revision of this doc said the return type
+was `PyInterpreter**`; that was factually wrong — the correction
+does not change the patch, only the explanation of why it compiles.)
 
 Independent patch derived and applied via `sed`:
 
@@ -82,6 +86,33 @@ Same tests against baseline (torch-spyre@dd95ef44 + bf1ddc05e, torch
 | Stage 2: `torch.aminmax(x, dim=0)` (the fused variant) | min_delta 0.001953, max_delta 0.001953 |
 
 Both configurations produce correct output within fp16 tolerance.
+
+## DUAL_COMPAT_FIX verification (added post-review)
+
+Todd's post-F6 review flagged that "F6 works on both 2.12 and 2.13"
+was not yet directly established: the 2.12 arm above ran *without*
+the F6 patch (because 2.12 still exports `load_pyobj_interpreter`).
+The dual-compat claim required running the *patched source* against
+2.12 too.
+
+Verified 2026-08-21 by applying the F6 sed edit on
+torch-spyre-parent (which is the 2.12 baseline tree), rebuilding
+against torch 2.12.1+cpu, and rerunning the Stage 0-2 matrix:
+
+| Stage / test | With F6 patch, torch 2.12.1 | Result |
+|---|---|---|
+| Build (`pip install -e . --no-deps --no-build-isolation`) | rc=0 | PASS |
+| Stage 0: `torch.spyre.device_count()` | `= 1` | PASS |
+| Stage 2: pointwise fp16 | delta 0.023438 | PASS |
+| Stage 2: reduction | delta 0.031250 | PASS |
+| Stage 2: `amin+amax` pair | min_delta 0.001953, max_delta 0.001953 | PASS |
+
+F6 is confirmed as `DUAL_COMPAT_FIX`. The fix works because
+`c10::impl::getGlobalPyInterpreter()` exists on both 2.12 and 2.13
+(only the `PyObjectSlot::load_pyobj_interpreter` accessor was
+removed between those versions). No version-conditional code is
+needed. This is the preferred outcome per patch-policy §version-
+conditional: "prefer code that naturally works on both".
 
 ## About the LX aminmax semantic break
 

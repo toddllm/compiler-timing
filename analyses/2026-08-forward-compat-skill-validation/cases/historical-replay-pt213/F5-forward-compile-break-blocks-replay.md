@@ -1,4 +1,49 @@
-# F5 — Second forward-compat break blocks §7 replay execution on this substrate
+# F5 — RETRACTED: double-ccache pipeline misconfig, not a torch break
+
+**Discovered 2026-08-21 during §7 replay execution. Retracted 2026-08-21
+after further investigation.**
+
+## Retraction summary
+
+This document originally classified F5 as
+`TORCH_SPYRE_BUILD_API_BREAK` and attributed it to a torch 2.13
+change in `cpp_extension.py` build-line generation. **That
+classification is wrong.** The correct classification is
+`PIPELINE_MISCONFIGURATION`.
+
+Root cause: the pipeline exported `CXX="ccache c++"`. The image's
+`/usr/lib64/ccache/` is already first on `PATH`, so `c++` on its own
+already invokes ccache-wrapped c++. When torch 2.13's cpp_extension
+prepends its own compiler variable in the build line, the emitted
+command becomes `ccache 'ccache c++' -MMD ...` — ccache sees
+`ccache c++` as its compiler argument and rejects `-MMD` as a bogus
+compiler name.
+
+The fix is `CXX=c++` (or unset CXX entirely and let PATH resolution
+handle it). Verified 2026-08-21: with `CXX=c++`, the same torch 2.13
+build proceeds and surfaces the real forward-compat break, F6, which
+is an actual `TORCH_SPYRE_BUILD_API_BREAK` around
+`c10::impl::PyObjectSlot::load_pyobj_interpreter` removal.
+
+## Why this retraction matters
+
+Committing the wrong classification to a durable file is more
+dangerous than a normal stale doc, because future skill sessions may
+encode the wrong rule. The taxonomy already lists
+`PIPELINE_DEFECT` (from F1). F5 belongs in that category, not in
+`TORCH_SPYRE_BUILD_API_BREAK`.
+
+Rule for v0.2: **when a compile error involves an unusual toolchain
+invocation (double-ccache, wrong-arg-to-compiler, etc.), the first
+hypothesis should be pipeline env misconfig, not upstream torch
+change.** The diagnostic recipe is to `env | grep -E "^(CXX|CC|CFLAGS)="`
+before assuming any torch-side responsibility.
+
+Baseline (2.12) built cleanly with the same `CXX="ccache c++"` only
+because torch 2.12's cpp_extension emits build lines that happen not
+to double-ccache-wrap. That accident hid F5 in one direction.
+
+## Historical content below — preserved for audit trail
 
 **Discovered 2026-08-21 during §7 replay execution.**
 
