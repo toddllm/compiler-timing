@@ -71,12 +71,16 @@
 
 set -euo pipefail
 
-# Source /etc/profile.d/ibm-aiu-setup.sh if present. See
-# setup_supported_env.sh for the full rationale — Spyre runtime env vars
-# only get set by login shells, and `oc exec -- bash -c` skips them.
+# Source /etc/profile.d/ibm-aiu-setup.sh if present. Spyre runtime env
+# vars only get set by login shells, and `oc exec -- bash -c` skips
+# them. Temporarily disable set -u because the AIU setup file uses
+# variables like $_IBM_AIU_SETUP without a `:-default`, and our -u
+# would treat those as errors.
 if [ -f /etc/profile.d/ibm-aiu-setup.sh ]; then
+    set +u
     # shellcheck disable=SC1091
     source /etc/profile.d/ibm-aiu-setup.sh
+    set -u
 fi
 
 # --- Argument parsing -------------------------------------------------------

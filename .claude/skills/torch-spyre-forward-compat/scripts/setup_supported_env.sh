@@ -95,9 +95,13 @@ set -uo pipefail
 # scripts invoked via `oc exec -- bash -c` (non-login) don't get it.
 # Fresh-pod v0.2 run on 2026-08-22 caught this trap: setup.py errored
 # with "SPYRE_COMMS_INSTALL_DIR not set" during metadata generation.
+# Temporarily disable set -u because the AIU setup file uses
+# variables like $_IBM_AIU_SETUP without a `:-default` fallback.
 if [ -f /etc/profile.d/ibm-aiu-setup.sh ]; then
+    set +u
     # shellcheck disable=SC1091
     source /etc/profile.d/ibm-aiu-setup.sh
+    set -u
 fi
 
 # ---------------------------------------------------------------------
