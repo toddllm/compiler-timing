@@ -1,0 +1,2 @@
+Neutered attempt: sed -i 's|^                align_lx_producer_loop_order,$|                # align_lx_producer_loop_order,  # neutered for LX-bug replay|' torch_spyre/_inductor/passes.py
+Result: test still PASSED (41s). See F7-lx-aminmax-replay-attempt.md for why.

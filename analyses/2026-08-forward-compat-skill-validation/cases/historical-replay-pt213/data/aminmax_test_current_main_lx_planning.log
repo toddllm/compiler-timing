@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /home/tdeshane/f3-live-remediation/.venv/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/tdeshane/f3-live-remediation/torch-spyre
+configfile: pyproject.toml
+plugins: hypothesis-6.165.10
+collecting ... collected 1 item
+
+tests/inductor/test_inductor_ops.py::TestOps::test_aminmax_keepdim0_aminmax_pad_2d_dim_0 PASSED [100%]
+
+============================== 1 passed in 35.25s ==============================
