@@ -382,8 +382,12 @@ PYEOF
     # — pip's build invocation prepends its own ccache, and
     # `ccache 'ccache c++' -MMD` makes ccache parse "ccache c++" as
     # its compiler name and reject -MMD (F5 lesson).
+    # NOTE: pipefail+`ls` with no glob match yields rc=2 which, combined with
+    # set -e, would silently kill this function on images without gcc-toolset.
+    # Wrap the whole pipeline in `|| true` so the "no match" case reaches the
+    # else-branch instead of bubbling out as SETUP_RC=2 (F7 lesson).
     local tsxx
-    tsxx="$(ls /opt/rh/gcc-toolset-*/root/usr/bin/c++ 2>/dev/null | tail -1)"
+    tsxx="$( { ls /opt/rh/gcc-toolset-*/root/usr/bin/c++ 2>/dev/null || true; } | tail -1)"
     if [ -n "$tsxx" ]; then
         export CXX="$tsxx"
         echo "# CXX=$CXX (via gcc-toolset)" >> "$log"
