@@ -509,12 +509,28 @@ log_step "installing torch-spyre editable from $(pwd) (canonical no-deps / no-bu
 # link against a different libstdc++ than the one torch was built with,
 # producing a torch-spyre .so that imports but breaks in subtle ways at
 # runtime.
+# Locate the C++ compiler. On older images this is
+# /opt/rh/gcc-toolset-*/root/usr/bin/c++. On newer torch-aiu-runtime-dev
+# (2026-06-30 and later) the image ships GCC 14 directly as the system
+# compiler and no /opt/rh/gcc-toolset-* directory exists. In both cases
+# /usr/lib64/ccache/c++ is on PATH already (ccache-wrapped), so plain
+# `c++` is the right form. Do NOT prepend "ccache" to CXX — pip's build
+# invocation prepends its own ccache, and `ccache 'ccache c++' -MMD`
+# makes ccache try to parse "ccache c++" as its compiler name and
+# reject the -MMD flag (F5 lesson from 2026-08-21 fresh-pod run).
 GCC_TOOLSET_CXX=$(ls /opt/rh/gcc-toolset-*/root/usr/bin/c++ 2>/dev/null | tail -1)
-if [ -z "$GCC_TOOLSET_CXX" ]; then
-    fail 8 "SUBSTRATE_FAILURE: /opt/rh/gcc-toolset-*/root/usr/bin/c++ not found; image is not a torch-aiu-runtime-dev variant"
+if [ -n "$GCC_TOOLSET_CXX" ]; then
+    export CXX="$GCC_TOOLSET_CXX"
+    echo "CXX = $CXX (via gcc-toolset)"
+elif command -v c++ >/dev/null 2>&1; then
+    export CXX=c++
+    echo "CXX = $CXX (system compiler; /usr/lib64/ccache/c++ if on PATH)"
+    # Sanity: the system c++ must be GCC 12+ for torch-spyre's C++20 code.
+    cxx_version=$(c++ --version | head -1)
+    echo "cxx_version = $cxx_version"
+else
+    fail 8 "SUBSTRATE_FAILURE: no C++ compiler found (checked /opt/rh/gcc-toolset-*/root/usr/bin/c++ and system c++); image is not a torch-aiu-runtime-dev variant"
 fi
-export CXX="ccache $GCC_TOOLSET_CXX"
-echo "CXX = $CXX"
 
 if ! ( cd "$WORKDIR/torch-spyre" && pip install -e . --no-deps --no-build-isolation -vvv --verbose 2>&1 | tee "$WORKDIR/build_supported.log" ); then
     fail 8 "pip install -e . --no-deps --no-build-isolation failed — Stage-2 SUPPORTED_CONTROL cannot proceed; leave this failure in place (see $WORKDIR/build_supported.log)"

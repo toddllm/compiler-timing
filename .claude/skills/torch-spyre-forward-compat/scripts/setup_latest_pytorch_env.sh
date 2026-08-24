@@ -375,20 +375,26 @@ PYEOF
     # c++ under /opt/rh and wrap it in ccache. Anything else (system
     # /usr/bin/c++, no gcc-toolset at all) is a substrate defect on the
     # pod image, not something to paper over.
+    # Locate the C++ compiler. Older torch-aiu-runtime-dev images ship
+    # /opt/rh/gcc-toolset-*/root/usr/bin/c++; newer ones (2026-06-30+)
+    # ship GCC 14 as the system compiler with /usr/lib64/ccache/c++
+    # already on PATH (ccache-wrapped). Do NOT prepend "ccache" to CXX
+    # — pip's build invocation prepends its own ccache, and
+    # `ccache 'ccache c++' -MMD` makes ccache parse "ccache c++" as
+    # its compiler name and reject -MMD (F5 lesson).
     local tsxx
     tsxx="$(ls /opt/rh/gcc-toolset-*/root/usr/bin/c++ 2>/dev/null | tail -1)"
-    if [ -z "$tsxx" ]; then
-        echo "FATAL: SUBSTRATE_FAILURE — no /opt/rh/gcc-toolset-*/root/usr/bin/c++ on this pod" >&2
-        echo "SUBSTRATE_FAILURE: gcc-toolset c++ not found under /opt/rh" >> "$log"
+    if [ -n "$tsxx" ]; then
+        export CXX="$tsxx"
+        echo "# CXX=$CXX (via gcc-toolset)" >> "$log"
+    elif command -v c++ >/dev/null 2>&1; then
+        export CXX=c++
+        echo "# CXX=$CXX (system compiler; /usr/lib64/ccache/c++ if on PATH)" >> "$log"
+    else
+        echo "FATAL: SUBSTRATE_FAILURE — no C++ compiler found (gcc-toolset or system)" >&2
+        echo "SUBSTRATE_FAILURE: no C++ compiler found" >> "$log"
         exit 3
     fi
-    export CXX="ccache $tsxx"
-    if [ -z "$CXX" ] || [ "$CXX" = "ccache " ]; then
-        echo "FATAL: SUBSTRATE_FAILURE — CXX resolved empty ($CXX)" >&2
-        echo "SUBSTRATE_FAILURE: CXX empty after gcc-toolset probe" >> "$log"
-        exit 3
-    fi
-    echo "# CXX=$CXX" >> "$log"
 
     # --- The editable install itself --------------------------------------
     # --no-deps prevents pip from touching the forward torch already in
