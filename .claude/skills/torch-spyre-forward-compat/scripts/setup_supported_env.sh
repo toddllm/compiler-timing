@@ -266,7 +266,7 @@ pip --version
 # system-site-packages, but re-pinning them into the venv guarantees
 # the versions the docs prescribe).
 
-log_step "installing basic_install.md prerequisites (expecttest wheel psutil pytest typing_extensions)"
+log_step "installing basic_install.md prerequisites (expecttest wheel psutil pytest typing_extensions pyyaml hypothesis numpy sortedcontainers)"
 
 # typing_extensions is a torch runtime dep. Normally pip pulls it in from
 # torch's dependency chain, but with --index-url .../whl/cpu it sees
@@ -274,8 +274,20 @@ log_step "installing basic_install.md prerequisites (expecttest wheel psutil pyt
 # NOT on the venv's sys.path when we set PYTHONNOUSERSITE=1 or invoke
 # strictly. Installing it explicitly puts it into the venv site-packages
 # so post-install `import torch` works under any user-site policy.
-if ! pip install expecttest wheel psutil pytest typing_extensions; then
-    fail 4 "pip install expecttest wheel psutil pytest failed"
+# --force-reinstall + --no-deps so pip doesn't skip a package that's
+# "already satisfied" in /usr/local/lib/python3.12/site-packages (which
+# is on sys.path via --system-site-packages but excluded by
+# PYTHONNOUSERSITE=1). Without --force-reinstall, the venv ends up
+# without typing_extensions/pyyaml/hypothesis/etc. even though pip
+# reports them as installed. Full list covers torch import (typing_ext,
+# sympy, networkx, filelock, jinja2, fsspec, mpmath, markupsafe),
+# pytest, hypothesis + its sortedcontainers dep, and numpy (used by
+# torch-spyre tests for assert_close comparisons).
+if ! pip install --force-reinstall --no-deps \
+        expecttest wheel psutil pytest typing_extensions \
+        pyyaml hypothesis sortedcontainers attrs pluggy iniconfig \
+        numpy sympy networkx filelock jinja2 fsspec mpmath markupsafe; then
+    fail 4 "pip install of basic prerequisites failed"
 fi
 
 log_step "installing dev_install.md build toolchain (nanobind==2.9.2 ninja pybind11 build cmake~=3.26 regex)"

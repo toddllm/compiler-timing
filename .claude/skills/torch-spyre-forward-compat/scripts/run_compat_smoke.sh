@@ -50,6 +50,18 @@
 
 set -uo pipefail
 
+# Source Spyre runtime env (LD_LIBRARY_PATH, PYTHONPATH, PATH, and env
+# vars like SPYRE_COMMS_INSTALL_DIR) so torch_spyre's _C.so can find
+# libspyre_comms.so.1 and other runtime libs. Login shells source this
+# automatically; the skill's scripts are typically launched from
+# `oc exec -- bash -c` (non-login) so we source it explicitly.
+if [ -f /etc/profile.d/ibm-aiu-setup.sh ]; then
+    set +u
+    # shellcheck disable=SC1091
+    source /etc/profile.d/ibm-aiu-setup.sh
+    set -u
+fi
+
 # --------------------------------------------------------------------
 # Arg parsing
 # --------------------------------------------------------------------
