@@ -1,0 +1,554 @@
+# torch-spyre editable install (2026-08-24T19:17:39Z)
+# tree = /home/tdeshane/forward-tree/torch-spyre @ e7bb29dc1a0730829e9ed891b3bcd30b69887ec5
+# canonical flow: references/canonical-dev-flow.md
+#                 /Users/tdeshane/torch-spyre-docs/scripts/build-torch-spyre.sh
+# prereq installs (expecttest wheel psutil pytest)
+# prereq installs (nanobind==2.9.2 ninja pybind11 build cmake~=3.26 regex)
+# prereq installs (/home/tdeshane/forward-tree/torch-spyre/requirements/dev.txt, torch line stripped)
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+vllm 0.20.1 requires torchvision==0.26.0, which is not installed.
+vllm 0.20.1 requires setuptools<81.0.0,>=77.0.3; python_version > "3.11", but you have setuptools 81.0.0 which is incompatible.
+vllm 0.20.1 requires torch==2.11.0, but you have torch 2.15.0.dev20260824+cpu which is incompatible.
+mistral-common 1.11.3 requires numpy<2.4,>=1.25; python_version <= "3.12", but you have numpy 2.5.1 which is incompatible.
+numba 0.65.0 requires numpy<2.5,>=1.22, but you have numpy 2.5.1 which is incompatible.
+torch-spyre 0.0.1 requires torch~=2.11.0, but you have torch 2.15.0.dev20260824+cpu which is incompatible.
+# CXX=c++ (system compiler; /usr/lib64/ccache/c++ if on PATH)
+# invoking: pip install -e . --no-deps --no-build-isolation -vvv --verbose
+Remote version of pip: 26.2.1
+Local version of pip:  26.2.1
+Was pip installed by pip? True
+Using pip 26.2.1 from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/pip (python 3.12)
+Non-user install because site-packages writeable
+Created temporary directory: /tmp/pip-build-tracker-n2cisknq
+Initialized build tracking at /tmp/pip-build-tracker-n2cisknq
+Created build tracker: /tmp/pip-build-tracker-n2cisknq
+Entered build tracker: /tmp/pip-build-tracker-n2cisknq
+Created temporary directory: /tmp/pip-install-et2t3eey
+Created temporary directory: /tmp/pip-ephem-wheel-cache-l0wybl7k
+Obtaining file:///home/tdeshane/forward-tree/torch-spyre
+  Added file:///home/tdeshane/forward-tree/torch-spyre to build tracker '/tmp/pip-build-tracker-n2cisknq'
+  Checking if build backend supports build_editable: started
+  Running command Checking if build backend supports build_editable
+  Checking if build backend supports build_editable: finished with status 'done'
+  Created temporary directory: /tmp/pip-modern-metadata-vo9i3aoy
+  Preparing editable metadata (pyproject.toml): started
+  Running command Preparing editable metadata (pyproject.toml)
+  Downloading nlohmann/json.hpp...
+  running dist_info
+  creating /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info
+  writing /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/PKG-INFO
+  writing dependency_links to /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/dependency_links.txt
+  writing entry points to /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/entry_points.txt
+  writing requirements to /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/requires.txt
+  writing top-level names to /tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/top_level.txt
+  writing manifest file '/tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/SOURCES.txt'
+  reading manifest file '/tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/SOURCES.txt'
+  adding license file 'LICENSE.txt'
+  writing manifest file '/tmp/pip-modern-metadata-vo9i3aoy/torch_spyre.egg-info/SOURCES.txt'
+  creating '/tmp/pip-modern-metadata-vo9i3aoy/torch_spyre-0.0.1.dist-info'
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+  Source in ./. has version 0.0.1, which satisfies requirement torch_spyre==0.0.1 from file:///home/tdeshane/forward-tree/torch-spyre
+  Removed torch_spyre==0.0.1 from file:///home/tdeshane/forward-tree/torch-spyre from build tracker '/tmp/pip-build-tracker-n2cisknq'
+Created temporary directory: /tmp/pip-unpack-uth3gb7_
+Building wheels for collected packages: torch_spyre
+  Destination directory: /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf
+  Building editable for torch_spyre (pyproject.toml): started
+  Running command Building editable for torch_spyre (pyproject.toml)
+  running editable_wheel
+  creating /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info
+  writing /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/PKG-INFO
+  writing dependency_links to /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/dependency_links.txt
+  writing entry points to /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/entry_points.txt
+  writing requirements to /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/requires.txt
+  writing top-level names to /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/top_level.txt
+  writing manifest file '/tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/SOURCES.txt'
+  reading manifest file '/tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/SOURCES.txt'
+  adding license file 'LICENSE.txt'
+  writing manifest file '/tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre.egg-info/SOURCES.txt'
+  creating '/tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre-0.0.1.dist-info'
+  creating /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre-0.0.1.dist-info/WHEEL
+  running build_py
+  running build_ext
+  building 'torch_spyre._C' extension
+  creating /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc
+  creating /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed
+  creating /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler
+  [1/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/logging.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [2/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_config.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/logging_config.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_config.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [3/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/SpyreActivityProfiler.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/SpyreActivityProfiler.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/SpyreActivityProfiler.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [4/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_storage_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_storage_impl.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_storage_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [5/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityApi.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityApi.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityApi.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityApi.cpp: In member function ‘void KINETO_NAMESPACE::AiuptiActivityApi::bufferRequested(uint8_t**, size_t*, size_t*)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityApi.cpp:100:40: warning: comparison of integer expressions of different signedness: ‘std::deque<std::pair<unsigned char*, std::unique_ptr<KINETO_NAMESPACE::AiuptiActivityBuffer> > >::size_type’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+    100 |   if (allocatedAiuTraceBuffers_.size() >= maxAiuBufferCount_) {
+        |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+  [6/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/kernel_provenance_registry.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/kernel_provenance_registry.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/kernel_provenance_registry.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [7/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_device_enum.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_device_enum.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_device_enum.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [8/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityProfiler.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityProfiler.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityProfiler.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [9/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityHandlers.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityHandlers.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp: In instantiation of ‘uint32_t KINETO_NAMESPACE::AiuptiActivityProfilerSession::getResourceId(memory_activity_type*) [with memory_activity_type = AIUpti_ActivityMemcpy; uint32_t = unsigned int]’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:360:59:   required from here
+    360 |     AIUpti_ActivityMemcpy>(AIUpti_ActivityMemcpy* activity);
+        |                                                           ^
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:339:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    339 |     for (auto i = 0; i < last_active_times.size(); ++i) {
+        |                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:340:32: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<long int>, long int>::value_type’ {aka ‘long int’} and ‘uint64_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+    340 |       if (last_active_times[i] <= activity->start) {
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemcpy::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+    354 |     activeThreadMap_[{activity->device_id, base_resource_id}] = {activity->end};
+        |                                                                  ~~~~~~~~~~^~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemcpy::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp: In instantiation of ‘uint32_t KINETO_NAMESPACE::AiuptiActivityProfilerSession::getResourceId(memory_activity_type*) [with memory_activity_type = AIUpti_ActivityMemory; uint32_t = unsigned int]’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:362:59:   required from here
+    362 |     AIUpti_ActivityMemory>(AIUpti_ActivityMemory* activity);
+        |                                                           ^
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:339:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    339 |     for (auto i = 0; i < last_active_times.size(); ++i) {
+        |                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:340:32: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<long int>, long int>::value_type’ {aka ‘long int’} and ‘uint64_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+    340 |       if (last_active_times[i] <= activity->start) {
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemory::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+    354 |     activeThreadMap_[{activity->device_id, base_resource_id}] = {activity->end};
+        |                                                                  ~~~~~~~~~~^~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemory::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp: In instantiation of ‘uint32_t KINETO_NAMESPACE::AiuptiActivityProfilerSession::getResourceId(memory_activity_type*) [with memory_activity_type = AIUpti_ActivityMemset; uint32_t = unsigned int]’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:364:59:   required from here
+    364 |     AIUpti_ActivityMemset>(AIUpti_ActivityMemset* activity);
+        |                                                           ^
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:339:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    339 |     for (auto i = 0; i < last_active_times.size(); ++i) {
+        |                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:340:32: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<long int>, long int>::value_type’ {aka ‘long int’} and ‘uint64_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+    340 |       if (last_active_times[i] <= activity->start) {
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemset::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+    354 |     activeThreadMap_[{activity->device_id, base_resource_id}] = {activity->end};
+        |                                                                  ~~~~~~~~~~^~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemset::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp: In instantiation of ‘uint32_t KINETO_NAMESPACE::AiuptiActivityProfilerSession::getResourceId(memory_activity_type*) [with memory_activity_type = const AIUpti_ActivityMemcpy; uint32_t = unsigned int]’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:381:44:   required from here
+    381 |   memcpy_activity->resource = getResourceId(activity);
+        |                               ~~~~~~~~~~~~~^~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:339:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    339 |     for (auto i = 0; i < last_active_times.size(); ++i) {
+        |                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:340:32: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<long int>, long int>::value_type’ {aka ‘long int’} and ‘const uint64_t’ {aka ‘const long unsigned int’} [-Wsign-compare]
+    340 |       if (last_active_times[i] <= activity->start) {
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘(uint64_t)activity->AIUpti_ActivityMemcpy::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+    354 |     activeThreadMap_[{activity->device_id, base_resource_id}] = {activity->end};
+        |                                                                  ~~~~~~~~~~^~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemcpy::end’ from ‘const uint64_t’ {aka ‘const long unsigned int’} to ‘long int’ [-Wnarrowing]
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp: In instantiation of ‘uint32_t KINETO_NAMESPACE::AiuptiActivityProfilerSession::getResourceId(memory_activity_type*) [with memory_activity_type = const AIUpti_ActivityMemory; uint32_t = unsigned int]’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:448:43:   required from here
+    448 |     mem_activity->resource = getResourceId(activity);
+        |                              ~~~~~~~~~~~~~^~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:339:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    339 |     for (auto i = 0; i < last_active_times.size(); ++i) {
+        |                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:340:32: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<long int>, long int>::value_type’ {aka ‘long int’} and ‘const uint64_t’ {aka ‘const long unsigned int’} [-Wsign-compare]
+    340 |       if (last_active_times[i] <= activity->start) {
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘(uint64_t)activity->AIUpti_ActivityMemory::end’ from ‘uint64_t’ {aka ‘long unsigned int’} to ‘long int’ [-Wnarrowing]
+    354 |     activeThreadMap_[{activity->device_id, base_resource_id}] = {activity->end};
+        |                                                                  ~~~~~~~~~~^~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/profiler/AiuptiActivityHandlers.cpp:354:76: warning: narrowing conversion of ‘activity->AIUpti_ActivityMemory::end’ from ‘const uint64_t’ {aka ‘const long unsigned int’} to ‘long int’ [-Wnarrowing]
+  [10/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_bindings.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/logging_bindings.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_bindings.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [11/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/perm_layout_native.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/perm_layout_native.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/perm_layout_native.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [12/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/attn_utils.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/attn_utils.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/attn_utils.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [13/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_generator_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_generator_impl.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_generator_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [14/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_views.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [15/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_autocast.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_autocast.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_autocast.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [16/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/types_mapping.h:21,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:27:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.h:19,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:17:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp: In member function ‘void spyre::SpyreTensorLayout::init(std::vector<long int>, std::vector<long int>, c10::ScalarType, std::vector<int>)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:172:21: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    172 |   for (int i = 0; i < dim_map.size() - 1; i++) {
+        |                   ~~^~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp: In function ‘spyre::SpyreTensorLayout spyre::get_spyre_tensor_layout(const at::Tensor&)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:309:12: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+    309 |   if (impl = dynamic_cast<SpyreTensorImpl*>(tensor.unsafeGetTensorImpl())) {
+        |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp: In function ‘void spyre::set_spyre_tensor_layout(const at::Tensor&, const SpyreTensorLayout&)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:321:12: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+    321 |   if (impl = dynamic_cast<SpyreTensorImpl*>(tensor.unsafeGetTensorImpl())) {
+        |       ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  [17/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_kernel.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_kernel.h:31,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_kernel.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:20:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  [18/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:20:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.cpp: In lambda function:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.cpp:246:10: warning: unused variable ‘used_fast_path’ [-Wunused-variable]
+    246 |     bool used_fast_path = deeptools::processComputeOnHostCommandFast(
+        |          ^~~~~~~~~~~~~~
+  [19/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_stream.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_stream.h:24,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_stream.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_stream.h:19:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  [20/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.h:19,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp:24:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: warning: "LOG_IF" redefined
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.h:22,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp:16:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: note: this is the location of the previous definition
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp: In static member function ‘static std::shared_ptr<flex::FlexAllocator> spyre::SpyreAllocator::getFlexAllocator()’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp:42:48: warning: ‘std::shared_ptr<flex::RuntimeContext> flex::getFlexRuntimeContext()’ is deprecated: flex::getFlexRuntimeContext() has been deprecated for flex::RuntimeContext::getInstance(). [-Wdeprecated-declarations]
+     42 |   auto flex_alloc = flex::getFlexRuntimeContext()->getAllocator();
+        |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+  In file included from /opt/ibm/spyre/runtime/include/flex/flex.hpp:18:
+  /opt/ibm/spyre/runtime/include/flex/runtime_stream/runtime_context.hpp:292:1: note: declared here
+    292 | getFlexRuntimeContext() -> std::shared_ptr<RuntimeContext>;
+        | ^~~~~~~~~~~~~~~~~~~~~
+  [21/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_guard.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_guard.cpp:29:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/function_schema.h:8,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/op_registration/infer_schema.h:9,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/library.h:62,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_guard.h:20,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_guard.cpp:17:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  [22/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.h:22,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.h:19:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.cpp: In function ‘std::vector<data_conversion_stride_info> spyre::get_device_stride_infos(c10::IntArrayRef, c10::IntArrayRef, int64_t, SpyreTensorLayout, bool, c10::IntArrayRef)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.cpp:335:22: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<std::vector<long int> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    335 |   for (auto i = 0; i < remainders.size(); i++) {
+        |                    ~~^~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/spyre_mem.cpp:341:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘const long unsigned int’ [-Wsign-compare]
+    341 |     for (auto j = 0; j < num_infos; j++) {
+        |                      ~~^~~~~~~~~~~
+  [23/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp:22:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp:17:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  [24/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/prepare_kernel.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:20,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/prepare_kernel.h:28,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/prepare_kernel.cpp:17:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: warning: "LOG_IF" redefined
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/prepare_kernel.h:27:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: note: this is the location of the previous definition
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  [25/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /opt/ibm/spyre/spyre-comms/include/spyre_comms.hpp:8,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.hpp:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp:16:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/Variadic.h:7,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/utils/variadic.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/detail/static.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/python.h:4,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.hpp:19:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp: In member function ‘virtual c10::intrusive_ptr<c10d::Work> c10d::SpyreCCLBackend::gather(std::vector<std::vector<at::Tensor> >&, std::vector<at::Tensor>&, const c10d::GatherOptions&)’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp:551:21: warning: comparison of integer expressions of different signedness: ‘const int64_t’ {aka ‘const long int’} and ‘spyre_comms::process_id_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+    551 |   if (opts.rootRank == group_context_->getRank()) {
+        |       ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp:575:21: warning: comparison of integer expressions of different signedness: ‘const int64_t’ {aka ‘const long int’} and ‘spyre_comms::process_id_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+    575 |   if (opts.rootRank == group_context_->getRank()) {
+        |       ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  [26/26] ccache c++ -MMD -MF /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL -DHAS_AIUPTI -DUSE_KINETO -DFMT_HEADER_ONLY '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc -I/home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/kineto -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/forward/.venv-latest/include -I/usr/include/python3.12 -c -c /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.cpp -o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/job_plan.h:20,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.cpp:37:
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: warning: "LOG_IF" redefined
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.h:23,
+                   from /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: note: this is the location of the previous definition
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.cpp: In function ‘void spyre::_startRuntime()’:
+  /home/tdeshane/forward-tree/torch-spyre/torch_spyre/csrc/module.cpp:123:35: warning: ‘bool flex::initializeRuntime(std::shared_ptr<RuntimeContext>*, int)’ is deprecated: flex::initializeRuntime() has been deprecated for flex::RuntimeContext::create(). [-Wdeprecated-declarations]
+    123 |   auto s = flex::initializeRuntime(&runtime, logical_device_id);
+        |            ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  In file included from /opt/ibm/spyre/runtime/include/flex/flex.hpp:18:
+  /opt/ibm/spyre/runtime/include/flex/runtime_stream/runtime_context.hpp:281:1: note: declared here
+    281 | initializeRuntime(std::shared_ptr<RuntimeContext>* rt, int logical_device_id = 0);
+        | ^~~~~~~~~~~~~~~~~
+  creating /tmp/tmpfee51g73.build-lib/torch_spyre
+  c++ -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -shared /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/attn_utils.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/kernel_provenance_registry.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_bindings.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_config.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/perm_layout_native.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityApi.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityHandlers.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/AiuptiActivityProfiler.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/profiler/SpyreActivityProfiler.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_autocast.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_device_enum.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_generator_impl.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_storage_impl.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o /home/tdeshane/forward-tree/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o -L/opt/ibm/spyre/runtime/lib -L/opt/ibm/spyre/spyre-comms/lib -L/home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/torch/lib -L/usr/lib64 -lsendnn -lsendnn_interface -laiupti -lflex -lspyre_comms -lc10 -ltorch -ltorch_cpu -ltorch_python -o /tmp/tmpfee51g73.build-lib/torch_spyre/_C.so
+  copying /tmp/tmpfee51g73.build-lib/torch_spyre/_C.so -> torch_spyre
+  running egg_info
+  creating /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info
+  writing /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/PKG-INFO
+  writing dependency_links to /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/dependency_links.txt
+  writing entry points to /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/entry_points.txt
+  writing requirements to /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/requires.txt
+  writing top-level names to /tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/top_level.txt
+  writing manifest file '/tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/SOURCES.txt'
+  reading manifest file '/tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/SOURCES.txt'
+  adding license file 'LICENSE.txt'
+  writing manifest file '/tmp/tmpbpvo57r2.build-temp/torch_spyre.egg-info/SOURCES.txt'
+  Editable install will be performed using a meta path finder.
+
+  Options like `package-data`, `include/exclude-package-data` or
+  `packages.find.exclude/include` may have no effect.
+
+  adding '__editable___torch_spyre_0_0_1_finder.py'
+  adding '__editable__.torch_spyre-0.0.1.pth'
+  creating '/tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923/tmp549x7guf/.tmp-hb5oztvt/torch_spyre-0.0.1-0.editable-cp312-cp312-linux_x86_64.whl' and adding '/tmp/tmpqeu69wn1torch_spyre-0.0.1-0.editable-cp312-cp312-linux_x86_64.whl' to it
+  adding 'torch_spyre-0.0.1.dist-info/licenses/LICENSE.txt'
+  adding 'torch_spyre-0.0.1.dist-info/METADATA'
+  adding 'torch_spyre-0.0.1.dist-info/WHEEL'
+  adding 'torch_spyre-0.0.1.dist-info/entry_points.txt'
+  adding 'torch_spyre-0.0.1.dist-info/top_level.txt'
+  adding 'torch_spyre-0.0.1.dist-info/RECORD'
+  /home/tdeshane/forward/.venv-latest/lib64/python3.12/site-packages/setuptools/command/editable_wheel.py:352: InformationOnly: Editable installation.
+  !!
+
+          ********************************************************************************
+          Please be careful with folders in your working directory with the same
+          name as your package as they may take precedence during imports.
+          ********************************************************************************
+
+  !!
+    with strategy, WheelFile(wheel_path, "w") as wheel_obj:
+  Building editable for torch_spyre (pyproject.toml): finished with status 'done'
+  Created wheel for torch_spyre: filename=torch_spyre-0.0.1-0.editable-cp312-cp312-linux_x86_64.whl size=8328 sha256=86df4b03ea2c24a941a3eb58609aa04e11556896b001fd77ed2c98408777ceb4
+  Stored in directory: /tmp/pip-ephem-wheel-cache-l0wybl7k/wheels/39/f9/e4/fe0dbb6f1c6921a667e839cf8712fade32d8b3bb616a6da923
+Successfully built torch_spyre
+Installing collected packages: torch_spyre
+  Attempting uninstall: torch_spyre
+    Found existing installation: torch_spyre 0.0.1
+    Not uninstalling torch-spyre at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/forward/.venv-latest
+    Can't uninstall 'torch_spyre'. No files were found to uninstall.
+
+Successfully installed torch_spyre-0.0.1
+Removed build tracker: '/tmp/pip-build-tracker-n2cisknq'
+editable install OK (build log: /home/tdeshane/forward/build_latest.log)
+import torch FAILED: ModuleNotFoundError No module named 'typing_extensions'
+import torch_spyre FAILED: ModuleNotFoundError No module named 'typing_extensions'
