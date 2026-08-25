@@ -1,0 +1,45 @@
+--- a/torch_spyre/_inductor/propagate_layouts.py
++++ b/torch_spyre/_inductor/propagate_layouts.py
+@@ -31,6 +31,8 @@
+     InputBuffer,
+     MutationLayoutSHOULDREMOVE,
+     MultiOutput,
++    MultiOutputLayout,
++    NoneLayout,
+     ReinterpretView,
+     Operation,
+     Pointwise,
+@@ -2014,14 +2016,25 @@
+             else:
+                 logger.warning(f"Warning: unhandled node type {type(op.data)}")
+         elif isinstance(op, FallbackKernel):
+-            # FallbackKernel.create in PyTorch produces three cases:
+-            #   Case 1 (single tensor)  -> MultiOutputLayout + 1 MultiOutput
+-            #   Case 2 (tuple of N)     -> MultiOutputLayout + N MultiOutputs
+-            #   Case 3 (void/in-place)  -> NoneLayout       + 0 MultiOutputs
+-            # The FallbackKernel itself never carries a real tensor layout
+-            # (MultiOutputLayout / NoneLayout both raise from get_layout()).
+-            # The trailing MultiOutputs are handled in their own branch below.
+-            pass
++            # FallbackKernel.create in PyTorch produces four cases:
++            #   Case 1  (single tensor, <=2.13)  -> MultiOutputLayout + 1 MultiOutput
++            #   Case 1' (single tensor, >=2.15)  -> FixedLayout        + 0 MultiOutputs
++            #   Case 2  (tuple of N)             -> MultiOutputLayout + N MultiOutputs
++            #   Case 3  (void/in-place)          -> NoneLayout        + 0 MultiOutputs
++            # In cases 1, 2, 3 the FallbackKernel carries no real tensor layout
++            # (MultiOutputLayout / NoneLayout both raise from get_layout()), and
++            # trailing MultiOutputs handle it below.
++            # In case 1' (introduced by pytorch #<TBD> around torch 2.15), the
++            # FallbackKernel IS itself a real single-tensor buffer with a
++            # FixedLayout and no trailing MultiOutput — downstream ops read
++            # this buffer directly, so we must give it a .layouts attribute
++            # here or _get_prop_args will raise.
++            fk_layout = op.get_layout() if not isinstance(
++                op.layout, (MultiOutputLayout, NoneLayout)
++            ) else None
++            if isinstance(fk_layout, FixedLayout):
++                op.layouts = [generic_layout(op)]
++                op.restick_cost_fn = AnyInNode.from_args()
+         elif isinstance(op, MultiOutput):
+             op.layouts = [generic_layout(op)]
+             op.restick_cost_fn = AnyInNode.from_args()
