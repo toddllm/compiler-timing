@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "snapshot_at": "2026-08-25T00:00:00Z",
+  "repo": "torch-spyre/torch-spyre",
+  "note": "Active non-PR branches on origin. Filters applied: excluded main, dependabot/*, gh-readonly-queue/*. Each branch is annotated with (a) whether it currently has an open PR pointing at it, and (b) commits-ahead-of-main, last-commit date. Branches without an associated open PR are the ones the master prompt asked about beyond the PR inventory.",
+  "filters": {
+    "excluded_prefixes": ["dependabot/", "gh-readonly-queue/"],
+    "excluded_exact": ["main"]
+  },
+  "counts": {
+    "total_active_branches_after_filter": 13,
+    "with_open_pr": 4,
+    "without_open_pr": 9
+  },
+  "branches": [
+    {
+      "name": "additional_pointwise_output_layouts",
+      "head_sha": "5e1f63fd96ac39831209eae8ee5c229d4a86fa62",
+      "author": "Avery Blanchard",
+      "last_commit_date": "2026-07-15T12:48:51+00:00",
+      "commits_ahead_of_main": 5,
+      "last_commit_subject": "Fix layout of SDPA (#3184)",
+      "open_pr": null,
+      "notes": "No open PR; branch tip points at a merged PR title (#3184). Likely stale scaffolding."
+    },
+    {
+      "name": "adopt-runtime-context-phase2",
+      "head_sha": "a02efba144867cff050e7e7c335a89f4496e3bf9",
+      "author": "TUAN HOANG TRONG",
+      "last_commit_date": "2026-06-24T09:25:49-04:00",
+      "commits_ahead_of_main": 1,
+      "last_commit_subject": "the change we need from torch-spyre to adopt RuntimeContext",
+      "open_pr": null,
+      "notes": "Runtime-context adoption WIP branch. Categories on inspection: cpp/runtime. Not currently a PR."
+    },
+    {
+      "name": "claude-skills-pr2516-remove-full-xfail",
+      "head_sha": "d4716c0329f563659a8096ef38d30af258d62905",
+      "author": "Antoni Viros",
+      "last_commit_date": "2026-06-30T11:53:32-04:00",
+      "commits_ahead_of_main": 2,
+      "last_commit_subject": "Merge branch 'main' into claude-skills-pr2516-remove-full-xfail",
+      "open_pr": null,
+      "notes": "Claude-skills experimental branch referencing PR #2516. Not currently a PR."
+    },
+    {
+      "name": "dep-test",
+      "head_sha": "2a49c104cd1a4831a128719f025e6599578b9caf",
+      "author": "unknown",
+      "last_commit_date": "2026-07-07T13:24:06+05:30",
+      "commits_ahead_of_main": 14,
+      "open_pr": 2954,
+      "notes": "Backing PR #2954."
+    },
+    {
+      "name": "docs/profiling-status-refresh",
+      "head_sha": "3f424d65c0023812fca43b8e9c012abfafc27ce1",
+      "author": "unknown",
+      "last_commit_date": "2026-08-19T11:33:01-04:00",
+      "commits_ahead_of_main": 8,
+      "open_pr": 3645,
+      "notes": "Backing PR #3645."
+    },
+    {
+      "name": "fix-rankdiff-dim-order-projection",
+      "head_sha": "unknown",
+      "last_commit_date": "2026-01-21T15:59:09-05:00",
+      "commits_ahead_of_main": 0,
+      "open_pr": 3734,
+      "notes": "Backing PR #3734. Old branch date; ls-remote returned no SHA for the branch in this snapshot."
+    },
+    {
+      "name": "fix-util-include-paths-deeptools-reorg",
+      "head_sha": "c6380dbd60228e99dfeff00756b0886377008c35",
+      "author": "Ashok Pon Kumar",
+      "last_commit_date": "2026-08-01T07:41:32+05:30",
+      "commits_ahead_of_main": 3,
+      "last_commit_subject": "fix(csrc): fix remaining stale processSpyreCodeArtifacts.h include path",
+      "open_pr": null,
+      "notes": "Deeptools reorg follow-up branch. Same reorg family as the module.h include-path change that broke PR #3404's build. Categories: cpp. Worth watching — if this branch has fixes the shadow ledger doesn't know about, it could go in the shadow patch stack."
+    },
+    {
+      "name": "fix/2633-xlat-program-allocation",
+      "head_sha": "8d3f5bed5fb91486c4b678ef26f0bd8bb88f9626",
+      "author": "Joshua Rosenkranz",
+      "last_commit_date": "2026-06-22T12:59:31+00:00",
+      "commits_ahead_of_main": 1,
+      "last_commit_subject": "initial commit to use the boostrap offset for compute",
+      "open_pr": null,
+      "notes": "Xlat program-allocation fix (issue #2633). Not currently a PR."
+    },
+    {
+      "name": "int/gha-integration-probe",
+      "head_sha": "dcfeeaa6fa81ea17be25eaa05a8b75797b97f218",
+      "author": "unknown",
+      "last_commit_date": "2026-07-14T21:12:09+05:30",
+      "commits_ahead_of_main": 1,
+      "open_pr": 3175,
+      "notes": "Backing PR #3175 (integration-tests infrastructure probe)."
+    },
+    {
+      "name": "int/prebaked-integration-tests",
+      "head_sha": "41bcbd613a9913dfbc89b805fad63d2cfb2a3120",
+      "author": "Avery Blanchard",
+      "last_commit_date": "2026-07-14T23:10:08+00:00",
+      "commits_ahead_of_main": 0,
+      "last_commit_subject": "Fix layout of SDPA (#3184)",
+      "open_pr": null,
+      "notes": "int/* convention branch; no open PR. Points at merged code — likely a landed integration-test experiment."
+    },
+    {
+      "name": "ktir-pathway",
+      "head_sha": "7e45168f1d56ca1cec4889a3e19b14719dcdd23f",
+      "author": "Kazuaki Ishizaki",
+      "last_commit_date": "2026-07-03T07:29:01+00:00",
+      "commits_ahead_of_main": 0,
+      "last_commit_subject": "feat(oot test framework): resolve config constructor args into real config objects (#3012)",
+      "open_pr": null,
+      "notes": "Not currently a PR. Zero ahead of main — landed or stale."
+    },
+    {
+      "name": "perf-test",
+      "head_sha": "2fcb0b099e64d6946c8fc5dd6dbc075e689bcfd6",
+      "author": "Hari",
+      "last_commit_date": "2026-08-20T15:22:40+05:30",
+      "commits_ahead_of_main": 5,
+      "last_commit_subject": "ci(perf): skip empty-matrix test job in perf mode (#3869)",
+      "open_pr": null,
+      "notes": "Perf-testing branch, no open PR. Categories: ci. NO_FORWARD_RUN for the product surface if selected."
+    },
+    {
+      "name": "remove_torch_sendnn",
+      "head_sha": "8552647fc0ca38fe01f651811f26dba43ed034f0",
+      "author": "Joshua Rosenkranz",
+      "last_commit_date": "2025-12-08T20:02:06+00:00",
+      "commits_ahead_of_main": 1,
+      "last_commit_subject": "remove torch_sendnn as no longer being used;",
+      "open_pr": null,
+      "notes": "8+ months old. Almost certainly stale; would not be triaged."
+    }
+  ],
+  "triage_note": "For pseudo-CI purposes the 4 branches with an open PR are already covered by the PR-side triage (see triage/triage.json). The 9 no-PR branches are 5 stale/legacy, 3 substantive WIP (adopt-runtime-context-phase2, fix-util-include-paths-deeptools-reorg, fix/2633-xlat-program-allocation), and 1 CI perf-testing (perf-test). Of the 3 substantive WIP branches, fix-util-include-paths-deeptools-reorg is the most likely to matter for shadow forward-compat because it's in the same header-rename family that caused PR #3404's stale-base failure. None of these branches are runnable through the pseudo-CI lane today because the lane's driver reads open-prs.json, not branches."
+}

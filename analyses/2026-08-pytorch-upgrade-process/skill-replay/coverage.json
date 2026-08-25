@@ -1,5 +1,6 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "note": "Schema v2 (2026-08-25): silent-correctness count split into three subcategories. The v1 aggregate treated all as equivalent; that flattered the discovery process. See ../notes/consequence-taxonomy.md.",
   "replays": [
     {
       "from": "2.11",
@@ -11,8 +12,22 @@
       "substantive_breaks_specifically_predicted": 0,
       "substantive_breaks_watch_category_matched": 4,
       "substantive_breaks_watch_category_missed": 1,
-      "silent_correctness_predicted": 0,
-      "silent_correctness_actual": 3
+      "silent_correctness_v1_count": 3,
+      "silent_correctness_v1_count_note": "DEPRECATED — collapsed three qualitatively different cases into one bucket. Kept for provenance.",
+      "silent_correctness_v2_breakdown": {
+        "OBSERVED_SILENT_WRONG_OUTPUT": {
+          "count": 1,
+          "cases": ["Dynamo .to graph-break — wrong D2D dtype casts produced at runtime"]
+        },
+        "LATENT_CORRECTNESS_RISK": {
+          "count": 1,
+          "cases": ["size_hint split — wrong replacement caught in review before wrong output"]
+        },
+        "REFERENCE_TOLERANCE_DRIFT": {
+          "count": 1,
+          "cases": ["fp16 1-ULP CPU-reference drift — three tests xfailed"]
+        }
+      }
     },
     {
       "from": "2.12",
@@ -24,8 +39,15 @@
       "substantive_breaks_specifically_predicted": 0,
       "substantive_breaks_watch_category_matched": 2,
       "substantive_breaks_watch_category_missed": 2,
-      "silent_correctness_predicted": 0,
-      "silent_correctness_actual": 1,
+      "silent_correctness_v1_count": 1,
+      "silent_correctness_v2_breakdown": {
+        "OBSERVED_SILENT_WRONG_OUTPUT": {
+          "count": 1,
+          "cases": ["LX loop-order — accidental correctness lost, test failure"]
+        },
+        "LATENT_CORRECTNESS_RISK": {"count": 0, "cases": []},
+        "REFERENCE_TOLERANCE_DRIFT": {"count": 0, "cases": []}
+      },
       "forward_compat_skill_independent_prediction": [
         "load_pyobj_interpreter -> getGlobalPyInterpreter (byte-identical fix in cases/historical-replay-pt213/)"
       ]
@@ -35,9 +57,14 @@
     "mechanical_hit_rate": 1.0,
     "mechanical_overshoot_rate": "consistent 2 files (upstream_tests*.yaml comment edits — not always needed)",
     "substantive_prediction_hit_rate": 0.0,
-    "silent_correctness_prediction_hit_rate": 0.0,
+    "silent_correctness_prediction_hit_rate_v2": {
+      "OBSERVED_SILENT_WRONG_OUTPUT": {"predicted": 0, "actual": 2, "rate": 0.0},
+      "LATENT_CORRECTNESS_RISK": {"predicted": 0, "actual": 1, "rate": 0.0, "note": "review caught this before it manifested"},
+      "REFERENCE_TOLERANCE_DRIFT": {"predicted": 0, "actual": 1, "rate": 0.0}
+    },
     "categories_missed_across_both_replays": [
-      "SILENT_CORRECTNESS_CHANGE from internal-behavior drift in an unchanged API"
-    ]
+      "OBSERVED_SILENT_WRONG_OUTPUT from internal-behavior drift in an unchanged API (2 across two replays — the category with sharpest teeth)"
+    ],
+    "audit_type_disclaimer": "This is a static historical coverage audit, NOT a blind empirical replay. See ../notes/audit-vs-replay.md for the distinction. A true blind replay was not performed in this session."
   }
 }

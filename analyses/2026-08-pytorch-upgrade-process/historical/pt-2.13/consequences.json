@@ -19,7 +19,9 @@
     },
     {
       "category": "INDUCTOR_SEMANTIC_BREAK",
-      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with": ["OBSERVED_SILENT_WRONG_OUTPUT"],
+      "compound_with_legacy_label": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with_note": "Reclassified 2026-08-25 to OBSERVED_SILENT_WRONG_OUTPUT: wrong runtime results surfaced by a test failure; internal upstream rewrite of loop-orders was doing invisible work for us. See notes/consequence-taxonomy.md.",
       "mechanical": false,
       "surface": "torch._inductor.scheduler.Scheduler._try_reorder_loops_for_candidates",
       "delta": "2.13 computes a loop-reorder for candidate fusions and then DISCARDS it, whereas 2.12 applied it. LX-pinned clones no longer accidentally match consumers' iter order.",

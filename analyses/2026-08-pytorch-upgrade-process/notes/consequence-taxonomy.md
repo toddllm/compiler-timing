@@ -47,24 +47,79 @@ readiness model needs.
     internals. The pattern is not a taxonomy category per se, but
     an operational hazard the review process catches.
 
-## The severe category that appeared in 2.12 AND 2.13
+## The severe categories that appeared in 2.12 AND 2.13
 
-`SILENT_CORRECTNESS_CHANGE` — no exception, no warning, just wrong
-results.
+The original writeup collapsed three quite different cases under
+one label. Split into a finer taxonomy so the readiness model can
+target the right kind of check:
 
-- 2.12: three fp16 numerical edge cases drift by ~1 ULP (CPU
-  reference numerics changed, not Spyre kernel).
-- 2.12: Dynamo `.to` graph-break silently fell back to eager and
-  returned wrong D2D dtype casts.
-- 2.13: The LX loop-order accidental correctness case. Two
-  reductions sharing an LX-resident buffer read a different
-  core's slice than the producer wrote. No downstream check
-  complained because the split factors still multiplied to the
-  same core count.
+### `OBSERVED_SILENT_WRONG_OUTPUT`
 
-**These are the failure modes an API-signature grep cannot catch.**
-Both 2.12's `.to` graph-break and 2.13's LX loop-order case
-required someone to notice numeric wrongness in a test run.
+No exception, no warning, wrong results actually produced at
+runtime and observed by a test comparing values. This is the
+category with the sharpest teeth.
+
+- **2.12: Dynamo `.to` graph-break.** Silently fell back to eager
+  and returned wrong D2D dtype casts (fp16↔bf16). Discovered by
+  a dtype-cast test comparing against CPU reference. Fixed with
+  `torch._dynamo.allow_in_graph(torch.Tensor.to)`. No API-signature
+  change on either side.
+- **2.13: LX loop-order accidental correctness.** Two reductions
+  sharing an LX-resident buffer read a different core's slice
+  than the producer wrote. No downstream check complained because
+  the split factors still multiplied to the same core count.
+  Discovered by a test failure — `ani300: "required for PT 2.13,
+  otherwise CI is not green"`.
+
+### `LATENT_CORRECTNESS_RISK`
+
+Internal API contract changed in a way that WOULD have caused
+wrong output, but was caught in review or during initial patching
+before wrong output was observed.
+
+- **2.12: `size_hint` split.** SDSC concretization could silently
+  accept non-concrete values, producing wrong compilation. The
+  bad replacement was caught by dgrove-oss reading the docstring
+  during review; the initial patch used the wrong replacement.
+  Never manifested as wrong output in a downstream test.
+
+Counting this equivalent to `OBSERVED_SILENT_WRONG_OUTPUT` inflates
+the severity count in a way that flatters the discovery process
+that caught it early. Better to record it as its own category
+so a readiness check can say "this is the kind of thing review
+should look for" vs. "this is the kind of thing tests must catch."
+
+### `REFERENCE_TOLERANCE_DRIFT`
+
+Numeric reference itself changed in the new PyTorch version, not
+a torch-spyre kernel change. Downstream test tolerances need
+adjustment; the torch-spyre code itself did not silently miscompile.
+
+- **2.12: three fp16 numerical edge cases drift by ~1 ULP.**
+  PT 2.12 CPU-reference numerics changed. Fixed with three xfails
+  (commit 3a2d482). Category is closer to
+  `TEST_EXPECTATION_CHANGE` than to a torch-spyre silent
+  miscompile — the Spyre kernel produced the same output; the
+  reference moved.
+
+### The categories together
+
+**Only `OBSERVED_SILENT_WRONG_OUTPUT` is what "silent correctness"
+should mean in the readiness model** — a case that actually
+produced wrong runtime results and required someone to notice
+numeric wrongness in a test run. That happened once in 2.12
+(Dynamo `.to`) and once in 2.13 (LX loop-order). Two cases across
+three upgrades, not three or four.
+
+`LATENT_CORRECTNESS_RISK` is a review-catch category — good news
+that the process works.
+
+`REFERENCE_TOLERANCE_DRIFT` is a test-suite hygiene category —
+the upstream reference moved.
+
+All three are legitimately "an API-signature grep cannot catch
+this," but they need different mitigations, so the taxonomy
+distinguishes them.
 
 ## Categories that appear in exactly one upgrade
 
@@ -133,7 +188,14 @@ the release cycle each category is detectable:
 
 ### Silent-run-visible — visible only if a test COMPARES numerics
 
-- `SILENT_CORRECTNESS_CHANGE`
+- `OBSERVED_SILENT_WRONG_OUTPUT` — only category with sharp teeth
+  (2.12 Dynamo `.to`; 2.13 LX loop-order).
+- `LATENT_CORRECTNESS_RISK` — caught in review (2.12 size_hint).
+  Not silent-run-visible in the sense of firing during a test run
+  because it was fixed before that would happen.
+- `REFERENCE_TOLERANCE_DRIFT` — tolerance/xfail adjustment
+  category (2.12 fp16 1-ULP). Test failure fires; the fix is
+  tolerance/xfail rather than a torch-spyre code change.
 
 ### Downstream-visible — visible only after downstream projects try
 
@@ -150,14 +212,19 @@ the release cycle each category is detectable:
 - The forward-compat skill covers the **compile-visible** and
   **run-visible** parts empirically. F3 / F6 / F8 all sit in this
   band.
-- `SILENT_CORRECTNESS_CHANGE` is the category the current tooling
-  is WEAKEST at. Both 2.12 and 2.13 hit at least one silent case.
-  A readiness model would specifically want:
-  - a targeted numeric-diff test against CPU reference at the fp16
-    edge cases that historically drift;
-  - a targeted "LX-resident buffer + two consumers with different
-    dim orders" scenario;
-  - a general `torch.compile(...) → CPU-oracle` differential test.
+- `OBSERVED_SILENT_WRONG_OUTPUT` is the category the current
+  tooling is WEAKEST at. Two instances across three upgrades
+  (2.12 Dynamo `.to`; 2.13 LX loop-order). A readiness model
+  would specifically want a general
+  `torch.compile(...) → CPU-oracle` differential test — that's
+  the mitigation for the category as a whole.
+- `LATENT_CORRECTNESS_RISK` is best mitigated by review discipline
+  on any patch that touches a "returns hint" / "assumes concrete"
+  API contract. Named review pattern rather than a check script.
+- `REFERENCE_TOLERANCE_DRIFT` is mitigated by targeted numeric-diff
+  tests at known-drift edge cases (fp16 corner values) that
+  distinguish "our kernel drifted" from "the reference drifted"
+  before applying an xfail.
 - Downstream (vLLM, spyre-inference, hf-adapters, kineto) status
   is READY / NOT READY as a first-class dimension. The 2.12 case
   showed that a downstream architectural change can UNBLOCK the

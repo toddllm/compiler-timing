@@ -1,12 +1,26 @@
-# PR #3404 — 2×2 empirical result
+# PR #3404 — empirical Cell B; A/C/D not run
 
-- **PR:** [`torch-spyre/torch-spyre#3404`](https://github.com/torch-spyre/torch-spyre/pull/3404)  
+- **PR:** [`torch-spyre/torch-spyre#3404`](https://github.com/torch-spyre/torch-spyre/pull/3404)
   "fix(distributed): fix import torch_spyre crash from spyre::broadcast_async schema ordering"
 - **Author:** anubhavjana
 - **Base SHA:** `9de3a7be39f4aafd24cb3d003409f5fd902223da`
 - **Head SHA:** `a50ba6a6854d348ec8c6162e129be88cfe24471d`
-- **State:** open, `mergeable_state: dirty` (has conflicts against main)
+- **State (2026-08-25 snapshot):** open, `mergeable_state: dirty` (has conflicts against main)
 - **Diff:** 3 files, +17 / −9. Small, well-scoped.
+
+## Scope of this case
+
+This case exercises the **static preflight** part of the pseudo-CI
+lane and one empirical build cell (Cell B). It does NOT exercise
+the 2×2 interaction attribution — cells A, C, and D were not run.
+The dashboard-level classification here is `PR_STALE_AGAINST_MAIN`,
+which the static preflight can produce cheaply. The prompt's
+2×2 causal semantics (distinguishing PR breakage from PyTorch
+breakage from their interaction) is NOT empirically validated by
+this case.
+
+See `../../notes/baseline-modes.md` for the baseline-mode design
+question that any future full 2×2 run has to resolve first.
 
 ## Static triage
 
@@ -40,12 +54,12 @@ earlier in `_autoload_impl`.
 This is a legitimate targeted fix — pull the schema-registration
 import to before `_C` gets loaded via `ops.eager`.
 
-## 2×2 matrix
+## Cells executed
 
 |                       | SUPPORTED torch 2.13 | FORWARD torch 2.15 nightly |
 |-----------------------|---------------------|----------------------------|
-| **torch-spyre main @ 613b259** | Cell A — PRESUMED PASS from third-clean-run's 2026-08-25 evidence at exactly this SHA. | Cell C — PRESUMED PASS with F3+F8 patches; PRESUMED FAIL without them (F8 will fire on inductor compile). |
-| **PR head @ a50ba6a** | Cell B — **FAIL** (empirical, this run) | Cell D — presumed to fail with the same C++ error as Cell B before it can reach a torch-version-specific check. |
+| **torch-spyre main @ 613b259** | Cell A — **NOT RUN**. See below. | Cell C — **NOT RUN**. See below. |
+| **PR head @ a50ba6a** | Cell B — **empirical FAIL** (this run) | Cell D — **NOT RUN**. Blocked by Cell B failure. |
 
 ### Cell B — empirical FAIL
 
@@ -75,20 +89,53 @@ the PR is not. This is precisely why `mergeable_state: dirty` shows
 red on GitHub — the header path in module.h is one of the merge
 conflicts against main.
 
+### Why A / C / D were not run — and why the earlier writeup was wrong
+
+The prior version of this document said Cell A was "PRESUMED PASS
+from third-clean-run's 2026-08-25 evidence at exactly this SHA."
+Both halves of that claim were incorrect:
+
+1. **The third-clean-run's torch-spyre SHA was `69bd7de1`, not
+   `613b259`.** See
+   `../../../2026-08-forward-compat-skill-validation/cases/third-clean-run-2026-08-25/01-versions.json`.
+2. **The third-clean-run's supported-control failed at Stage 0**
+   with F3 REVERSE_ENTRYPOINT_HAZARD before the local F3 fix was
+   applied. That case is a green result for the SKILL.md workflow
+   (which included the F3 fix), not a green result for raw
+   `69bd7de1`. Reading it as a green supported control for raw
+   main confuses baseline modes — see
+   `../../notes/baseline-modes.md`.
+
+Additionally, `613b259`'s `torch_spyre/__init__.py` still has
+`import torch` at line 20 with `_autoload` defined at line 256 and
+`_autoload_impl` at line 284 — the same structural pattern F3
+described. A raw-main supported control at 613b259 therefore
+cannot be presumed green.
+
+C and D were also NOT run empirically. The prior writeup's claim
+that they would "hit the same build error as Cell B before reaching
+a torch-version-specific check" is a plausible hypothesis but not
+tested here.
+
 ## Interpretation via the 2×2 classifier
 
-Textbook interpretation with A green, B red, same C/D pattern:
-`PR_BREAK_INDEPENDENT_OF_TORCH_VERSION` — the PR is broken on
-supported torch, and the failure is a stale-against-main build
-break, not anything to do with the PR's actual intent or with
-forward PyTorch.
+The prompt's classifier maps A-green / B-red to
+`PR_REGRESSION_ON_SUPPORTED`. This case does not exercise cell A
+empirically, so the strongest supported claim is a **static
+preflight verdict**:
 
-Refinement of the taxonomy: **PR_STALE_AGAINST_MAIN**. The 2×2
-prompt lists `PR_REGRESSION_ON_SUPPORTED` as the A-green-B-red
-interpretation, which is technically accurate here, but the CAUSE
-is that the PR hasn't been rebased. That's meaningfully different
-from "the PR itself introduces a regression" — a rebase would fix
-it.
+- **`PR_STALE_AGAINST_MAIN`** — the PR head fails at the C++
+  compile step because its base predates a repo-wide header rename.
+  A rebase would fix the header path. `mergeable_state: dirty`
+  already telegraphs this at the GitHub layer, before any device
+  time is spent.
+
+This verdict is producible without a 2×2 run — one build cell plus
+a `git diff` between the PR base and current main is enough. That's
+useful evidence for the **static preflight lane**. It is not
+evidence for the 2×2 classifier's ability to distinguish PR
+regression from PyTorch-forward regression from their interaction;
+that remains unvalidated.
 
 ## Action for the PR (shadow / non-invasive)
 
@@ -100,19 +147,18 @@ would be:
 
 > "PR #3404 build-broken on supported torch because base-branch has
 > drifted (`module.h` include path changed). Rebase on current main
-> resolves. No PyTorch-version-specific interaction is testable
-> until then."
+> resolves. Forward-PyTorch interaction cannot be assessed until
+> then."
 
 ## Device cost
 
 - Cell B: ~7 minutes of pod time before failing at the C++ compile
-  step. Cheap because it dies before the setup script even tries a
-  smoke stage.
-- Cells A / C / D not run empirically because:
-  - Cell A is redundant with third-clean-run at the same SHA.
-  - Cell C is redundant with third-clean-run's forward setup.
-  - Cell D would hit the same build error as Cell B — no torch-version
-    contribution possible until Cell B is green.
+  step.
+- Cells A / C / D: not run.
+- Static preflight (mergeable_state check + PR-vs-main file
+  diff): ~5 seconds of `gh api` and `git diff`. Would have flagged
+  this before Cell B ran; Cell B mostly served to confirm the
+  static signal.
 
 Serial device work respected.
 
@@ -123,7 +169,10 @@ distributed + inductor). Empirical Cell B took ~7 min and confirmed
 the PR is stale against main; no torch-version-specific interaction
 is testable in its current shape.
 
-A dashboard row for this PR would read:
+Correct dashboard row:
 
-    #3404  A=✅  B=❌  C=(skip)  D=(skip)   →  PR_STALE_AGAINST_MAIN
+    #3404  preflight=STALE  B=❌(stale)  A/C/D=not-run   →  PR_STALE_AGAINST_MAIN
     Author message (not posted): "rebase on main; module.h include path drifted."
+
+The old row (`A=✅  B=❌  C=(skip)  D=(skip)`) was misleading — it
+implied cell A had been evaluated when it had not.

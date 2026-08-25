@@ -4,6 +4,28 @@ Snapshot: 2026-08-25. torch-spyre main @ `613b259`. pytorch main @
 `26b9ddd7f`. Declared torch pin: `torch~=2.13.0`. Forward torch under
 test: NIGHTLY_PROXY (`2.15.0.dev20260824+cpu`, git `c0577575`).
 
+## Verdict up front
+
+- **Static preflight lane: empirically validated on one PR.** The
+  216-PR triage + `mergeable_state` + PR-vs-main diff was cheap
+  (~5 min) and produced a correct `PR_STALE_AGAINST_MAIN` verdict
+  for #3404 that a device build later confirmed.
+- **2×2 causal attribution: NOT empirically validated yet.** No
+  full four-cell run has been performed. #3404 ran one empirical
+  cell (Cell B) and its A/C/D verdicts were presumed, incorrectly
+  (see #3404 case README). The 2×2 interaction-attribution taxonomy
+  in `notes/matrix-semantics.md` remains a design specification.
+- **Wrapper skill: still premature.** No skill should be authored
+  around a validated static filter and an unvalidated causal matrix.
+
+## What changed vs. the initial writeup
+
+An earlier version of this SUMMARY claimed "2×2 methodology
+empirically validated" and "zero device time on the other six
+corpus members without loss of information." Both were overreached.
+Full retraction and revised claims in the section
+"Corrections against the original writeup" below.
+
 ## Universe
 
 - 216 open PRs on torch-spyre/torch-spyre (129 non-draft, 87 draft).
@@ -17,6 +39,10 @@ test: NIGHTLY_PROXY (`2.15.0.dev20260824+cpu`, git `c0577575`).
   `_test_matrix.yaml` (adds a `pytorch_sha` forwarded to the
   existing `checkout-pytorch` action) or run outside CI entirely on
   the forward-compat skill's pod-based lane.
+- **Active branches not enumerated in the 2026-08-25 snapshot.**
+  The master prompt asked for this; only PRs and workflow files
+  were captured. Filed as gap; see `inventory/active-branches.json`
+  (to be populated in a follow-up).
 
 ## Static triage (all 216 PRs)
 
@@ -49,40 +75,41 @@ The prompt asked for a balanced corpus:
 | #3404 | 90 | autoload,cpp,distributed,inductor,python_runtime | broad + autoload-touching |
 | #3765 | 35 | autoload,python_runtime | second autoload-touching |
 
-## 2×2 results
+## Results — corrected accounting
 
-Empirical runs completed:
+Empirical runs actually completed:
 
-- **#3404 Cell B (PR head + supported torch): FAIL.** Failed at C++
-  compile — `util/sen_host_ops.h` not found, because the PR is stale
-  against main. The `module.h` include path was changed in main to
-  `spyrecode-host-functions/sendataconvert/sen_host_ops.h`; the PR's
-  base predates that. `mergeable_state: dirty` — the git-level
-  signal for this was already visible. Classification:
-  `PR_STALE_AGAINST_MAIN` (a refinement of the prompt's
-  `PR_BREAK_INDEPENDENT_OF_TORCH_VERSION`). Cells A/C/D not run —
-  Cell A redundant with third-clean-run at same SHA; C/D would hit
-  the same C++ error before reaching any torch-version-specific
-  branch. **~7 min of device time; ~$negligible.**
-
-- **#3922 (tests-only): no empirical run needed.** Static triage
-  correctly classified it as `NO_FORWARD_RUN` — tests-only, cannot
-  break torch compatibility. Zero device time.
-
-- **Others (#3873, #3959, #3440, #3809, #3765): static forecast
-  only.** All are static-classified as `TARGETED_FORWARD_TEST` or
-  `DEEP_FORWARD_COMPAT`. Two more of them (#3809 and #3765) have
-  `mergeable_state: blocked` — required checks are failing, which
-  means either the PR is red on its OWN CI or waiting on
-  reviewers. Rebasing / green-CI status is a prerequisite before
-  torch-version-specific analysis is meaningful — same lesson as
-  #3404. Cheaper to check mergeable_state statically first than
-  burn device time.
+- **#3404 Cell B:** empirical FAIL, ~7 min. Correct static-preflight
+  verdict `PR_STALE_AGAINST_MAIN`. Cells A / C / D **not run**.
+  The prior writeup marked Cell A "presumed pass"; that presumption
+  was wrong on two grounds:
+  1. The referenced third-clean-run was against torch-spyre SHA
+     `69bd7de1`, not `613b259`.
+  2. That run's supported control failed at Stage 0 with F3
+     REVERSE_ENTRYPOINT_HAZARD before the local F3 fix was applied.
+  Independent verification: `613b259`'s `torch_spyre/__init__.py`
+  still has `import torch` at line 20 with `_autoload` first
+  defined at line 256 — the same F3 structure. Raw-main supported
+  control at 613b259 therefore cannot be assumed green.
+- **#3922 (tests-only):** static classification only. The verdict
+  `NO_FORWARD_RUN` applies to the **product** compatibility surface;
+  tests-only PRs can still affect CI/harness compatibility, which
+  this lane doesn't cover.
+- **#3873, #3440 (dirty):** static preflight verdict
+  `PR_STALE_AGAINST_MAIN`. Not empirically run.
+- **#3809, #3765 (blocked):** deferred. The blocked state should be
+  inspected (checks vs reviews) before deciding testability; the
+  original snapshot did not distinguish and defaulted to defer.
+  See `notes/selection-policy.md` for the corrected handling.
+- **#3959 (clean):** UNTESTED. This is the one that would exercise
+  a real four-cell 2×2. Currently the primary open empirical gap.
 
 Empirical rate observed: 1 empirical Cell B run out of 7 corpus
-members, saving an estimated 20-24 sub-cells of pod time.
+members. The prior claim "saving 20-24 sub-cells" conflated cost
+saved (real, for the deferred dirty/blocked ones) with information
+gained (zero, for #3959 which was skipped without a signal).
 
-## What the static-first heuristic gives you
+## What static preflight buys — validated
 
 For every open PR, the following can be produced WITHOUT any pod
 time:
@@ -92,91 +119,102 @@ time:
 - `mergeable_state` (Git-level ok / dirty / blocked / unknown);
 - draft flag.
 
-Rules of thumb the empirical run just confirmed:
+Rules of thumb this run supports:
 
-1. `mergeable_state ∈ {dirty, blocked}` → PR needs its own housekeeping
-   before any 2×2 cell is worth running. Static classifier catches
-   the vast majority of "this PR can't build against current main."
-2. `tests` / `docs` / `ci` / `tools` -only → `NO_FORWARD_RUN`.
-3. `autoload` / `monkey_patch` / `_C` / `cpp` categories → escalate
+1. `mergeable_state == dirty` → hard defer; PR literally conflicts
+   with main. This was the #3404 pattern and is empirically
+   confirmed as a device-cost saver.
+2. `mergeable_state == blocked` → **inspect first**, do not
+   auto-defer. Blocked can mean red-own-CI (real defer signal),
+   awaiting review (still testable), or code-freeze. Fetch the
+   check state before deciding.
+3. `tests` / `docs` / `ci` / `tools` -only → `NO_FORWARD_RUN`
+   for the product surface. Does not preclude a CI/harness lane
+   detecting compatibility issues in those PRs.
+4. `autoload` / `monkey_patch` / `_C` / `cpp` categories → escalate
    to full 2×2 only after rebase-and-build.
-4. `inductor` category → what the forward-compat skill's F8 case
-   covers. Currently 49 non-draft PRs touch `inductor/`; running
-   the 2×2 on all of them at 6 min/cell = ~20 pod-hours. Not
-   necessary — sample the highest-priority + newest updated ones.
+5. `inductor` category → F8 territory. 49 non-draft PRs touch
+   `inductor/`; running full 2×2 on all is not necessary — sample
+   the highest-priority + newest-updated first.
 
-## Dashboard (partial)
+## Dashboard (partial) — corrected
 
-Rendered for the corpus + top-10-by-priority non-draft PRs:
+Rendered for the corpus. `mode` field added per
+`notes/baseline-modes.md`; `A=✅ (implied)` from the old table
+replaced with `A=not-run` where truthful.
 
-| PR | Static priority | mergeable | Cell A | Cell B | Cell C | Cell D | Interpretation |
-|---|---|---|---|---|---|---|---|
-| #3922 | 0 (tests-only) | blocked | — | — | — | — | NO_FORWARD_RUN — no compat surface |
-| #3404 | 90 | dirty | ✅ (implied) | ❌ (empirical) | (skipped) | (skipped) | PR_STALE_AGAINST_MAIN — rebase needed |
-| #3873 | 65 | dirty | ✅ (implied) | (skip until rebased) | (skip) | (skip) | Deferred pending rebase |
-| #3809 | 60 | blocked | ✅ (implied) | (skip until unblocked) | (skip) | (skip) | Deferred pending CI |
-| #3440 | 50 | dirty | ✅ (implied) | (skip until rebased) | (skip) | (skip) | Deferred pending rebase |
-| #3959 | 35 | clean | ✅ (implied) | UNTESTED | UNTESTED | UNTESTED | Ready for empirical 2×2 |
-| #3765 | 35 | blocked | ✅ (implied) | (skip until unblocked) | (skip) | (skip) | Deferred pending CI |
+| PR | Priority | mergeable | mode | Cell A | Cell B | Cell C | Cell D | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| #3922 | 0 | blocked | — | — | — | — | — | NO_FORWARD_RUN (product surface) |
+| #3404 | 90 | dirty | preflight | not-run | ❌ empirical | not-run | not-run | PR_STALE_AGAINST_MAIN |
+| #3873 | 65 | dirty | preflight | not-run | not-run | not-run | not-run | PR_STALE_AGAINST_MAIN (from `dirty`) |
+| #3440 | 50 | dirty | preflight | not-run | not-run | not-run | not-run | PR_STALE_AGAINST_MAIN (from `dirty`) |
+| #3809 | 60 | blocked | preflight | not-run | not-run | not-run | not-run | DEFERRED (blocked — check state uninspected) |
+| #3765 | 35 | blocked | preflight | not-run | not-run | not-run | not-run | DEFERRED (blocked — check state uninspected) |
+| #3959 | 35 | clean | — | not-run | not-run | not-run | not-run | UNTESTED — primary open gap |
 
-Only ONE of seven corpus PRs (#3959) is even eligible for a
-pod-based 2×2 today: all others fail the "PR mergeable and CI
-green" prerequisite. That's an important design point.
-
-## Answer to the Track A question
+## Answer to the Track A question — revised
 
 **"Can a fresh Claude session inspect today's Torch-Spyre development
 activity and spend device time only where warranted, while correctly
 separating PR regressions from upstream-PyTorch compatibility
 regressions?"**
 
-**Yes, empirically demonstrated for one corpus PR (#3404).**
-- Static triage: 5 min of `gh api` calls to classify 216 PRs.
-- Empirical Cell B on #3404: 7 min, produced a correct
-  `PR_STALE_AGAINST_MAIN` verdict.
-- Zero device time on the other 6 corpus members without loss of
-  information (5 are gated on Git-level housekeeping; 1 is
-  tests-only).
+Split answer:
 
-The 2×2 methodology is the right shape. The rate-limiting step for
-empirically running it is not device time — it's PRs being in a
-buildable state to begin with. `mergeable_state == clean` is a
-much cheaper filter than trying to build a dirty PR.
+- **"Spend device time only where warranted": yes, empirically
+  demonstrated on one PR (#3404).** Static triage plus
+  `mergeable_state` filtering correctly identified a stale PR
+  before a device cell would have.
+- **"Correctly separate PR regressions from upstream-PyTorch
+  compatibility regressions": not empirically validated yet.**
+  The 2×2 causal matrix is the mechanism for that separation and
+  no full four-cell run has been performed. The #3404 case
+  answers the "PR is stale against main" question, which is a
+  Git-level property. It does not exercise the PR-vs-PyTorch
+  causal distinction.
+
+The methodology is the right shape. Its causal-attribution rules
+are unvalidated. Task #15 (full four-cell 2×2 on a clean PR) is
+the next empirical work required to change that.
 
 ## Wrapper skill?
 
-**Not yet.** The pseudo-CI experiment cleanly composes existing
-tools:
+**Not yet.** The composition of `gh api` + the forward-compat
+skill's per-cell scripts + a dashboard renderer is one page of
+Python. Wait for the four-cell 2×2 to be empirically validated
+before extracting a skill; otherwise the skill would encode an
+unvalidated method as if it worked.
 
-- `gh api` for triage.
-- `.claude/skills/torch-spyre-forward-compat/` scripts for each
-  cell.
-- The 2×2 interpretation table is one page of prose.
+## Corrections against the original writeup
 
-A wrapper skill's value would be automating the corpus selection,
-running the four cells, and emitting the dashboard row. Given
-that the primary filter is `mergeable_state` (not a device run),
-the natural first extension is not a skill at all — it's a small
-Python driver that:
+The original 7cc30ec version of this document contained the
+following claims that were subsequently corrected here:
 
-1. Reads open-prs.json + triage.json.
-2. Ranks by priority × (mergeable_state == clean) × updated_at.
-3. Emits a top-N list of PRs eligible for the 2×2 today.
-4. Runs cells B and D on those (A, C are already known for
-   main).
+1. "2×2 methodology empirically validated" — retracted. Only
+   the static preflight lane has one empirical data point.
+2. "Zero device time on 6 corpus members without loss of
+   information" — retracted for #3959, which was clean and
+   simply not tested.
+3. "`mergeable_state ∈ {dirty, blocked}` → defer" — replaced with
+   the split treatment in `notes/selection-policy.md`.
+4. "Tests-only PRs cannot break torch compatibility" — narrowed
+   to "cannot break the product compatibility surface"; CI/harness
+   compatibility is not in scope here.
+5. "Cell A presumed pass at exactly this SHA" for #3404 —
+   retracted; the referenced third-clean-run was at a different
+   SHA and its supported control failed before F3 patch.
+6. Missing: active-branches inventory — filed as gap.
+7. Missing: RAW_MAIN vs SHADOW_BASELINE mode declaration for
+   every 2×2 cell — added in `notes/baseline-modes.md`.
+8. "Neither track needs further empirical validation on its core
+   methodology" — retracted; see `notes/synthesis.md`.
 
-If that driver's output stabilizes, promoting it to a skill makes
-sense. Otherwise it's a one-file script under
-`.claude/skills/torch-spyre-forward-compat-pseudo-ci/scripts/`.
+## Follow-ups (unchanged, still valid)
 
-## Follow-ups
-
-- Empirical 2×2 on #3959 (only currently-buildable corpus member)
-  would test whether a compiler-facing PR interacts with forward
-  torch. Deferred to a next iteration.
-- The `_test_matrix.yaml` route would let this run inside real CI
-  once a `pytorch_sha` input is threaded through. Not urgent —
-  the pod-based lane already produced signal.
-- The static-first / mergeable-first filtering pattern should
-  itself become the skill's outer control flow — it's the
-  device-cost saver.
+- Real full 2×2 on the current highest-value eligible PR (may or
+  may not still be #3959 by the time this runs).
+- The `_test_matrix.yaml` route: still available whenever the
+  policy call is made to integrate.
+- Once the four-cell 2×2 is empirically validated, extracting a
+  wrapper skill becomes honest.

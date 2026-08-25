@@ -4,19 +4,33 @@
 
 **Track A (shadow forward-compat over open PRs):**
 - 216 open PRs statically triaged (5 min).
-- 1 empirical Cell-B run (7 min, correctly diagnosed as
-  `PR_STALE_AGAINST_MAIN`).
-- The rate-limiting factor is not device time. It's PRs being in a
-  buildable state to begin with. `mergeable_state ∈ {clean, dirty,
-  blocked}` is a cheaper filter than trying to build.
+- 1 empirical **Cell B only** run (7 min, correctly diagnosed
+  as `PR_STALE_AGAINST_MAIN`). Cells A / C / D were not run.
+- 13 active non-PR branches inventoried (task #5 catchup).
+- **What's empirically validated:** static preflight filter
+  correctly identifies stale-against-main PRs before device time
+  is spent.
+- **What's NOT yet empirically validated:** the 2×2 causal
+  matrix's ability to distinguish PR breakage from PyTorch
+  breakage from their interaction. That requires a full four-cell
+  run on a clean-mergeable PR — task #15.
+- The rate-limiting factor observed for *this* corpus was PR
+  mergeability. Do not generalize to a claim about all PR sets;
+  it's one data point.
 
-**Track B (three historical upgrades + skill replay):**
+**Track B (three historical upgrades + static coverage audit):**
 - 2.11 / 2.12 / 2.13 fully reconstructed with timelines +
   consequences.
 - Existing `upgrade-pytorch-version` skill covers mechanical
-  migration well; predicts zero of the substantive breaks.
-- Silent-correctness cases (2.12's Dynamo `.to`, 2.13's LX
-  loop-order) are the hardest failure mode.
+  migration well (5/5 files, 100%); did not name specific
+  substantive breaks. See `../../2026-08-pytorch-upgrade-process/skill-replay/README.md` — the underlying evidence is a
+  **static historical coverage audit**, not a blind empirical
+  replay. Blind replay is task #14.
+- `OBSERVED_SILENT_WRONG_OUTPUT` (2.12 Dynamo `.to`, 2.13 LX
+  loop-order) is the failure mode with sharpest teeth. Split
+  from `LATENT_CORRECTNESS_RISK` and `REFERENCE_TOLERANCE_DRIFT`
+  in the tightened taxonomy — see
+  `../../2026-08-pytorch-upgrade-process/notes/consequence-taxonomy.md`.
 - Compatibility ledger populated with 12 historical + 2 open
   entries.
 
@@ -213,27 +227,71 @@ Both are premature to create today — the analysis in this repo
 IS the design work. Once the checks are automated and pointed
 somewhere, THEN a skill wrapping them is honest.
 
-## Final answers to Todd's two independent questions
+## Final answers to Todd's two independent questions — REVISED
+
+Earlier version of this file overreached. Corrected answers:
 
 **A. "Can Claude act as a useful shadow compatibility CI system
 over current Torch-Spyre development without wasting device time
 or confusing PR failures with PyTorch failures?"**
 
-Yes, in principle, empirically validated for ONE PR. The 2×2
-matrix reliably distinguishes `PR_STALE_AGAINST_MAIN` from a
-torch-version issue. The methodology works. Scale-out is a matter
-of driver code + device budget; those are engineering, not open
-questions.
+**Split answer:**
+
+- "Spend device time only where warranted" — YES, empirically
+  demonstrated on one PR (#3404). Static preflight (triage +
+  `mergeable_state`) correctly identified a stale PR before a
+  device cell would have.
+- "Correctly separate PR failures from PyTorch failures via the
+  2×2 causal matrix" — NOT empirically validated yet. The #3404
+  case ran one cell (Cell B). Cells A / C / D were never run,
+  and the earlier writeup's claim that Cell A was "presumed pass"
+  was wrong (see `../cases/pr-3404/README.md`). The 2×2
+  interaction-attribution rules in `matrix-semantics.md` remain
+  a design specification. Task #15 (full four-cell 2×2 on a
+  clean-mergeable PR) is the missing empirical validation.
 
 **B. "Can Claude tell the team, before an official PyTorch upgrade
 starts, what is already known to break, what is already fixed,
 what downstream pieces are ready, and what work remains?"**
 
-Yes — the compatibility ledger + readiness model + historical
-timelines together answer this today. What is missing is
-orchestration: a single command that emits the ready/not-ready
-report per target torch version. That's a small piece of glue,
-not another research question.
+**Partial yes.** The compatibility ledger + readiness model +
+historical timelines are useful evidence today. Remaining gaps:
 
-Both tracks are ready for the next round of engineering; neither
-needs further empirical validation on its core methodology.
+- What appears in the ledger has not been reconciled against a
+  real upcoming target — the recommended next experiment
+  (PyTorch 2.14 RC readiness, task #13) exercises this against
+  a real target rather than a hypothetical.
+- The `upgrade-pytorch-version` skill's coverage numbers rest on
+  a **static historical coverage audit**, not a blind replay
+  (see `../../2026-08-pytorch-upgrade-process/notes/audit-vs-replay.md`).
+  Task #14 is the blind replay.
+- The readiness state machine had a self-contradiction in its
+  earlier version and has been rewritten
+  (`../../2026-08-pytorch-upgrade-process/notes/upgrade-readiness-model.md`).
+  It is now internally consistent but has not been exercised
+  end-to-end against a real target version.
+- D6 (perf) does not yet have a validated cross-torch-version
+  owner. `frontend-compiler-impact` is a candidate but was
+  validated for a different axis.
+
+**Retraction:** the earlier line "Both tracks are ready for the
+next round of engineering; neither needs further empirical
+validation on its core methodology" was wrong. Track A's 2×2
+causal matrix is unvalidated. Track B's audit-vs-replay
+distinction was not respected in the initial numbers. Both need
+follow-up empirical work before that summary claim is honest.
+
+## What still needs empirical validation
+
+1. **Full four-cell 2×2** on a clean-mergeable PR, with an
+   explicit baseline-mode declaration (task #15).
+2. **Real PT 2.14 RC readiness exercise** — 2.14 is no longer
+   hypothetical (RC1 exists on the test CPU channel as of the
+   PyTorch dev-discuss announcement; GA scheduled 2026-09-02)
+   (task #13).
+3. **Blind replay of `upgrade-pytorch-version`** — give a fresh
+   Claude session only the historical starting SHA + target
+   version; preserve output before revealing the merged PR
+   (task #14).
+4. **Cross-torch-version validation of `frontend-compiler-impact`**
+   (or explicit replacement mechanism for D6).

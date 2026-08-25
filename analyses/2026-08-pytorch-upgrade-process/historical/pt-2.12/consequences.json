@@ -9,11 +9,13 @@
     {"category": "LOCKFILE_REGENERATION", "mechanical": true, "location": "uv.lock, requirements/{build,dev,run,lint}.txt"},
     {
       "category": "INDUCTOR_API_BREAK",
-      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with": ["LATENT_CORRECTNESS_RISK"],
+      "compound_with_legacy_label": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with_note": "Reclassified 2026-08-25: the wrong replacement was caught in review before wrong output was observed. That is LATENT_CORRECTNESS_RISK, not OBSERVED_SILENT_WRONG_OUTPUT. See notes/consequence-taxonomy.md.",
       "mechanical": false,
       "surface": "V.graph.sizevars.size_hint",
       "delta": "size_hint removed; split into optimization_hint (may be non-concrete) and guarding_hint_or_throw (concrete or exception).",
-      "impact": "SDSC concretization would silently accept non-concrete values, producing wrong compilation.",
+      "impact": "SDSC concretization would silently accept non-concrete values, producing wrong compilation — RISK, not observed miscompile.",
       "fix": "Use guarding_hint_or_throw at final concretization points (superdsc.py:602).",
       "discovery": "review by dgrove-oss reading the docstring for _concretize_for_sdsc; initial patch used the wrong replacement."
     },
@@ -30,7 +32,9 @@
     },
     {
       "category": "INDUCTOR_API_BREAK",
-      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with": ["OBSERVED_SILENT_WRONG_OUTPUT"],
+      "compound_with_legacy_label": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with_note": "Reclassified 2026-08-25 to OBSERVED_SILENT_WRONG_OUTPUT: wrong dtype output actually produced at runtime; not surfaced by an exception. See notes/consequence-taxonomy.md.",
       "mechanical": false,
       "surface": "torch._dynamo (inlining of Python torch.Tensor.to wrapper)",
       "delta": "Dynamo now graph-breaks when Python wrapper calls C++ orig_to.",
@@ -61,7 +65,9 @@
     },
     {
       "category": "TEST_EXPECTATION_CHANGE",
-      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with": ["REFERENCE_TOLERANCE_DRIFT"],
+      "compound_with_legacy_label": ["SILENT_CORRECTNESS_CHANGE"],
+      "compound_with_note": "Reclassified 2026-08-25 to REFERENCE_TOLERANCE_DRIFT: CPU reference numerics drifted; Spyre kernel produced the same output. This is not a torch-spyre silent miscompile. See notes/consequence-taxonomy.md.",
       "mechanical": false,
       "surface": "three fp16 numerical tests",
       "delta": "PT 2.12 CPU-reference numerics change caused 1-ULP drifts.",

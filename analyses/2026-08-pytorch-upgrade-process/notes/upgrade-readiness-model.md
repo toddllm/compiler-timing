@@ -68,31 +68,70 @@ The `upgrade-pytorch-version` skill covers this dimension well.
 
 ### D6. Performance readiness
 
-- [ ] Compile-time regression check via `frontend-compiler-impact`
-      on main + target torch — no material regression
+- [ ] Compile-time regression check on main + target torch — no
+      material regression
 - [ ] Model-level smoke unchanged (one small Granite block or
       equivalent)
 
 This dimension was NOT explicitly gated in any of 2.11/2.12/2.13.
 It's forward-facing.
 
+**Caveat on tooling:** the `frontend-compiler-impact` skill was
+validated for comparing **torch-spyre code deltas** (main vs. a
+PR head at a fixed torch version). Comparing the same torch-spyre
+SHA across two different torch versions (torch 2.13 vs torch 2.14
+holding torch-spyre fixed) is a **different experimental axis**
+that skill has not been validated for yet. The instrumentation
+(compile-phase timings, mem/perf counters) likely transfers, but
+the interpretation guides in that skill assume torch-spyre-side
+change is the independent variable. Cross-torch use of the same
+mechanics would need its own validation pass before its output
+should be trusted.
+
 ## Overall verdict states
 
-- `NOT_READY` — any D1 red, or D2 has open ledger entries without
-  proposed fixes.
-- `READY_WITH_KNOWN_PATCHES` — D1/D2/D3 green; D4/D5/D6 pending;
-  every substantive fix has an authored patch in the shadow lane
-  waiting to be bundled into the bump PR.
-- `READY_FOR_UPGRADE_PR` — all six dimensions green; the maintainer
-  can open the version-bump PR with confidence that CI will not
-  surface surprises. The PR itself may still bundle
-  `REPO_HYGIENE_BUNDLING` unrelated bumps.
-- `UPGRADE_PR_VALIDATED` — the version-bump PR has been merged and
-  post-merge follow-ups (if any) are tracked.
+The prior version had `READY_WITH_KNOWN_PATCHES` require "D1/D2/D3
+green" but then said the same state "might have D3=vLLM-red." That
+was a self-contradiction. Fixed states:
+
+- **`NOT_READY`** — one or more gating dimensions has unresolved
+  unknowns or open ledger entries without an authored remediation.
+  Gating set: D1 (PT artifact), and D2's must-fix items (the ones
+  the team has marked as blocking rather than "known and worked
+  around"). D3/D4/D5/D6 are not gating for entering this state;
+  a red D3 with a documented workaround is not a NOT_READY signal.
+
+- **`READY_WITH_KNOWN_GAPS`** — every dimension has been evaluated
+  and every gap is either fixed, has an accepted patch in the
+  shadow lane, or has been explicitly dispositioned as an accepted
+  workaround. Some dimensions may still be red — that's fine, as
+  long as the redness is known and dispositioned. This is the
+  state most historical upgrade PRs opened from: the team knew
+  vLLM would lag or a specific test would xfail, and chose to
+  proceed anyway.
+
+- **`READY_FOR_UPGRADE_PR`** — the required-for-PR-open subset of
+  dimensions are green or explicitly waived. That subset is D1
+  (must have a target-torch artifact), D2's mechanical import +
+  compile smoke, and D5 (mechanical migration recipe). D3/D4/D6
+  can be tracked as PR blockers but are not required for the
+  PR to open.
+
+- **`UPGRADE_PR_VALIDATED`** — the version-bump PR has been opened
+  and passed its required validation (CI matrix green on the
+  bump PR itself, downstream checks that were red pre-open are
+  now dispositioned, post-merge follow-ups tracked).
 
 Dimensions must be preserved on the internal record even when the
-overall state is set — a `READY_WITH_KNOWN_PATCHES` state might
-have D3=vLLM-red that is expected but worth surfacing.
+overall state is set — a `READY_WITH_KNOWN_GAPS` state that has
+D3=vLLM-red must record the D3=red status and the disposition
+("accepted workaround: spyre-inference no longer depends on vLLM
+CPU wheels, per spyre-inference#357"), not lose that detail.
+
+The states are ordered: `NOT_READY` → `READY_WITH_KNOWN_GAPS` →
+`READY_FOR_UPGRADE_PR` → `UPGRADE_PR_VALIDATED`. Moving forward
+requires resolving/dispositioning gaps; moving backward requires
+new unknowns emerging (e.g. an ABI break discovered mid-PR).
 
 ## What the forward-compat + upgrade skills each contribute
 
@@ -106,7 +145,10 @@ have D3=vLLM-red that is expected but worth surfacing.
 | D6 (perf) | – | – (out of scope) |
 
 `frontend-compiler-impact` (separate skill, not analyzed here) is
-the natural D6 owner.
+the natural D6 candidate but has only been validated for the
+torch-spyre-code-delta axis; cross-torch-version use is a
+different application that would need its own validation. See
+D6 caveat above.
 
 ## The composed picture
 
@@ -129,9 +171,14 @@ the natural D6 owner.
         not yet built                            –
 ```
 
-Two of six dimensions have existing skills. One (D2) has
-scaffolding via Track A. Three (D3, D4, D6) don't have a dedicated
-mechanism — each is a small check, not another whole skill.
+One of six dimensions has an existing validated skill (D5:
+upgrade-pytorch-version). D2 has scaffolding via Track A (with
+the caveat that Track A's 2×2 causal attribution is not yet
+empirically validated). D6 has a candidate skill
+(frontend-compiler-impact) that is validated for a different
+axis and would need cross-torch validation before it can be
+counted as a D6 owner. D1/D3/D4 don't have dedicated mechanisms
+yet — small checks, not new skills.
 
 A readiness skill would be a THIN orchestration layer that queries
 each dimension and emits a report. Body of work is small if the

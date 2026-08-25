@@ -30,15 +30,37 @@ trying the new torch:
 The mechanical file edits are a fraction of the diff. The
 substantive fixes carry the story.
 
-### Silent correctness change is the failure mode current tooling misses
+### Observed-silent-wrong-output is the failure mode current tooling misses
 
-Both 2.12 and 2.13 hit at least one `SILENT_CORRECTNESS_CHANGE`.
-Both stemmed from an unchanged API's INTERNAL behavior drifting —
-Dynamo inlining behavior for 2.12; scheduler loop-reorder for 2.13.
-An API-signature grep would not catch either. Only rebuild-and-run-
-with-a-CPU-oracle catches them.
+The initial writeup lumped "silent correctness" into one bucket
+with three cases. The finer taxonomy
+(`notes/consequence-taxonomy.md`) splits them:
+
+- **`OBSERVED_SILENT_WRONG_OUTPUT`** (2 cases): 2.12 Dynamo `.to`
+  graph-break — wrong D2D dtype casts produced at runtime; 2.13
+  LX loop-order — wrong reduction outputs. **These are the ones
+  with sharp teeth.**
+- **`LATENT_CORRECTNESS_RISK`** (1 case): 2.12 `size_hint` split
+  — wrong replacement caught in review before wrong output
+  materialized.
+- **`REFERENCE_TOLERANCE_DRIFT`** (1 case): 2.12 fp16 1-ULP CPU
+  reference numerics changed; Spyre kernel produced the same
+  output.
+
+Both `OBSERVED_SILENT_WRONG_OUTPUT` cases stemmed from an unchanged
+API's INTERNAL behavior drifting — Dynamo inlining behavior for
+2.12; scheduler loop-reorder for 2.13. An API-signature grep would
+not catch either. Only rebuild-and-run-with-a-CPU-oracle catches
+them.
 
 ### The existing upgrade skill is well-scoped for mechanical, not for discovery
+
+**Methodology note:** the section below labels its evidence as
+"replay results," but the underlying work is a **static historical
+coverage audit**, not a blind empirical replay. See
+`notes/audit-vs-replay.md` and `skill-replay/README.md` for the
+distinction. Task #14 (a true blind replay) is a followup that
+would strengthen the numbers below.
 
 The `upgrade-pytorch-version` skill (authored in the 2.11 PR by
 `bohnstingl`, now in torch-spyre main at
@@ -54,12 +76,12 @@ The `upgrade-pytorch-version` skill (authored in the 2.11 PR by
   categories (Inductor API, Dynamo/guard API, downstream C++,
   etc.) — but as watch items, not predictions.
 
-Replay results (`skill-replay/coverage.json`):
+Audit results (`skill-replay/coverage.json` — schema v2):
 
-| Replay | Mechanical prescribed & needed | Mechanical needed but not prescribed | Substantive breaks specifically predicted | Silent-correctness predicted |
-|---|---|---|---|---|
-| 2.11 → 2.12 | 5 / 5 | 2 (hygiene bundles) | 0 | 0 (3 actual) |
-| 2.12 → 2.13 | 5 / 5 | 4 | 0 | 0 (1 actual) |
+| Version | Mechanical prescribed & needed | Mechanical needed but not prescribed | Substantive breaks specifically predicted | Observed-silent-wrong-output actual | Latent-correctness-risk actual | Reference-tolerance-drift actual |
+|---|---|---|---|---|---|---|
+| 2.11 → 2.12 | 5 / 5 | 2 (hygiene bundles) | 0 predicted | 1 | 1 | 1 |
+| 2.12 → 2.13 | 5 / 5 | 4 | 0 predicted | 1 | 0 | 0 |
 
 The skill is honest about its scope. Its Potential-Breakage list
 gestures at every substantive category but never names a specific
@@ -98,11 +120,16 @@ Full breakdown at `notes/upgrade-readiness-model.md`. Six axes:
 3. Downstream readiness (vLLM, spyre-inference, hf-adapters, kineto)
 4. CI readiness (workflow config, multi-arch runners)
 5. Migration readiness (mechanical — upgrade-pytorch-version's territory)
-6. Performance readiness (frontend-compiler-impact's territory)
+6. Performance readiness (frontend-compiler-impact candidate — but
+   validated only for torch-spyre-code-delta axis, not
+   cross-torch-version axis; see D6 caveat in the readiness model)
 
-Existing skills cover D5 (mechanical) and D2 (compatibility) well;
-D6 has `frontend-compiler-impact` for compile-time. D1 / D3 / D4
-are small check-lists without dedicated tooling yet.
+Existing skills cover D5 (mechanical) validated on its own axis;
+D2 (compatibility) via forward-compat, but Track A's causal 2×2
+is unvalidated. D6 has `frontend-compiler-impact` as a candidate,
+validated for torch-spyre-code-delta axis but not cross-torch-
+version. D1 / D3 / D4 are small check-lists without dedicated
+tooling yet.
 
 ## Answer to the Track B question
 
@@ -130,9 +157,12 @@ independently learn how any of them work.
 
 ## Should the existing upgrade skill change?
 
-**No, not directly.** The replays show it does what it says it
-does. Its "Potential Breakage" section is honestly labeled as a
-watch list.
+**No, not directly.** The static coverage audit shows it does
+what it says it does — mechanical migration is 5/5 files for
+both 2.11→2.12 and 2.12→2.13. Its "Potential Breakage" section
+is honestly labeled as a watch list. A blind replay (task #14)
+would strengthen this conclusion; the current evidence is audit,
+not replay.
 
 The productive next move is not to bolt discovery onto the
 mechanical skill — it's to add a readiness composition layer
