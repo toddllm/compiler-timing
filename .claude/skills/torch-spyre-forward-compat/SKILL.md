@@ -70,8 +70,9 @@ from "the newer torch broke it." Three builds can.
 SUPPORTED_CONTROL     — torch pinned per torch-spyre's pyproject.toml
                          (currently declares torch~=2.13.0; scripts
                          re-read this at runtime, not hard-coded).
-                         Must be GREEN through Stage 6 for the case
-                         to have signal. If SUPPORTED_CONTROL is red,
+                         Must be GREEN through every stage the case
+                         wants to reach — at minimum Stages 0-3 (the
+                         automated ladder). If SUPPORTED_CONTROL is red,
                          the pod, the pin, or the pipeline itself is
                          broken and the forward-compat question
                          cannot be answered.
@@ -110,38 +111,47 @@ See `references/environment-policy.md` for the enforcement details.
 ## Validation ladder — Stages 0-6
 
 Progression is ordered and terminates on the first stage that fails
-under FORWARD_BEFORE_FIX. Do not skip.
+under FORWARD_BEFORE_FIX. Do not skip. Detailed recipes live in
+`references/validation-ladder.md` — this is the summary.
 
-- **Stage 0 — Environment capture.** Record pod name, namespace, base
-  image digest (resolve `us.icr.io/wxpe-cicd-internal/amd64/torch-aiu-runtime-dev:latest`
-  to its immutable `@sha256:...` digest at pod-creation time), kernel,
-  glibc, python, pip, pytorch commit SHA, torch-spyre commit SHA, and
-  the `torch~=X.Y` declaration parsed from `pyproject.toml` at
-  runtime (never hard-coded). Produces `00-environment.json`. Runs
-  for all three control states.
-- **Stage 1 — Torch install.** Under FORWARD state, install torch
-  from the current pytorch main HEAD (EXACT_UPSTREAM_MAIN) or a
-  nightly wheel (NIGHTLY_PROXY). Success = `pip install` exits 0 AND
-  `import torch` prints a version matching the requested SHA.
-- **Stage 2 — Torch-spyre install.** With forward torch present,
-  build torch-spyre editable per `references/canonical-dev-flow.md`
-  (canonical form is `pip install -e . --no-deps
-  --no-build-isolation -vvv`).
-- **Stage 3 — Import.** `python -c 'import torch_spyre'` in a fresh
-  process. Success = exit 0 with no ImportError, no AttributeError,
-  no C-extension symbol errors.
-- **Stage 4 — Device presence.** Verify the spyre device is
-  registered and enumerable — `torch.spyre.device_count()` returns a
-  non-negative int; `torch.tensor([1,2,3]).to("spyre").sum().item()`
-  succeeds.
-- **Stage 5 — Op registration / dispatcher sanity.** Enumerate the
-  torch-spyre-registered ops and verify they resolve.
-- **Stage 6 — Smoke compile.** ONE small `torch.compile(...,
-  backend="inductor")` on the spyre device with a CPU correctness
-  oracle. This is the last stage and the only one that costs
-  meaningful device time. A green Stage 6 across SUPPORTED_CONTROL /
-  FORWARD_AFTER_FIX is the acceptance criterion for "forward-compat
-  restored for this bump."
+- **Stage 0 — ENVIRONMENT.** Runtime smoke: `import torch`, `import
+  torch_spyre`, `torch.spyre.device_count() >= 1`, and one trivial
+  eager op on the spyre device. A failure here is a substrate /
+  ABI / import problem, not a compiler problem.
+- **Stage 1 — BUILD / IMPORT.** Primary-module import matrix under
+  the current torch — confirms every `torch_spyre.*` package that
+  the compiler will later touch imports cleanly, and the private-
+  use-1 backend has been registered on the `torch` singleton.
+- **Stage 2 — MINIMAL COMPILE.** ONE `torch.compile(..., backend=
+  "inductor")` call on a two-op program (e.g. `add`) with a CPU
+  correctness oracle. Cheapest actual compile; catches lowering /
+  code-emission API breaks before the harder ones surface.
+- **Stage 3 — COMPILER-SURFACE SMOKES.** A hand-picked cheap subset
+  of `tests/inductor/` — building_blocks, dedup_constants, logging,
+  overwrite, inductor_scalar, copy_back_elision. Covers the
+  lowering-pipeline entry points that upstream torch changes tend
+  to break first.
+- **Stage 4 — FOCUSED FAILURE-DRIVEN TESTING.** Per-case, manual.
+  Once a Stage 0-3 failure is triaged and hypothesized, the case
+  author writes targeted tests that would have caught the failure
+  and passes them against SUPPORTED_CONTROL + FORWARD_AFTER_FIX.
+- **Stage 5 — REGRESSION VERIFICATION.** Per-case, manual. Wider
+  regression sweep on FORWARD_AFTER_FIX — the broader test grid the
+  case's diagnosis calls for (fp16, bool, distributed, etc.), not
+  the full torch-spyre suite.
+- **Stage 6 — BROADER CONFIDENCE.** Per-case, manual. Model-level
+  smoke: at least one small end-to-end model (e.g. one Granite
+  block) compiled and run under FORWARD_AFTER_FIX. Green Stage 6
+  across SUPPORTED_CONTROL and FORWARD_AFTER_FIX is the acceptance
+  criterion for "forward-compat restored for this bump."
+
+**Automation boundary.** `run_compat_smoke.sh --stage-through 3` is
+the automated runner. It implements Stages 0-3 above verbatim (each
+stage maps 1:1 to a `stage_N.log` and `stage_N.result` on disk).
+Stages 4-6 are per-case manual work driven by `record_failure.py`
+(to open the six-file record) and `verify_patch.sh` (to enforce the
+verification matrix). Extending the runner to `--stage-through 6` is
+v0.3 backlog.
 
 Detailed stage recipes in `references/validation-ladder.md`.
 
@@ -287,12 +297,31 @@ bash .claude/skills/torch-spyre-forward-compat/scripts/create_fresh_pod.sh \
 oc cp .claude/skills/torch-spyre-forward-compat/scripts \
       "$NS/$POD_NAME:/home/tdeshane/skill-scripts"
 
-# 3. Capture environment (pod, image, python, toolchain, PVC hazards).
+# 3. Sweep PVC contamination aside. The dev-cluster PVC (a5-deepview)
+#    is shared across all pods, so /home/tdeshane may already contain
+#    /supported, /forward, /torch-spyre-work, etc. from prior sessions.
+#    setup_supported_env.sh and setup_latest_pytorch_env.sh both refuse
+#    a non-empty WORKDIR — for good reason: a partial old state would
+#    silently poison the run. Move any pre-existing state ASIDE (not
+#    delete) so it can be inspected if the run surfaces something.
+#    Timestamp-suffixed so multiple stashings never collide.
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+oc exec "$POD_NAME" -n "$NS" -- bash -c '
+    STAMP="'"$STAMP"'"
+    for d in supported forward torch-spyre-work manual-repro fresh-validate skill-runs; do
+        if [ -e "/home/tdeshane/$d" ]; then
+            mv "/home/tdeshane/$d" "/home/tdeshane/${d}.stash-${STAMP}"
+        fi
+    done
+    echo "# PVC swept; anything under /home/tdeshane/*.stash-'"$STAMP"' is prior state"
+'
+
+# 4. Capture environment (pod, image, python, toolchain, PVC hazards).
 oc exec "$POD_NAME" -n "$NS" -- \
    python3 /home/tdeshane/skill-scripts/capture_environment.py \
    > "$CASE_DIR/00-environment.json"
 
-# 4. Resolve current torch-spyre and pytorch HEAD SHAs plus the
+# 5. Resolve current torch-spyre and pytorch HEAD SHAs plus the
 #    pyproject-declared torch pin. Anonymous fetch; falls back to
 #    GITHUB_TOKEN if the network policy requires it.
 oc exec "$POD_NAME" -n "$NS" -- \
@@ -305,19 +334,31 @@ oc cp "$NS/$POD_NAME:/home/tdeshane/versions.json" \
 TS_SHA=$(python3 -c 'import json; print(json.load(open("'$CASE_DIR'/01-versions.json"))["torch_spyre"]["sha"])')
 PT_SHA=$(python3 -c 'import json; print(json.load(open("'$CASE_DIR'/01-versions.json"))["pytorch"]["sha"])')
 
-# 5. SUPPORTED_CONTROL — install torch at the pyproject-declared pin
+# --- Device-serialization boundary ------------------------------------
+# The a5-deepview pod has ONE Spyre AIU device and the device runtime
+# is exclusive: once started (e.g. by a `capture_environment.py` call
+# or by a smoke stage running an on-device op), it holds state that a
+# concurrent workload can wedge into a DMA timeout / SIGABRT. Steps
+# 6-9 below must run SERIALLY. Do NOT background any of them.
+# ---------------------------------------------------------------------
+
+# 6. SUPPORTED_CONTROL — install torch at the pyproject-declared pin
 #    (parsed at runtime; scripts do NOT hard-code). --workdir must
-#    NOT yet exist; the script creates it and refuses to overwrite.
+#    NOT yet exist; the script creates it and refuses to overwrite
+#    (that's why step 3 swept the PVC).
 oc exec "$POD_NAME" -n "$NS" -- \
    bash /home/tdeshane/skill-scripts/setup_supported_env.sh \
         --torch-spyre-sha "$TS_SHA" \
         --workdir /home/tdeshane/supported
 
-# 6. FORWARD_BEFORE_FIX — a SEPARATE workdir (F1 rule: never share
-#    source trees between builds against different torches). Choose
-#    mode: EXACT_UPSTREAM_MAIN builds torch from source (~3h ceiling);
-#    NIGHTLY_PROXY installs a nightly wheel and reports the embedded
-#    git SHA for provenance.
+# 7. FORWARD_BEFORE_FIX — a SEPARATE workdir (F1 rule: never share
+#    source trees between builds against different torches). This
+#    script clones its own torch-spyre tree into $WORKDIR/torch-spyre
+#    at $TS_SHA, so there is no shared-tree hazard with step 6.
+#    Choose mode:
+#      EXACT_UPSTREAM_MAIN builds torch from source (~3h ceiling);
+#      NIGHTLY_PROXY installs a nightly wheel and reports the embedded
+#      git SHA for provenance.
 oc exec "$POD_NAME" -n "$NS" -- \
    bash /home/tdeshane/skill-scripts/setup_latest_pytorch_env.sh \
         --torch-spyre-sha "$TS_SHA" \
@@ -325,28 +366,32 @@ oc exec "$POD_NAME" -n "$NS" -- \
         --workdir /home/tdeshane/forward \
         --mode NIGHTLY_PROXY
 
-# 7. Run the compat smoke on the SUPPORTED venv. This walks Stages
+# 8. Run the compat smoke on the SUPPORTED venv. This walks Stages
 #    0-3 (env, import, minimal compile, targeted smoke). Stages 4-6
 #    from references/validation-ladder.md are per-case manual work
-#    driven by record_failure.py + verify_patch.sh.
+#    driven by record_failure.py + verify_patch.sh. The
+#    TORCH_SPYRE_TREE env pins Stage 3's test-tree locator to the
+#    supported tree.
 oc exec "$POD_NAME" -n "$NS" -- \
+   env TORCH_SPYRE_TREE=/home/tdeshane/supported/torch-spyre \
    bash /home/tdeshane/skill-scripts/run_compat_smoke.sh \
         --venv /home/tdeshane/supported/.venv-supported \
         --out-dir /home/tdeshane/supported-smoke \
         --stage-through 3
 
-# 8. Run the compat smoke on the FORWARD venv. Failures here are
+# 9. Run the compat smoke on the FORWARD venv. Failures here are
 #    the interesting result. First FORWARD failure blocks the ladder.
 oc exec "$POD_NAME" -n "$NS" -- \
+   env TORCH_SPYRE_TREE=/home/tdeshane/forward/torch-spyre \
    bash /home/tdeshane/skill-scripts/run_compat_smoke.sh \
         --venv /home/tdeshane/forward/.venv-latest \
         --out-dir /home/tdeshane/forward-smoke \
         --stage-through 3
 
-# 9. For each FORWARD failure: author a hypothesis-first record.
-#    record_failure.py creates the six-file per-failure directory
-#    (01-observation.md through 06-retrospective.md). 04-patch.md
-#    must reference a concrete diff before verify_patch.sh will run.
+# 10. For each FORWARD failure: author a hypothesis-first record.
+#     record_failure.py creates the six-file per-failure directory
+#     (01-observation.md through 06-retrospective.md). 04-patch.md
+#     must reference a concrete diff before verify_patch.sh will run.
 oc exec "$POD_NAME" -n "$NS" -- \
    python3 /home/tdeshane/skill-scripts/record_failure.py \
    --dir /home/tdeshane/case \
@@ -355,7 +400,7 @@ oc exec "$POD_NAME" -n "$NS" -- \
    --torch-spyre-loc torch_spyre/__init__.py:20 \
    --observation /home/tdeshane/observation.txt
 
-# 10. Verify the patch: assert it moves the ladder at least one
+# 11. Verify the patch: assert it moves the ladder at least one
 #     stage past the FORWARD failure AND does not regress
 #     SUPPORTED_CONTROL. Six-row matrix; refuses if any row fails.
 oc exec "$POD_NAME" -n "$NS" -- \
@@ -364,7 +409,7 @@ oc exec "$POD_NAME" -n "$NS" -- \
         --venv-supported /home/tdeshane/supported/.venv-supported \
         --venv-latest /home/tdeshane/forward/.venv-latest
 
-# 11. When done, pull the case directory back and tear down the pod.
+# 12. When done, pull the case directory back and tear down the pod.
 oc cp "$NS/$POD_NAME:/home/tdeshane/case" "$CASE_DIR/case"
 oc delete pod "$POD_NAME" -n "$NS"
 ```
@@ -488,7 +533,11 @@ is not written and no script in this skill imports from
         resolve_versions.sh           — git ls-remote pytorch + torch-spyre
         setup_supported_env.sh        — SUPPORTED_CONTROL venv+build
         setup_latest_pytorch_env.sh   — FORWARD venv+build (separate tree)
-        run_compat_smoke.sh           — Stages 0-6 harness
+        run_compat_smoke.sh           — Stages 0-3 harness
+                                        (Stages 4-6 are per-case
+                                        manual work via
+                                        record_failure.py +
+                                        verify_patch.sh)
         record_failure.py             — case scaffolding
         verify_patch.sh               — FORWARD_AFTER_FIX acceptance
 ```
@@ -497,8 +546,9 @@ is not written and no script in this skill imports from
 
 - **Not a torch bumper.** It answers whether a bump is safe; it does
   not land pin changes in `pyproject.toml`.
-- **Not a performance tool.** Stage 6 is a smoke compile, not a
-  benchmark. Compile-time regression is `frontend-compiler-impact`.
+- **Not a performance tool.** Stage 2 is a minimum-viable compile
+  and Stage 6 is a small-model smoke — neither is a benchmark.
+  Compile-time regression is `frontend-compiler-impact`.
 - **Not authoritative on pytorch internals.** When a failure
   implicates a pytorch commit, the skill cites the commit and
   reports the diagnosis; it does not propose changes to pytorch.

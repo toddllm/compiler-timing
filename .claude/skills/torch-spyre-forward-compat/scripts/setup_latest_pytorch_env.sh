@@ -147,32 +147,17 @@ fi
 
 # --- Preflight --------------------------------------------------------------
 
-TORCH_SPYRE_TREE="${TORCH_SPYRE_TREE:-$HOME/torch-spyre-work/torch-spyre}"
-if [ ! -d "$TORCH_SPYRE_TREE" ]; then
-    echo "FATAL: torch-spyre tree not found at $TORCH_SPYRE_TREE" >&2
-    echo "       set TORCH_SPYRE_TREE to override" >&2
+# WORKDIR discipline: refuse a pre-existing directory. FORWARD_BEFORE_FIX
+# and FORWARD_AFTER_FIX must both be able to point at a byte-known
+# starting substrate — a partially-populated WORKDIR from an earlier
+# attempt is exactly the state that produces "did the failure change or
+# is my rebuild stale?" ambiguity. Mirror setup_supported_env.sh's
+# same-named guard.
+if [ -e "$WORKDIR" ]; then
+    echo "FATAL: workdir already exists: $WORKDIR" >&2
+    echo "       forward setup requires a fresh directory; refusing to proceed" >&2
+    echo "       (move it aside first, e.g. mv $WORKDIR ${WORKDIR}.stash)" >&2
     exit 3
-fi
-if [ ! -f "$TORCH_SPYRE_TREE/pyproject.toml" ]; then
-    echo "FATAL: $TORCH_SPYRE_TREE/pyproject.toml missing" >&2
-    exit 3
-fi
-
-# Confirm the torch-spyre tree is at the recorded SHA, so the substrate
-# we produce is provably tied to the case SHA. The forward-compat
-# discipline forbids running against a drifted checkout.
-ACTUAL_TS_SHA="$(git -C "$TORCH_SPYRE_TREE" rev-parse HEAD 2>/dev/null || echo unknown)"
-if [ "$ACTUAL_TS_SHA" != "$TORCH_SPYRE_SHA" ]; then
-    # Accept short-SHA prefix match too.
-    case "$ACTUAL_TS_SHA" in
-        "$TORCH_SPYRE_SHA"*) ;;
-        *)
-            echo "FATAL: torch-spyre tree HEAD ($ACTUAL_TS_SHA) does not match" >&2
-            echo "       requested --torch-spyre-sha ($TORCH_SPYRE_SHA)." >&2
-            echo "       Re-check out the tree at the case SHA before running." >&2
-            exit 3
-            ;;
-    esac
 fi
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -182,6 +167,60 @@ fi
 
 mkdir -p "$WORKDIR"
 WORKDIR="$(cd "$WORKDIR" && pwd)"
+
+# Clone torch-spyre into $WORKDIR/torch-spyre at the requested SHA.
+#
+# Historical note: earlier versions of this script required the caller
+# to prepare the torch-spyre checkout separately (default
+# $HOME/torch-spyre-work/torch-spyre or via $TORCH_SPYRE_TREE env
+# override). That was fragile — it violated the F1 rule when the
+# supported and forward setups pointed at the same tree, and it left a
+# doc gap in SKILL.md (the env var wasn't part of the quick-start).
+# The forward setup now owns its own tree, mirroring setup_supported.
+#
+# $TORCH_SPYRE_TREE is still honored as an escape hatch for advanced
+# workflows (e.g. running against an uncommitted local branch): if the
+# env var is set AND points at an existing directory at the requested
+# SHA, we skip the clone and use it.
+if [ -n "${TORCH_SPYRE_TREE:-}" ] && [ -d "$TORCH_SPYRE_TREE" ] && [ -f "$TORCH_SPYRE_TREE/pyproject.toml" ]; then
+    OVERRIDE_SHA="$(git -C "$TORCH_SPYRE_TREE" rev-parse HEAD 2>/dev/null || echo unknown)"
+    case "$OVERRIDE_SHA" in
+        "$TORCH_SPYRE_SHA"*)
+            echo "# using pre-existing torch-spyre tree via TORCH_SPYRE_TREE=$TORCH_SPYRE_TREE (SHA $OVERRIDE_SHA)"
+            ;;
+        *)
+            echo "FATAL: TORCH_SPYRE_TREE=$TORCH_SPYRE_TREE HEAD=$OVERRIDE_SHA" >&2
+            echo "       does not match requested --torch-spyre-sha ($TORCH_SPYRE_SHA)." >&2
+            echo "       Either check out the requested SHA in that tree, or unset" >&2
+            echo "       TORCH_SPYRE_TREE and let this script clone fresh." >&2
+            exit 3
+            ;;
+    esac
+else
+    echo "# cloning torch-spyre into $WORKDIR/torch-spyre at $TORCH_SPYRE_SHA"
+    if ! git clone --quiet https://github.com/torch-spyre/torch-spyre.git \
+            "$WORKDIR/torch-spyre"; then
+        echo "FATAL: git clone torch-spyre failed" >&2
+        exit 3
+    fi
+    if ! git -C "$WORKDIR/torch-spyre" rev-parse --verify \
+            "${TORCH_SPYRE_SHA}^{commit}" >/dev/null 2>&1; then
+        # SHA not reachable from the default fetch — try PR heads.
+        git -C "$WORKDIR/torch-spyre" fetch --quiet origin \
+            '+refs/pull/*/head:refs/remotes/origin/pr/*' 2>/dev/null || true
+    fi
+    if ! git -C "$WORKDIR/torch-spyre" -c advice.detachedHead=false \
+            checkout --quiet "$TORCH_SPYRE_SHA"; then
+        echo "FATAL: torch-spyre checkout to $TORCH_SPYRE_SHA failed" >&2
+        exit 3
+    fi
+    export TORCH_SPYRE_TREE="$WORKDIR/torch-spyre"
+fi
+
+# Sanity: at this point $TORCH_SPYRE_TREE points at a tree at the
+# requested SHA. Downstream helpers (log lines, dev.txt install, and
+# pip install -e .) read $TORCH_SPYRE_TREE.
+ACTUAL_TS_SHA="$(git -C "$TORCH_SPYRE_TREE" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 # --- Helper: emit pytorch_selection.json ------------------------------------
 # Arguments are passed through env for JSON safety.
