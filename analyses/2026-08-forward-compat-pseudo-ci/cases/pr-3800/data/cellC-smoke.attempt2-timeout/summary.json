@@ -1,0 +1,8 @@
+{
+  "verdict": "FAIL",
+  "last_stage_run": 3,
+  "failed_stage": 3,
+  "stage_through_requested": 3,
+  "venv": "/home/tdeshane/cellC/.venv-latest",
+  "timestamp_utc": "2026-08-25T19:12:57Z"
+}

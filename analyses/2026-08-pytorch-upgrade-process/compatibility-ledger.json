@@ -157,7 +157,23 @@
       "first_torch_spyre_sha_with_fix": "not landed upstream; local patch in cases/f8-fallback-single-tensor/patches/F8-forward-patch.diff",
       "dual_compatible": true,
       "included_in_official_bump": null,
-      "status": "OPEN — PT 2.15 not yet released; ready for the upgrade PR when it starts."
+      "status": "OPEN — PT 2.15 not yet released; ready for the upgrade PR when it starts.",
+      "reproductions": [
+        {
+          "date": "2026-08-24",
+          "case": "cases/f8-fallback-single-tensor/",
+          "torch_spyre_sha": "not-recorded",
+          "pytorch_version": "2.15.0.dev20260824+cpu"
+        },
+        {
+          "date": "2026-08-25",
+          "case": "analyses/2026-08-forward-compat-pseudo-ci/cases/pr-3800/data/cellC-smoke.attempt1-F8-fail/",
+          "torch_spyre_sha": "8567fb2b",
+          "pytorch_version": "2.15.0.dev20260825+cpu",
+          "trigger": "Stage 0 env smoke's first torch.compile call, not Stage 2 as originally recorded",
+          "note": "Two-day-later reproduction on newer nightly and newer torch-spyre main. Failure mechanism byte-identical."
+        }
+      ]
     }
   ]
 }

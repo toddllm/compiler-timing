@@ -192,3 +192,33 @@ orchestration — it's D2 (the forward-compat empirical shadow lane)
 being fully continuous, and D3 (downstream lag) having any
 mechanism at all. Address those first; the readiness layer is
 easy to compose once they exist.
+
+## Refinements from the PT 2.14 RC readiness exercise
+
+Executed 2026-08-25 against real PT 2.14 RC artifacts (not
+hypothetical). Full report at
+`../readiness/pt-2.14-readiness.md`. Three refinements land back
+into this model:
+
+1. **D2 needs a baseline-mode declaration.** F3
+   REVERSE_ENTRYPOINT_HAZARD has been open across the 2.11 / 2.12 /
+   2.13 / 2.15 nightly range. D2's "supported control green on
+   main" prerequisite is red under RAW_MAIN mode and green under
+   SHADOW_BASELINE with the F3 patch applied. Same lesson as
+   Track A's `../../2026-08-forward-compat-pseudo-ci/notes/baseline-modes.md`
+   — every 2×2 or readiness cell must declare mode.
+
+2. **D3's kineto-spyre check is trivially scriptable.** One-line:
+
+       gh api repos/IBM/kineto-spyre/releases --jq '.[0].tag_name'
+
+   Parse for `torch-X.Y.Z` prefix. Compare against target
+   version. Historical answer for kineto lag has been "accept and
+   proceed" — this is a documentation checkbox, not a block.
+
+3. **D6 remains without a validated owner.** `frontend-compiler-
+   impact` was over-scoped as the D6 owner (fixed in correction
+   commit). The 2.14 exercise confirms D6 has no
+   cross-torch-version-validated tooling. Historical upgrades did
+   NOT gate on this dimension, so leaving D6 as "deferred until
+   validated" is defensible.

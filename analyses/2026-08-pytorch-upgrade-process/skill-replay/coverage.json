@@ -65,6 +65,27 @@
     "categories_missed_across_both_replays": [
       "OBSERVED_SILENT_WRONG_OUTPUT from internal-behavior drift in an unchanged API (2 across two replays — the category with sharpest teeth)"
     ],
-    "audit_type_disclaimer": "This is a static historical coverage audit, NOT a blind empirical replay. See ../notes/audit-vs-replay.md for the distinction. A true blind replay was not performed in this session."
+    "audit_type_disclaimer_v1": "The v1 numbers came from a static historical coverage audit, NOT a blind empirical replay. See ../notes/audit-vs-replay.md.",
+    "blind_replay_2026_08_25": {
+      "performed": true,
+      "method": "Fresh general-purpose subagent per replay; given only the pre-upgrade torch-spyre SHA, target version string, and the skill as it existed at that SHA. Hard rules forbade reading PR #2218/#3374, any file in this repo, or any time-machine peek.",
+      "results": {
+        "2.11_to_2.12": {
+          "mechanical_files_prescribed_and_needed": 4,
+          "mechanical_files_prescribed_but_not_needed": 2,
+          "substantive_breaks_specifically_predicted": 0,
+          "substantive_break_category_matches": 4,
+          "verdict": "Reproduces retrospective audit numbers exactly. See blind-replay-2.11-to-2.12.md."
+        },
+        "2.12_to_2.13": {
+          "mechanical_files_prescribed_and_needed": 4,
+          "mechanical_files_prescribed_but_not_needed": 2,
+          "substantive_breaks_specifically_predicted": 0,
+          "substantive_break_category_matches": 2,
+          "verdict": "Reproduces retrospective audit numbers exactly. See blind-replay-2.12-to-2.13.md."
+        }
+      },
+      "epistemic_note": "The blind and retrospective methodologies converge on the same numbers. That's evidence the retrospective audit was not inflated by hindsight — the same skill run without knowing the answer produces the same coverage picture."
+    }
   }
 }

@@ -1,0 +1,5 @@
+[Fast Path Debug] SUCCESS: 3 patches, 3 eval steps, 3 input symbols, 6 total symbols, output_size=4224
+stage2_compile_ok = True
+shape = (16,)
+dtype = torch.float16
+max_delta = 0.0

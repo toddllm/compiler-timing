@@ -1,0 +1,19 @@
+python_version = 3.12.13
+torch_version = 2.15.0.dev20260825+cpu
+torch_file = /home/tdeshane/cellD/.venv-latest/lib64/python3.12/site-packages/torch/__init__.py
+torch_spyre_file = /home/tdeshane/cellD/torch-spyre/torch_spyre/__init__.py
+<stdin>:5: FallbackWarning: aten.arange.default is falling back to cpu
+/home/tdeshane/cellD/torch-spyre/torch_spyre/_monkey_patch.py:105: UserWarning: Backend Spyre does not support int64; downcasting to int32 may change values outside the 32-bit range. You can silence this via warnings.filterwarnings(...) or spyre.set_downcast_warning(False) or TORCH_SPYRE_DOWNCAST_WARN env. variable. (Triggered internally at /home/tdeshane/cellD/torch-spyre/torch_spyre/csrc/types_mapping.h:95.)
+  return orig_to(self, *args, **kwargs)
+[Fast Path Debug] SUCCESS: 3 patches, 3 eval steps, 3 input symbols, 6 total symbols, output_size=4224
+/home/tdeshane/cellD/torch-spyre/torch_spyre/_inductor/customops.py:692: FallbackWarning: conversion from torch.int64 to torch.float32 is falling back to cpu
+  warn_fallback(f"conversion from {input.dtype} to {dtype}")
+/home/tdeshane/cellD/torch-spyre/torch_spyre/_inductor/customops.py:692: FallbackWarning: conversion from torch.float32 to torch.int64 is falling back to cpu
+  warn_fallback(f"conversion from {input.dtype} to {dtype}")
+[Fast Path Debug] SUCCESS: 3 patches, 3 eval steps, 3 input symbols, 6 total symbols, output_size=4224
+/home/tdeshane/cellD/torch-spyre/torch_spyre/_inductor/customops.py:692: FallbackWarning: conversion from torch.int64 to torch.float32 is falling back to cpu
+  warn_fallback(f"conversion from {input.dtype} to {dtype}")
+/home/tdeshane/cellD/torch-spyre/torch_spyre/_inductor/customops.py:692: FallbackWarning: conversion from torch.float32 to torch.int64 is falling back to cpu
+  warn_fallback(f"conversion from {input.dtype} to {dtype}")
+spyre_device_count = 1
+eager_op_ok = True

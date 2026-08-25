@@ -10,13 +10,19 @@ test: NIGHTLY_PROXY (`2.15.0.dev20260824+cpu`, git `c0577575`).
   216-PR triage + `mergeable_state` + PR-vs-main diff was cheap
   (~5 min) and produced a correct `PR_STALE_AGAINST_MAIN` verdict
   for #3404 that a device build later confirmed.
-- **2×2 causal attribution: NOT empirically validated yet.** No
-  full four-cell run has been performed. #3404 ran one empirical
-  cell (Cell B) and its A/C/D verdicts were presumed, incorrectly
-  (see #3404 case README). The 2×2 interaction-attribution taxonomy
-  in `notes/matrix-semantics.md` remains a design specification.
-- **Wrapper skill: still premature.** No skill should be authored
-  around a validated static filter and an unvalidated causal matrix.
+- **2×2 causal matrix — `FORWARD_COMPAT_CLEAN` verdict: empirically
+  validated on PR #3800 (added 2026-08-25 evening).** Full four-cell
+  run under SHADOW_BASELINE with F3+F8 patch stack. All cells passed
+  all stages on retry. See `cases/pr-3800/README.md`.
+- **2×2 causal matrix — other verdicts: still not empirically
+  observed.** `PR_FORWARD_INTERACTION_BREAK`,
+  `FORWARD_BREAK_ALREADY_ON_MAIN`, etc. remain structural predictions.
+  Would require a case where cells diverge in the ways the taxonomy
+  names.
+- **Wrapper skill: still premature.** One clean-verdict case doesn't
+  justify a skill; a skill would need multiple cases including at
+  least one divergent-cells case to encode the causal-attribution
+  playbook meaningfully.
 
 ## What changed vs. the initial writeup
 
@@ -101,8 +107,12 @@ Empirical runs actually completed:
   inspected (checks vs reviews) before deciding testability; the
   original snapshot did not distinguish and defaulted to defer.
   See `notes/selection-policy.md` for the corrected handling.
-- **#3959 (clean):** UNTESTED. This is the one that would exercise
-  a real four-cell 2×2. Currently the primary open empirical gap.
+- **#3959 (clean at first snapshot):** ended up NOT the target when
+  we ran the full 2×2 — by evening of 2026-08-25 its mergeable_state
+  had drifted to `unstable`. Replaced with #3800.
+- **#3800 (clean at second snapshot):** empirical full 2×2 completed.
+  All four cells green under SHADOW_BASELINE (F3+F8). Verdict:
+  `FORWARD_COMPAT_CLEAN`. See `cases/pr-3800/`.
 
 Empirical rate observed: 1 empirical Cell B run out of 7 corpus
 members. The prior claim "saving 20-24 sub-cells" conflated cost
@@ -153,7 +163,7 @@ replaced with `A=not-run` where truthful.
 | #3765 | 35 | blocked | preflight | not-run | not-run | not-run | not-run | DEFERRED (blocked — check state uninspected) |
 | #3959 | 35 | clean | — | not-run | not-run | not-run | not-run | UNTESTED — primary open gap |
 
-## Answer to the Track A question — revised
+## Answer to the Track A question — revised (2026-08-25 evening)
 
 **"Can a fresh Claude session inspect today's Torch-Spyre development
 activity and spend device time only where warranted, while correctly
@@ -167,16 +177,21 @@ Split answer:
   `mergeable_state` filtering correctly identified a stale PR
   before a device cell would have.
 - **"Correctly separate PR regressions from upstream-PyTorch
-  compatibility regressions": not empirically validated yet.**
-  The 2×2 causal matrix is the mechanism for that separation and
-  no full four-cell run has been performed. The #3404 case
-  answers the "PR is stale against main" question, which is a
-  Git-level property. It does not exercise the PR-vs-PyTorch
-  causal distinction.
+  compatibility regressions": partially validated.** The full
+  four-cell 2×2 on PR #3800 empirically produced a
+  `FORWARD_COMPAT_CLEAN` verdict — all four cells green under
+  SHADOW_BASELINE (F3+F8). That validates the matrix's clean-verdict
+  path end to end. What's NOT yet validated is the matrix's ability
+  to distinguish cell-divergent cases (`PR_FORWARD_INTERACTION_BREAK`
+  et al.); those verdicts remain structural predictions until a case
+  with divergent cells lands.
 
-The methodology is the right shape. Its causal-attribution rules
-are unvalidated. Task #15 (full four-cell 2×2 on a clean PR) is
-the next empirical work required to change that.
+The methodology is the right shape. Its clean-verdict path is now
+empirically validated. Divergent-cell attribution rules are still
+theory. Both are useful; the clean-verdict path alone is what a
+maintainer needs to see when they ask "does this PR survive forward
+torch?" — and the answer for PR #3800 is: yes, under the known
+compat patch stack.
 
 ## Wrapper skill?
 

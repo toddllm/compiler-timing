@@ -1,0 +1,79 @@
+python_version = 3.12.13
+torch_version = 2.15.0.dev20260825+cpu
+torch_file = /home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/__init__.py
+torch_spyre_file = /home/tdeshane/cellC/torch-spyre/torch_spyre/__init__.py
+<stdin>:5: FallbackWarning: aten.arange.default is falling back to cpu
+/home/tdeshane/cellC/torch-spyre/torch_spyre/_monkey_patch.py:105: UserWarning: Backend Spyre does not support int64; downcasting to int32 may change values outside the 32-bit range. You can silence this via warnings.filterwarnings(...) or spyre.set_downcast_warning(False) or TORCH_SPYRE_DOWNCAST_WARN env. variable. (Triggered internally at /home/tdeshane/cellC/torch-spyre/torch_spyre/csrc/types_mapping.h:95.)
+  return orig_to(self, *args, **kwargs)
+spyre_device_count = 1
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_compile.py", line 54, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1548, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/library.py", line 948, in func_no_dynamo
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/ops/eager.py", line 41, in wrapper
+    return fn(*args, compiled=compiled, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/ops/eager.py", line 253, in dispatch
+    result = compiled(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1278, in compile_wrapper
+    raise e.remove_dynamo_frames() from None  # see TORCHDYNAMO_VERBOSE=1
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1349, in _compile_fx_inner
+    raise InductorError(e, currentframe()).with_traceback(
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1326, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 2158, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1906, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 3072, in compile_to_module
+    return self._compile_to_module()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 3078, in _compile_to_module
+    self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+                                                             ^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 3010, in codegen
+    self._update_scheduler()
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/_inductor/patches.py", line 126, in _spyre_update_scheduler
+    _pre_scheduling_pass(self)
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/_inductor/passes.py", line 510, in __call__
+    pass_fn(graph)
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 1972, in propagate_spyre_tensor_layouts
+    args = _get_prop_args(rw.reads)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/cellC/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 132, in _get_prop_args
+    raise RuntimeError(f"{buf} does not have FixedTiledLayout")
+torch._inductor.exc.InductorError: RuntimeError: FallbackKernel(
+  python_kernel_name='torch.ops.spyre.to_dtype_cpu.default',
+  name=buf0,
+  layout=FixedLayout('spyre:0', torch.float32, size=[8], stride=[1]),
+  inputs=[InputBuffer(name='arg0_1', layout=FixedLayout('spyre:0', torch.int64, size=[8], stride=[1]))],
+  constant_args=(torch.float32,),
+  kwargs={},
+  output_view=None,
+  python_kernel_name=torch.ops.spyre.to_dtype_cpu.default,
+  cpp_kernel_name=None,
+  ordered_kwargs_for_cpp_kernel=[],
+  op_overload=spyre.to_dtype_cpu.default,
+  arg_properties=[{'name': 'input', 'type': Tensor, 'default_value': None}, {'name': 'dtype', 'type': ScalarType, 'default_value': None}],
+  allarg_properties={'input': {'type': Tensor, 'default_value': None}, 'dtype': {'type': ScalarType, 'default_value': None}},
+  kwarg_properties=None,
+  unbacked_bindings={},
+  mutation_outputs=[],
+  origin_node=None,
+  origins=OrderedSet([add])
+) does not have FixedTiledLayout
+
+Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+

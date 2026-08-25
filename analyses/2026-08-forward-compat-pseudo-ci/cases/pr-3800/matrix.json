@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "status": "EMPIRICAL_COMPLETE",
+  "pr": 3800,
+  "base_sha": "eeeb115c838e96cf0b4f815151c753ab6e7d23f0",
+  "head_sha": "aba2c7b4bb266025d3cf26aef8e78b6911e32aba",
+  "main_sha": "8567fb2bc32c729d0dba7bd14d9df14b4a5adb77",
+  "supported_torch": "2.13.0+cpu",
+  "forward_torch": {
+    "mode": "NIGHTLY_PROXY",
+    "version": "2.15.0.dev20260825+cpu",
+    "actual_sha": "55199d11cea30ce0b557d25e0302d9b3499aa6a0",
+    "requested_sha": "48c8844ee2fc9e66a364d791c7a9979e1d4965af",
+    "note": "Case README pre-staging said PT 2.14 RC7; setup_latest_pytorch_env.sh only supports EXACT_UPSTREAM_MAIN or NIGHTLY_PROXY, not PIN-a-specific-tag. Used NIGHTLY_PROXY consistent with all prior forward-compat cases. The actual embedded git SHA differs from the resolve_versions.sh output because NIGHTLY_PROXY resolves to the wheel's embedded SHA at install time (the wheel was built earlier in the day than pytorch main advanced)."
+  },
+  "pod": {
+    "name": "tdeshane-2x2-pr3800-20260825",
+    "namespace": "a5-deepview",
+    "node": "p1-worker-85",
+    "image_digest": "sha256:81c352893b6927193f5e79d0a78f0bbe9bc4607aad1e71c076706da44a6993f6"
+  },
+  "baseline_mode": "SHADOW_BASELINE",
+  "patch_stack": {
+    "S": ["F3_REVERSE_ENTRYPOINT_HAZARD", "F8_FALLBACKKERNEL_SINGLE_TENSOR"],
+    "F3_source": "analyses/2026-08-forward-compat-skill-validation/cases/live-current-main-F3/patches/F3-live-patch.diff",
+    "F8_source": "analyses/2026-08-forward-compat-skill-validation/cases/f8-fallback-single-tensor/patches/F8-forward-patch.diff",
+    "F8_scope": "Required only for FORWARD-torch cells (C and D). Not applied to A/B. Ledger's F8 entry validated empirically — Cell C's first attempt (F3 only) failed at Stage 0 with the exact `propagate_layouts.py:132 buf does not have FixedTiledLayout` error the ledger predicts."
+  },
+  "cells": {
+    "A_main_supported": {
+      "status": "PASS",
+      "attempts": [
+        {"attempt": 1, "stage_3": "5/6 pass (2 timeouts on test_building_blocks + test_inductor_scalar)", "note": "runner marked stage 3 fail on timeouts"},
+        {"attempt": 2, "stage_3": "6/6 all pass", "duration_s_stage3": 379, "note": "same code, same patch stack, retry — confirms first-attempt timeouts were pod-timing/network artifacts, not real breaks"}
+      ],
+      "final": "6/6 all stages pass; all Stage 3 subtests OK"
+    },
+    "B_pr_supported": {
+      "status": "PASS",
+      "attempts": [
+        {"attempt": 1, "stage_3": "5/6 pass (1 timeout on test_building_blocks)"},
+        {"attempt": 2, "stage_3": "6/6 all pass", "duration_s_stage3": 389}
+      ],
+      "final": "6/6 all stages pass"
+    },
+    "C_main_forward": {
+      "status": "PASS",
+      "attempts": [
+        {"attempt": 1, "stage_0": "FAIL", "cause": "F8 INDUCTOR_API_BREAK — propagate_layouts.py:132 'buf does not have FixedTiledLayout'. F3-only stack insufficient for forward torch. Confirms ledger entry `torch-2.15-FallbackKernel-single-tensor`.", "resolution": "add F8 patch to stack"},
+        {"attempt": 2, "stage_3": "5/6 pass (1 timeout on test_building_blocks)", "note": "F3+F8 stack, timeout is pod-timing artifact"},
+        {"attempt": 3, "stage_3": "6/6 all pass", "duration_s_stage3": 377, "note": "same code, retry, confirms clean under F3+F8"}
+      ],
+      "final": "6/6 all stages pass under F3+F8"
+    },
+    "D_pr_forward": {
+      "status": "PASS",
+      "attempts": [
+        {"attempt": 1, "stage_3": "6/6 all pass", "duration_s_stage3": 362, "note": "clean on first attempt; test_building_blocks landed at 111s (under 120s limit)"}
+      ],
+      "final": "6/6 all stages pass under F3+F8 on first attempt"
+    }
+  },
+  "classification": "FORWARD_COMPAT_CLEAN",
+  "classification_detail": "Under the SHADOW_BASELINE mode with the F3+F8 patch stack, PR #3800 does not introduce any new forward-torch break relative to main. Cell D (PR + forward torch) passes cleanly. All four cells green on retry.",
+  "new_failure_relative_to_main": false,
+  "confidence": "HIGH",
+  "empirical_findings": {
+    "F8_ledger_entry_confirmed_live": true,
+    "F8_ledger_entry_reproduction_stage": "Stage 0 (env smoke, first torch.compile call), not Stage 2 as the ledger initially said. Both are `inductor compile` in the same sense; the smoke stages happen to hit it earlier.",
+    "F3_ledger_entry_confirmed_live": true,
+    "F3_reproduction": "Every venv sanity import that ran without F3 patch reproduced F3 (Cell C's initial `import torch` in the venv before F3 patch was applied). Confirms F3 is durable on all four (main and PR-head) code paths.",
+    "PR_3800_verdict": "Does not perturb forward-torch behavior. Its `torch_spyre/_inductor/views.py` change (padded-base stick coordinate offset) doesn't intersect with the F8 fallback-kernel-layout path or with anything else exposed by the smoke stages."
+  },
+  "wall_clock": {
+    "cellA_setup_minutes": 13,
+    "cellB_setup_minutes": 12,
+    "cellC_setup_minutes": 13,
+    "cellD_setup_minutes": 12,
+    "cellA_smoke_minutes": 8,
+    "cellB_smoke_minutes": 8,
+    "cellC_smoke_minutes": 8,
+    "cellD_smoke_minutes": 6,
+    "F8_diagnosis_and_patch_apply_minutes": 3,
+    "cellA_retry_smoke_minutes": 7,
+    "cellB_retry_smoke_minutes": 7,
+    "cellC_retry_smoke_minutes": 7,
+    "total_pod_minutes": 112,
+    "note": "Serialized single-Spyre-device pod. 4 setups × ~12 min + 5 smoke runs × ~8 min + 3 retry smokes × ~7 min. Total elapsed pod time ~2 hours; wall clock ~3 hours including monitor waits."
+  }
+}

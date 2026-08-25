@@ -1,0 +1,11 @@
+declared_torch_pin = <pyproject.toml not found from cwd>
+import_ok = torch_spyre
+import_ok = torch_spyre._C
+import_ok = torch_spyre._inductor
+import_ok = torch_spyre._inductor.lowering
+import_optional_missing = torch_spyre._inductor.decomp
+import_ok = torch_spyre._inductor.scheduler
+import_ok = torch_spyre._inductor.dedup_constants
+resolved_torch = 2.13.0+cpu
+spyre_device_count = 1
+inductor_backend_present = True

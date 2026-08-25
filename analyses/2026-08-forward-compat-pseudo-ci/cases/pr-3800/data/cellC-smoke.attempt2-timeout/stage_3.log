@@ -1,0 +1,62 @@
+# torch_spyre_tree = /home/tdeshane/cellC/torch-spyre (from TORCH_SPYRE_TREE env)
+....# STAGE3_TIMEOUT  tests/inductor/test_building_blocks.py  (>120s, escalate to Stage 6)
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_constants_at_front
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_dedup_across_same_dtype_pad_sequences
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_different_dtype_constants_not_merged
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_no_orphans_in_name_to_buffer
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_surviving_constant_at_index_zero
+  /home/tdeshane/cellC/.venv-latest/lib64/python3.12/site-packages/torch/_dynamo/pgo.py:605: UserWarning: dynamo_pgo force disabled by torch.compiler.config.force_disable_caches
+    warn_once(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+5 passed, 5 warnings in 14.64s
+# STAGE3_OK  tests/inductor/test_dedup_constants.py  (47s)
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/inductor/test_logging.py::TestLoggingConfiguration::test_enabled_defaults_to_info_level
+  /home/tdeshane/cellC/torch-spyre/torch_spyre/logging_config.py:318: DeprecationWarning: SPYRE_INDUCTOR_LOG is deprecated. Use TORCH_LOGS='spyre.inductor:INFO' instead.
+    _config = _resolve_config()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+4 passed, 1 warning in 6.78s
+# STAGE3_OK  tests/inductor/test_logging.py  (26s)
+..........                                                               [100%]
+=============================== warnings summary ===============================
+tests/inductor/test_overwrite.py: 33 warnings
+  /home/tdeshane/cellC/torch-spyre/torch_spyre/_inductor/lowering.py:1317: FutureWarning: torch.ops.spyre.overwrite is deprecated. Use standard PyTorch operations like output[indices] = input or output[indices].copy_(input). Please report any incompatibilities.
+    warn(depr_msg, FutureWarning, stacklevel=1)
+
+tests/inductor/test_overwrite.py::TestOverwriteFunctionalReinplace::test_overwrite_f_in_compiled_loop
+  /home/tdeshane/cellC/torch-spyre/torch_spyre/_monkey_patch.py:105: UserWarning: Backend Spyre does not support int64; downcasting to int32 may change values outside the 32-bit range. You can silence this via warnings.filterwarnings(...) or spyre.set_downcast_warning(False) or TORCH_SPYRE_DOWNCAST_WARN env. variable. (Triggered internally at /home/tdeshane/cellC/torch-spyre/torch_spyre/csrc/types_mapping.h:95.)
+    return orig_to(self, *args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+10 passed, 34 warnings in 36.68s
+# STAGE3_OK  tests/inductor/test_overwrite.py  (64s)
+x  [REASON = expected failure (OOT xfail): RuntimeError: Spyre backend does not support dtype ComplexFloat]
+x  [REASON = expected failure (OOT xfail): RuntimeError: Spyre backend does not support dtype ComplexFloat]
+x  [REASON = expected failure (OOT xfail): RuntimeError: Spyre backend does not support dtype Double]
+x  [REASON = expected failure (OOT xfail): torch._dynamo.exc.TorchRuntimeError: RuntimeError when making fake tensor call Explanation: Dynamo failed to run FX node with fake tensors: call_function <built-in method tensor of type object at 0x7f43e617fe40>(*(1.5,), **{'dtype': torch.float64, 'device': device(type='spyre', index=0)}): got Runti...]
+..x  [REASON = Eager mode: 'RuntimeError: In-device copy (.clone()) not implemented']
+...x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+x  [REASON = Constant tensor creation fails - IndexError on empty args during layout propagation.]
+x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+x  [REASON = Constant tensor creation fails - IndexError on empty args during layout propagation.]
+x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+.x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+.x  [REASON = Eager mode: In-device copy not implemented (required for MQA operations)]
+.x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+x  [REASON = Spyre backend does not support type conversion yet during copy.]
+x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+.x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+.x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+x  [REASON = Constant tensor creation fails - IndexError on empty args during layout propagation.]
+x  [REASON = Eager mode: aten::_reshape_alias operation not implemented]
+.                                           [100%]
+11 passed, 19 xfailed in 75.48s (0:01:15)
+# STAGE3_OK  tests/inductor/test_inductor_scalar.py  (99s)
+.......                                                                  [100%]
+7 passed in 39.71s
+# STAGE3_OK  tests/inductor/test_copy_back_elision.py  (73s)
