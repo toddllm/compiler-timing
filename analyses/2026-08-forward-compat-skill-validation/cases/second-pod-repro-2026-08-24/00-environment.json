@@ -1,0 +1,44 @@
+/home/tdeshane/manual-repro/builds/torch-spyre-forward/torch-spyre/torch_spyre/_monkey_patch.py:207: UserWarning: Failed to install optimal weight layout patches: libspyre_comms.so.1: cannot open shared object file: No such file or directory
+  warnings.warn(f"Failed to install optimal weight layout patches: {e}")
+{
+  "schema_version": 1,
+  "timestamp": "2026-08-25T03:28:00Z",
+  "pod": {
+    "name": "tdeshane-fwdcompat-2026-08-24b",
+    "namespace": "a5-deepview",
+    "node": "unknown"
+  },
+  "image": {
+    "name": "unknown",
+    "digest": "unknown"
+  },
+  "python": {
+    "version": "3.12.13",
+    "executable": "/usr/bin/python3"
+  },
+  "torch": {
+    "error": "RuntimeError: Failed to load the backend extension: torch_spyre. You can disable extension auto-loading with TORCH_DEVICE_BACKEND_AUTOLOAD=0."
+  },
+  "torch_spyre": {
+    "version": "0.0.1",
+    "__file__": "/home/tdeshane/manual-repro/builds/torch-spyre-forward/torch-spyre/torch_spyre/__init__.py",
+    "sha": "7d3ac919d140e50ee9c2e4c439ed63d19c623166"
+  },
+  "deeptools": null,
+  "toolchain": {
+    "gcc": "gcc (GCC) 14.3.1 20251022 (Red Hat 14.3.1-4)",
+    "clang": null,
+    "cmake": null,
+    "ninja": "1.11.1",
+    "ccache": "ccache version 4.11.3"
+  },
+  "device": {
+    "error": "RuntimeError: Only a single TORCH_LIBRARY can be used to register the namespace triton; please put all of your definitions in a single TORCH_LIBRARY block.  If you were trying to specify implementations, consider using TORCH_LIBRARY_IMPL (which can be duplicated).  If you really intended to define operators for a single namespace in a distributed way, you can use TORCH_LIBRARY_FRAGMENT to explicitly indicate this.  Previous registration of TORCH_LIBRARY was registered at /usr/local/lib64/python3.12/site-packages/torch/__init__.py:2824; latest registration was registered at /usr/local/lib64/python3.12/site-packages/torch/__init__.py:2824"
+  },
+  "env_vars": {
+    "AIU_SETUP_MULTI_AIU": "1",
+    "FLEX_COMPUTE": "SENTIENT",
+    "FLEX_DEVICE": "PF",
+    "TORCHINDUCTOR_CACHE_DIR": "/tmp/torchinductor_tdeshane"
+  }
+}

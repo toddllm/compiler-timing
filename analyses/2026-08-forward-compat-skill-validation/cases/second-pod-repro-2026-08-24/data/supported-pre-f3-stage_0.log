@@ -1,0 +1,23 @@
+python_version = 3.12.13
+torch_version = 2.13.0+cpu
+torch_file = /home/tdeshane/supported/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py
+Traceback (most recent call last):
+  File "/home/tdeshane/supported/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3030, in _import_device_backends
+    entrypoint = backend_extension.load()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.12/importlib/metadata/__init__.py", line 207, in load
+    return functools.reduce(getattr, attrs, module)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: partially initialized module 'torch_spyre' has no attribute '_autoload' (most likely due to a circular import)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/tdeshane/supported/torch-spyre/torch_spyre/__init__.py", line 20, in <module>
+    import torch
+  File "/home/tdeshane/supported/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3077, in <module>
+    _import_device_backends()
+  File "/home/tdeshane/supported/.venv-supported/lib64/python3.12/site-packages/torch/__init__.py", line 3034, in _import_device_backends
+    raise RuntimeError(
+RuntimeError: Failed to load the backend extension: torch_spyre. You can disable extension auto-loading with TORCH_DEVICE_BACKEND_AUTOLOAD=0.

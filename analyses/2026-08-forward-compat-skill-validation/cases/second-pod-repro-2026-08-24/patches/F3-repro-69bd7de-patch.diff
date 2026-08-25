@@ -1,0 +1,90 @@
+--- a/torch_spyre/__init__.py
++++ b/torch_spyre/__init__.py
+@@ -17,6 +17,40 @@
+ import types
+ import importlib
+ 
++# --- F3 fix: defer-and-invoke stub so torch's device_backend autoload
++# entry (torch_spyre:_autoload) resolves even when triggered by the
++# `import torch` on the next line — which fires torch's
++# _import_device_backends() while this module is only partially
++# initialized. The real _autoload_impl is defined later in this
++# module; if it isn't bound yet when _autoload fires (the reverse-
++# entrypoint hazard), we record that autoload was requested and
++# return; the tail-invoke below runs it once the module is fully
++# loaded. If _autoload_impl IS already bound (later re-entrant
++# call, or a re-import), it dispatches through.
++import importlib as _importlib_for_autoload
++import sys as _sys_for_autoload
++import traceback as _traceback_for_autoload
++
++
++def _autoload():
++    if getattr(_autoload, "_ran", False):
++        return
++    _impl = globals().get("_autoload_impl")
++    if _impl is None:
++        _autoload._requested = True
++        return
++    _autoload._ran = True
++    try:
++        _impl()
++    except BaseException:
++        print(
++            "torch_spyre backend autoload failed; underlying error follows:",
++            file=_sys_for_autoload.stderr,
++        )
++        _traceback_for_autoload.print_exc()
++        raise
++
++
+ import torch
+ 
+ from .constants import DEVICE_NAME, DISTRIBUTED_BACKEND_NAME
+@@ -253,34 +287,6 @@
+     return mod
+ 
+ 
+-def _autoload():
+-    # guard if autoload may run more than once
+-    if getattr(_autoload, "_ran", False):
+-        return
+-    _autoload._ran = True
+-
+-    try:
+-        _autoload_impl()
+-    except BaseException:
+-        # PyTorch's _import_device_backends() catches whatever this entrypoint
+-        # raises and re-raises a generic "Failed to load the backend extension:
+-        # torch_spyre" RuntimeError. In CI logs the chained cause is often not
+-        # printed, so the real reason (e.g. an ImportError for an undefined
+-        # symbol in a native runtime library such as libspyre_comms /
+-        # libflex) is hidden and the failure looks like a mystery. Log the full
+-        # traceback here, before control returns to PyTorch, then re-raise so
+-        # behaviour is otherwise unchanged.
+-        import sys
+-        import traceback
+-
+-        print(
+-            "torch_spyre backend autoload failed; underlying error follows:",
+-            file=sys.stderr,
+-        )
+-        traceback.print_exc()
+-        raise
+-
+-
+ def _autoload_impl():
+     import torch  # noqa: E402
+ 
+@@ -399,3 +405,10 @@
+ 
+     # Enable spyre code with symbolic args by default
+     os.environ.setdefault("BUNDLE_SYMBOLIC_ARGS", "1")
++
++
++# --- F3 fix tail: if autoload was requested during the early
++# entrypoint (before _autoload_impl was bound), run it now that the
++# whole module is loaded.
++if getattr(_autoload, "_requested", False):
++    _autoload()
+command terminated with exit code 1
