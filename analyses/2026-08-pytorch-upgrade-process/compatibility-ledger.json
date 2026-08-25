@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "generated": "2026-08-25",
+  "entries": [
+    {
+      "id": "PT-2.11-add_lambda_guard-user_stack",
+      "pytorch_version": "2.11.0",
+      "pytorch_first_observed_sha": null,
+      "affected_torch_spyre_surface": "torch_spyre/_monkey_patch.py:200 (_spyre_TENSOR_MATCH)",
+      "failure_short": "torch._C._dynamo.guards.GuardManager.add_lambda_guard() now requires 3-arg (lambda, verbose_code_parts, user_stack); torch-spyre passed 2 args.",
+      "classification": "PYTHON_API_BREAK",
+      "forward_compat_case": null,
+      "remediation_short": "Append `guard.user_stack` as third arg to `add_lambda_guard`.",
+      "first_torch_spyre_sha_with_fix": "post-539a1a0c (merge commit of #1930)",
+      "dual_compatible": false,
+      "included_in_official_bump": 1930,
+      "regression_test_added": "run at import; not a dedicated regression test",
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.11-profiler-breakage",
+      "pytorch_version": "2.11.0",
+      "affected_torch_spyre_surface": "profiler infrastructure",
+      "failure_short": "Profiler broke on 2.11 due to PT 2.11 changes + parallel runtime changes.",
+      "classification": "PROFILER_CHANGE + DOWNSTREAM_DEPENDENCY_LAG",
+      "forward_compat_case": null,
+      "remediation_short": "Deferred to 2.12 upgrade (new PrivateUse1 profiler API).",
+      "first_torch_spyre_sha_with_fix": "in PR #2218",
+      "included_in_official_bump": 2218,
+      "status": "landed in 2.12 upgrade"
+    },
+    {
+      "id": "PT-2.11-multiarch-runners",
+      "pytorch_version": "2.11.0",
+      "affected_torch_spyre_surface": "CI infrastructure",
+      "failure_short": "s390x / ppc64le runners not available at 2.11 merge; x86 alone gated merge after #1997 landed.",
+      "classification": "CI_INFRASTRUCTURE_CHANGE",
+      "included_in_official_bump": 1930,
+      "related_pr": 1997,
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.12-size_hint-split",
+      "pytorch_version": "2.12.0",
+      "affected_torch_spyre_surface": "torch_spyre/_inductor/codegen/superdsc.py:602 (_concretize_for_sdsc)",
+      "failure_short": "size_hint removed, split into optimization_hint (may be non-concrete) and guarding_hint_or_throw (concrete or throws). Wrong choice = silent wrong SDSC compilation.",
+      "classification": "INDUCTOR_API_BREAK + SILENT_CORRECTNESS_CHANGE",
+      "remediation_short": "Use guarding_hint_or_throw where concretization is required.",
+      "first_torch_spyre_sha_with_fix": "in PR #2218",
+      "included_in_official_bump": 2218,
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.12-decomp-broadening",
+      "pytorch_version": "2.12.0",
+      "affected_torch_spyre_surface": "torch_spyre/_inductor/lowering.py + decompositions.py",
+      "failure_short": "PT 2.12 added in-tree decomps for arange/tril/triu/isin/index_copy.out and broadened mm/bmm to decompose the K==1 case; torch-spyre's fallbacks conflict with the auto-installed decomp.",
+      "classification": "INDUCTOR_SEMANTIC_BREAK + DECOMPOSITION_CHANGE",
+      "remediation_short": "register_fallback_over_decomp() helper + spyre_decompositions_to_exclude entries.",
+      "included_in_official_bump": 2218,
+      "upstream_followup_pr": "pytorch/pytorch#185909",
+      "status": "landed; upstream fix pending 2.12.1 GA (2026-06-17)"
+    },
+    {
+      "id": "PT-2.12-dynamo-to-graph-break",
+      "pytorch_version": "2.12.0",
+      "affected_torch_spyre_surface": "torch_spyre/_monkey_patch.py (spyre_to wrapper)",
+      "failure_short": "Dynamo graph-breaks when inlining spyre_to's C++ orig_to call; D2D dtype casts silently go eager and return wrong results.",
+      "classification": "INDUCTOR_API_BREAK + SILENT_CORRECTNESS_CHANGE",
+      "remediation_short": "torch._dynamo.allow_in_graph(torch.Tensor.to) — global process-level mark.",
+      "included_in_official_bump": 2218,
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.12-fp16-numeric-drift",
+      "pytorch_version": "2.12.0",
+      "affected_torch_spyre_surface": "three fp16 test cases",
+      "failure_short": "PT 2.12 changed CPU-reference fp16 numerics for exp/sin round-trips; 1-ULP drifts fail existing assertions.",
+      "classification": "TEST_EXPECTATION_CHANGE + SILENT_CORRECTNESS_CHANGE (reference-side)",
+      "remediation_short": "xfail the three edge cases via commit 3a2d482.",
+      "included_in_official_bump": 2218,
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.12-vllm-lag",
+      "pytorch_version": "2.12.0",
+      "affected_torch_spyre_surface": "downstream vLLM / spyre-inference",
+      "failure_short": "Upstream vLLM had NOT moved to 2.12 at merge time.",
+      "classification": "DOWNSTREAM_DEPENDENCY_LAG",
+      "remediation_short": "spyre-inference#357 removed dep on precompiled vLLM CPU wheels.",
+      "included_in_official_bump": 2218,
+      "related_pr": "torch-spyre/spyre-inference#357",
+      "status": "resolved by downstream architectural change"
+    },
+    {
+      "id": "PT-2.13-pyobj-slot",
+      "pytorch_version": "2.13.0",
+      "affected_torch_spyre_surface": "torch_spyre/csrc/spyre_tensor_impl.cpp:253",
+      "failure_short": "c10::impl::PyObjectSlot::load_pyobj_interpreter() removed; replaced with c10::impl::getGlobalPyInterpreter().",
+      "classification": "CXX_ABI_BREAK",
+      "forward_compat_case": "cases/historical-replay-pt213/F6-pyobj-slot-api-rename-independently-derived.md",
+      "remediation_short": "One-line change to (*c10::impl::getGlobalPyInterpreter())->detach(this).",
+      "included_in_official_bump": 3374,
+      "dual_compatible": true,
+      "status": "landed; forward-compat skill produced a byte-identical fix in independent replay."
+    },
+    {
+      "id": "PT-2.13-scheduler-loop-reorder-discard",
+      "pytorch_version": "2.13.0",
+      "affected_torch_spyre_surface": "torch_spyre/_inductor/scheduler.py + passes.py (CustomPreFusionPasses)",
+      "failure_short": "PT 2.13 Scheduler._try_reorder_loops_for_candidates computes then DISCARDS a loop reorder. LX-pinned clones no longer accidentally match consumers' iter order. Two reductions sharing one LX buffer read the wrong core's slice. Silent wrong results.",
+      "classification": "INDUCTOR_SEMANTIC_BREAK + SILENT_CORRECTNESS_CHANGE",
+      "remediation_short": "New align_lx_producer_loop_order pass, run BEFORE build_loop_scheduler_nodes.",
+      "included_in_official_bump": 3374,
+      "notes": "'accidental correctness' had held since forever; only surfaced when the upstream internal rewrite stopped applying.",
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.13-profiler-inplace",
+      "pytorch_version": "2.13.0",
+      "affected_torch_spyre_surface": "tests/inductor/test_inductor_ops.py + tests/configs/upstream_tests/test_profiler_config.yaml",
+      "failure_short": "Inplace-op tests + profiler config updates for 2.13.",
+      "classification": "PROFILER_CHANGE + TEST_EXPECTATION_CHANGE",
+      "included_in_official_bump": 3374,
+      "status": "landed"
+    },
+    {
+      "id": "PT-2.13-upstream-tests-enable",
+      "pytorch_version": "2.13.0",
+      "affected_torch_spyre_surface": "upstream tests configuration",
+      "failure_short": "Adding 2.13 to the upstream test suite is not automatic; explicit infrastructure work requested at merge time.",
+      "classification": "CI_INFRASTRUCTURE_CHANGE",
+      "included_in_official_bump": 3374,
+      "status": "requested at merge time; presumed landed post-merge"
+    },
+    {
+      "id": "torch-spyre-F3-reverse-entrypoint",
+      "pytorch_version": "all (2.11, 2.12, 2.13, 2.15-nightly)",
+      "affected_torch_spyre_surface": "torch_spyre/__init__.py (line 20 area)",
+      "failure_short": "torch._import_device_backends() fires while torch_spyre is partially initialized. `_autoload` name not yet bound; AttributeError → wrapped RuntimeError.",
+      "classification": "REVERSE_ENTRYPOINT_HAZARD",
+      "forward_compat_case": "cases/live-current-main-F3/, cases/second-pod-repro-2026-08-24/, cases/third-clean-run-2026-08-25/",
+      "remediation_short": "Hoist a defer-and-invoke `def _autoload()` before `import torch`; tail-invoke at end of file.",
+      "first_torch_spyre_sha_with_fix": "not landed upstream; local patch in compiler-timing case dirs",
+      "dual_compatible": true,
+      "included_in_official_bump": null,
+      "status": "OPEN — reproduced on three consecutive torch-spyre main SHAs; upstream needs the fix landed."
+    },
+    {
+      "id": "torch-2.15-FallbackKernel-single-tensor",
+      "pytorch_version": "2.15.0.dev20260824+cpu (nightly)",
+      "affected_torch_spyre_surface": "torch_spyre/_inductor/propagate_layouts.py:132 (_get_prop_args)",
+      "failure_short": "PT 2.15 FallbackKernel.create for single-tensor output takes create_direct_output path — FallbackKernel now carries a FixedLayout directly, no MultiOutputLayout + trailing MultiOutput wrapper. propagate_spyre_tensor_layouts assumed the wrapping.",
+      "classification": "INDUCTOR_API_BREAK",
+      "forward_compat_case": "cases/f8-fallback-single-tensor/",
+      "remediation_short": "Extend FallbackKernel branch to handle Case 1': assign op.layouts = [generic_layout(op)] when op.get_layout() is FixedLayout.",
+      "first_torch_spyre_sha_with_fix": "not landed upstream; local patch in cases/f8-fallback-single-tensor/patches/F8-forward-patch.diff",
+      "dual_compatible": true,
+      "included_in_official_bump": null,
+      "status": "OPEN — PT 2.15 not yet released; ready for the upgrade PR when it starts."
+    }
+  ]
+}

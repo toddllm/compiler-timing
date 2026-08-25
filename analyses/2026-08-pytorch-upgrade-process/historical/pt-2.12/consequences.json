@@ -1,0 +1,103 @@
+{
+  "pr": 2218,
+  "merged_at": "2026-07-28T01:01:38Z",
+  "target_pytorch": "2.12",
+  "starting_pytorch": "2.11",
+  "diff_stats": {"files": 39, "additions": 906, "deletions": 617},
+  "consequences": [
+    {"category": "VERSION_BOOKKEEPING", "mechanical": true, "location": "pyproject.toml, installation.md, .claude/skills/project-overview/SKILL.md"},
+    {"category": "LOCKFILE_REGENERATION", "mechanical": true, "location": "uv.lock, requirements/{build,dev,run,lint}.txt"},
+    {
+      "category": "INDUCTOR_API_BREAK",
+      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "mechanical": false,
+      "surface": "V.graph.sizevars.size_hint",
+      "delta": "size_hint removed; split into optimization_hint (may be non-concrete) and guarding_hint_or_throw (concrete or exception).",
+      "impact": "SDSC concretization would silently accept non-concrete values, producing wrong compilation.",
+      "fix": "Use guarding_hint_or_throw at final concretization points (superdsc.py:602).",
+      "discovery": "review by dgrove-oss reading the docstring for _concretize_for_sdsc; initial patch used the wrong replacement."
+    },
+    {
+      "category": "INDUCTOR_SEMANTIC_BREAK",
+      "compound_with": ["DECOMPOSITION_CHANGE"],
+      "mechanical": false,
+      "surface": "torch._inductor.decomposition (mm/bmm K==1 case, arange, tril, triu, isin, index_copy.out)",
+      "delta": "PT 2.12 broadened Inductor's default decompositions.",
+      "impact": "Fallback registration on ops that now have in-tree decompositions hits an assertion in make_fallback().",
+      "fix": "register_fallback_over_decomp() helper + spyre_decompositions_to_exclude entries for K==1 mm/bmm.",
+      "discovery": "compile-time assertion during test run.",
+      "upstream_followup": "bohnstingl landed pytorch/pytorch#185909 to fix decomposition handling; awaiting 2.12.1 GA to make effective."
+    },
+    {
+      "category": "INDUCTOR_API_BREAK",
+      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "mechanical": false,
+      "surface": "torch._dynamo (inlining of Python torch.Tensor.to wrapper)",
+      "delta": "Dynamo now graph-breaks when Python wrapper calls C++ orig_to.",
+      "impact": "D2D dtype casts (fp16<->bf16) went eager and returned wrong results.",
+      "fix": "torch._dynamo.allow_in_graph(torch.Tensor.to) — global side effect, defended as acceptable.",
+      "discovery": "wrong-dtype output; not surfaced by an exception."
+    },
+    {
+      "category": "PROFILER_CHANGE",
+      "mechanical": false,
+      "surface": "PrivateUse1 profiler API",
+      "delta": "New profiler API for PrivateUse1 backends.",
+      "impact": "resolves 2.11 breakage — this was intentional, IBM-requested.",
+      "fix": "Coordinated with #1856 (Move aiupti changes from kineto plugin)."
+    },
+    {
+      "category": "SYMBOLIC_SHAPE_CHANGE",
+      "mechanical": false,
+      "surface": "symbolic-shapes hints API",
+      "delta": "New API (covered by size_hint split above + 'Fix strict checks for dynamic shapes' commit)."
+    },
+    {
+      "category": "DOWNSTREAM_DEPENDENCY_LAG",
+      "mechanical": false,
+      "surface": "upstream vLLM",
+      "delta": "vLLM had not moved to 2.12; draft PR only.",
+      "resolution": "spyre-inference#357 removed dep on precompiled vLLM CPU wheels, unblocking the bump before upstream vLLM caught up."
+    },
+    {
+      "category": "TEST_EXPECTATION_CHANGE",
+      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "mechanical": false,
+      "surface": "three fp16 numerical tests",
+      "delta": "PT 2.12 CPU-reference numerics change caused 1-ULP drifts.",
+      "fix": "xfail with commit 3a2d482 'Xfail three pre-existing PT 2.12 numerical edge cases'."
+    },
+    {
+      "category": "RELEASE_ARTIFACT_NOT_READY",
+      "mechanical": false,
+      "surface": "PyTorch 2.12.1 patch release",
+      "notes": "bohnstingl's upstream decomposition fix in flight but not in 2.12.0; awaiting cherry-pick and 2.12.1 GA on June 17th."
+    },
+    {
+      "category": "CI_INFRASTRUCTURE_CHANGE",
+      "mechanical": true,
+      "surface": "checkout of pytorch commit",
+      "resolution": "PR #2274 landed 2026-05-26 to fix pytorch commit tracking when pyproject changes."
+    },
+    {
+      "category": "PYTHON_API_BREAK",
+      "compound_with": ["MAINTAINABILITY"],
+      "mechanical": false,
+      "surface": "torch._C._dispatch_tls_is_dispatch_key_excluded",
+      "delta": "Continued dependence on a private torch API.",
+      "notes": "Used to detect no_dispatch() from within an op kernel; no public predicate exists."
+    },
+    {
+      "category": "MERGE_HYGIENE",
+      "mechanical": false,
+      "location": "torch_spyre/_inductor/temp_passes.py",
+      "delta": "Bad merge accidentally re-introduced convert_constant_with_graph_node that had been pushed down to LoopLevel IR.",
+      "notes": "Fixed after dgrove-oss review comment. Same pattern as 2.11's codegen bad-merge."
+    },
+    {
+      "category": "REPO_HYGIENE_BUNDLING",
+      "mechanical": false,
+      "notes": "Author bundled unrelated dependency upgrades under the 'use the excuse to update other deps' framing."
+    }
+  ]
+}

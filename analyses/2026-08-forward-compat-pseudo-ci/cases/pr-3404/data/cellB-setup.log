@@ -1,0 +1,763 @@
+
+===== [2026-08-25T06:13:04Z] setup_supported_env.sh starting =====
+torch_spyre_sha : a50ba6a6854d348ec8c6162e129be88cfe24471d
+workdir         : /home/tdeshane/pr-b
+python          : python3.12
+log             : /home/tdeshane/pr-b/setup_supported.log
+pwd             : /home/tdeshane
+uname           : Linux tdeshane-pseudo-ci-2026-08-25 5.14.0-570.131.1.el9_6.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Jul 24 10:50:35 EDT 2026 x86_64 GNU/Linux
+id              : tdeshane@unknown-host
+
+===== [2026-08-25T06:13:04Z] creating venv with python3.12 (--system-site-packages) =====
+Python 3.12.13
+which python : /home/tdeshane/pr-b/.venv-supported/bin/python
+which pip    : /home/tdeshane/pr-b/.venv-supported/bin/pip
+Python 3.12.13
+pip 23.3.2 from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip (python 3.12)
+
+===== [2026-08-25T06:13:14Z] upgrading pip =====
+Requirement already satisfied: pip in ./.venv-supported/lib64/python3.12/site-packages (23.3.2)
+Collecting pip
+  Using cached pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+Using cached pip-26.2.1-py3-none-any.whl (1.8 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 23.3.2
+    Uninstalling pip-23.3.2:
+      Successfully uninstalled pip-23.3.2
+Successfully installed pip-26.2.1
+pip 26.2.1 from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip (python 3.12)
+
+===== [2026-08-25T06:13:31Z] installing basic_install.md prerequisites (expecttest wheel psutil pytest typing_extensions pyyaml hypothesis numpy sortedcontainers) =====
+Collecting expecttest
+  Using cached expecttest-0.3.0-py3-none-any.whl.metadata (3.8 kB)
+Collecting wheel
+  Using cached wheel-0.48.0-py3-none-any.whl.metadata (2.3 kB)
+Collecting psutil
+  Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+Collecting pytest
+  Using cached pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting typing_extensions
+  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting pyyaml
+  Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting hypothesis
+  Using cached hypothesis-6.165.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.7 kB)
+Collecting sortedcontainers
+  Using cached sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+Collecting attrs
+  Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting pluggy
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting iniconfig
+  Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting numpy
+  Using cached numpy-2.5.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting sympy
+  Using cached sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting networkx
+  Using cached networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+Collecting filelock
+  Using cached filelock-3.32.4-py3-none-any.whl.metadata (2.0 kB)
+Collecting jinja2
+  Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec
+  Using cached fsspec-2026.7.0-py3-none-any.whl.metadata (10 kB)
+Collecting mpmath
+  Using cached mpmath-1.4.1-py3-none-any.whl.metadata (9.1 kB)
+Collecting markupsafe
+  Using cached markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Using cached expecttest-0.3.0-py3-none-any.whl (8.2 kB)
+Using cached wheel-0.48.0-py3-none-any.whl (33 kB)
+Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Using cached pytest-9.1.1-py3-none-any.whl (386 kB)
+Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+Using cached hypothesis-6.165.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+Using cached sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Using cached numpy-2.5.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+Using cached sympy-1.14.0-py3-none-any.whl (6.3 MB)
+Using cached networkx-3.6.1-py3-none-any.whl (2.1 MB)
+Using cached filelock-3.32.4-py3-none-any.whl (99 kB)
+Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+Using cached fsspec-2026.7.0-py3-none-any.whl (206 kB)
+Using cached mpmath-1.4.1-py3-none-any.whl (567 kB)
+Using cached markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Installing collected packages: sortedcontainers, wheel, typing_extensions, sympy, pyyaml, pytest, psutil, pluggy, numpy, networkx, mpmath, markupsafe, jinja2, iniconfig, hypothesis, fsspec, filelock, expecttest, attrs
+  Attempting uninstall: typing_extensions
+    Found existing installation: typing_extensions 4.16.0
+    Not uninstalling typing-extensions at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'typing_extensions'. No files were found to uninstall.
+  Attempting uninstall: sympy
+    Found existing installation: sympy 1.14.0
+    Not uninstalling sympy at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'sympy'. No files were found to uninstall.
+  Attempting uninstall: pyyaml
+    Found existing installation: PyYAML 6.0.3
+    Not uninstalling pyyaml at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'PyYAML'. No files were found to uninstall.
+  Attempting uninstall: psutil
+    Found existing installation: psutil 7.2.2
+    Not uninstalling psutil at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'psutil'. No files were found to uninstall.
+  Attempting uninstall: numpy
+    Found existing installation: numpy 2.3.5
+    Not uninstalling numpy at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'numpy'. No files were found to uninstall.
+  Attempting uninstall: networkx
+    Found existing installation: networkx 3.6.1
+    Not uninstalling networkx at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'networkx'. No files were found to uninstall.
+  Attempting uninstall: mpmath
+    Found existing installation: mpmath 1.3.0
+    Not uninstalling mpmath at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'mpmath'. No files were found to uninstall.
+  Attempting uninstall: markupsafe
+    Found existing installation: MarkupSafe 3.0.3
+    Not uninstalling markupsafe at /usr/local/lib64/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'MarkupSafe'. No files were found to uninstall.
+  Attempting uninstall: jinja2
+    Found existing installation: Jinja2 3.1.6
+    Not uninstalling jinja2 at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'Jinja2'. No files were found to uninstall.
+  Attempting uninstall: fsspec
+    Found existing installation: fsspec 2026.6.0
+    Not uninstalling fsspec at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'fsspec'. No files were found to uninstall.
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.29.5
+    Not uninstalling filelock at /usr/local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'filelock'. No files were found to uninstall.
+  Attempting uninstall: attrs
+    Found existing installation: attrs 26.1.0
+    Not uninstalling attrs at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'attrs'. No files were found to uninstall.
+
+Successfully installed attrs-26.1.0 expecttest-0.3.0 filelock-3.32.4 fsspec-2026.7.0 hypothesis-6.165.10 iniconfig-2.3.0 jinja2-3.1.6 markupsafe-3.0.3 mpmath-1.4.1 networkx-3.6.1 numpy-2.5.2 pluggy-1.6.0 psutil-7.2.2 pytest-9.1.1 pyyaml-6.0.3 sortedcontainers-2.4.0 sympy-1.14.0 typing_extensions-4.16.0 wheel-0.48.0
+
+===== [2026-08-25T06:14:40Z] installing dev_install.md build toolchain (nanobind==2.9.2 ninja pybind11 build cmake~=3.26 regex) =====
+Collecting nanobind==2.9.2
+  Using cached nanobind-2.9.2-py3-none-any.whl.metadata (1.8 kB)
+Requirement already satisfied: ninja in /home/tdeshane/.local/lib/python3.12/site-packages (1.13.0)
+Requirement already satisfied: pybind11 in /usr/local/lib/python3.12/site-packages (3.0.4)
+Collecting build
+  Using cached build-1.5.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting cmake~=3.26
+  Using cached cmake-3.31.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.3 kB)
+Requirement already satisfied: regex in /home/tdeshane/.local/lib/python3.12/site-packages (2026.5.9)
+Requirement already satisfied: packaging>=24.0 in /home/tdeshane/.local/lib/python3.12/site-packages (from build) (26.2)
+Collecting pyproject_hooks (from build)
+  Using cached pyproject_hooks-1.2.0-py3-none-any.whl.metadata (1.3 kB)
+Using cached nanobind-2.9.2-py3-none-any.whl (243 kB)
+Using cached cmake-3.31.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (27.8 MB)
+Using cached build-1.5.0-py3-none-any.whl (26 kB)
+Using cached pyproject_hooks-1.2.0-py3-none-any.whl (10 kB)
+Installing collected packages: nanobind, pyproject_hooks, cmake, build
+
+Successfully installed build-1.5.0 cmake-3.31.10 nanobind-2.9.2 pyproject_hooks-1.2.0
+
+===== [2026-08-25T06:15:01Z] cloning torch-spyre and checking out a50ba6a6854d348ec8c6162e129be88cfe24471d =====
+Cloning into 'torch-spyre'...
+Updating files:  17% (138/805)Updating files:  18% (145/805)Updating files:  19% (153/805)Updating files:  20% (161/805)Updating files:  21% (170/805)Updating files:  22% (178/805)Updating files:  23% (186/805)Updating files:  24% (194/805)Updating files:  25% (202/805)Updating files:  26% (210/805)Updating files:  27% (218/805)Updating files:  28% (226/805)Updating files:  29% (234/805)Updating files:  30% (242/805)Updating files:  31% (250/805)Updating files:  32% (258/805)Updating files:  33% (266/805)Updating files:  34% (274/805)Updating files:  35% (282/805)Updating files:  36% (290/805)Updating files:  37% (298/805)Updating files:  38% (306/805)Updating files:  38% (307/805)Updating files:  39% (314/805)Updating files:  40% (322/805)Updating files:  41% (331/805)Updating files:  42% (339/805)Updating files:  43% (347/805)Updating files:  44% (355/805)Updating files:  45% (363/805)Updating files:  46% (371/805)Updating files:  47% (379/805)Updating files:  48% (387/805)Updating files:  49% (395/805)Updating files:  50% (403/805)Updating files:  51% (411/805)Updating files:  52% (419/805)Updating files:  53% (427/805)Updating files:  54% (435/805)Updating files:  55% (443/805)Updating files:  56% (451/805)Updating files:  57% (459/805)Updating files:  58% (467/805)Updating files:  59% (475/805)Updating files:  60% (483/805)Updating files:  60% (486/805)Updating files:  61% (492/805)Updating files:  62% (500/805)Updating files:  63% (508/805)Updating files:  64% (516/805)Updating files:  65% (524/805)Updating files:  66% (532/805)Updating files:  67% (540/805)Updating files:  68% (548/805)Updating files:  69% (556/805)Updating files:  70% (564/805)Updating files:  71% (572/805)Updating files:  72% (580/805)Updating files:  73% (588/805)Updating files:  74% (596/805)Updating files:  75% (604/805)Updating files:  76% (612/805)Updating files:  76% (619/805)Updating files:  77% (620/805)Updating files:  78% (628/805)Updating files:  79% (636/805)Updating files:  80% (644/805)Updating files:  81% (653/805)Updating files:  82% (661/805)Updating files:  83% (669/805)Updating files:  84% (677/805)Updating files:  85% (685/805)Updating files:  86% (693/805)Updating files:  87% (701/805)Updating files:  88% (709/805)Updating files:  89% (717/805)Updating files:  90% (725/805)Updating files:  91% (733/805)Updating files:  92% (741/805)Updating files:  93% (749/805)Updating files:  94% (757/805)Updating files:  95% (765/805)Updating files:  96% (773/805)Updating files:  96% (775/805)Updating files:  97% (781/805)Updating files:  98% (789/805)Updating files:  99% (797/805)Updating files: 100% (805/805)Updating files: 100% (805/805), done.
+SHA not reachable from default fetch; fetching all remotes
+SHA still not reachable; fetching all PR heads
+HEAD is now at a50ba6a68 fix(distributed): register spyre::broadcast_async/wait_work schema before torch_spyre._C can load anywhere in autoload
+resolved torch-spyre HEAD: a50ba6a6854d348ec8c6162e129be88cfe24471d
+
+===== [2026-08-25T06:15:45Z] installing torch-spyre requirements/dev.txt (minus torch) =====
+filtered requirements written to: /home/tdeshane/pr-b/dev-no-torch.txt
+Ignoring colorama: markers '(os_name != "nt" and sys_platform == "win32") or (os_name == "nt" and sys_platform != "darwin")' don't match your environment
+Ignoring numpy: markers 'python_full_version < "3.12"' don't match your environment
+Ignoring tzdata: markers 'sys_platform == "emscripten" or sys_platform == "win32"' don't match your environment
+Collecting absl-py==2.5.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 3))
+  Using cached absl_py-2.5.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting annotated-types==0.8.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 5))
+  Using cached annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+Collecting ast-serialize==0.6.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 7))
+  Using cached ast_serialize-0.6.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+Requirement already satisfied: build==1.5.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 9)) (1.5.0)
+Collecting cfgv==3.5.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 11))
+  Using cached cfgv-3.5.0-py2.py3-none-any.whl.metadata (8.9 kB)
+Requirement already satisfied: cmake==3.31.10 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 13)) (3.31.10)
+Collecting distlib==0.4.3 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 19))
+  Using cached distlib-0.4.3-py2.py3-none-any.whl.metadata (5.3 kB)
+Collecting execnet==2.1.2 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 21))
+  Using cached execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+Requirement already satisfied: expecttest==0.3.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 23)) (0.3.0)
+Collecting filelock==3.32.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 25))
+  Using cached filelock-3.32.0-py3-none-any.whl.metadata (2.0 kB)
+Requirement already satisfied: fsspec==2026.7.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 30)) (2026.7.0)
+Collecting identify==2.6.19 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 32))
+  Using cached identify-2.6.19-py2.py3-none-any.whl.metadata (4.4 kB)
+Collecting immutabledict==4.3.1 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 34))
+  Using cached immutabledict-4.3.1-py3-none-any.whl.metadata (3.5 kB)
+Requirement already satisfied: iniconfig==2.3.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 36)) (2.3.0)
+Requirement already satisfied: jinja2==3.1.6 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 38)) (3.1.6)
+Collecting librt==0.13.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 42))
+  Using cached librt-0.13.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+Requirement already satisfied: markupsafe==3.0.3 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 44)) (3.0.3)
+Collecting mpmath==1.3.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 46))
+  Using cached mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting mypy==2.1.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 48))
+  Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+Collecting mypy-extensions==1.1.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 50))
+  Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+Requirement already satisfied: networkx==3.6.1 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 52)) (3.6.1)
+Requirement already satisfied: ninja==1.13.0 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 54)) (1.13.0)
+Collecting nodeenv==1.10.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 56))
+  Using cached nodeenv-1.10.0-py2.py3-none-any.whl.metadata (24 kB)
+Collecting numpy==2.5.1 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 63))
+  Using cached numpy-2.5.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting ortools==9.15.6755 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 68))
+  Using cached ortools-9.15.6755-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (3.3 kB)
+Requirement already satisfied: packaging==26.2 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 70)) (26.2)
+Collecting pandas==3.0.5 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 75))
+  Using cached pandas-3.0.5-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+Collecting pathspec==1.1.1 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 77))
+  Using cached pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+Collecting platformdirs==4.11.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 79))
+  Using cached platformdirs-4.11.0-py3-none-any.whl.metadata (5.5 kB)
+Requirement already satisfied: pluggy==1.6.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 83)) (1.6.0)
+Collecting pre-commit==4.6.1 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 85))
+  Using cached pre_commit-4.6.1-py2.py3-none-any.whl.metadata (1.2 kB)
+Requirement already satisfied: protobuf==6.33.6 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 87)) (6.33.6)
+Requirement already satisfied: psutil==7.2.2 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 89)) (7.2.2)
+Requirement already satisfied: pydantic==2.13.4 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 91)) (2.13.4)
+Requirement already satisfied: pydantic-core==2.46.4 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 93)) (2.46.4)
+Requirement already satisfied: pygments==2.20.0 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 95)) (2.20.0)
+Requirement already satisfied: pyproject-hooks==1.2.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 97)) (1.2.0)
+Requirement already satisfied: pytest==9.1.1 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 99)) (9.1.1)
+Collecting pytest-xdist==3.8.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 103))
+  Using cached pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+Requirement already satisfied: python-dateutil==2.9.0.post0 in /usr/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 105)) (2.9.0.post0)
+Collecting python-discovery==1.5.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 107))
+  Using cached python_discovery-1.5.0-py3-none-any.whl.metadata (5.0 kB)
+Requirement already satisfied: pyyaml==6.0.3 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 109)) (6.0.3)
+Collecting regex==2026.7.19 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 113))
+  Using cached regex-2026.7.19-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting setuptools==81.0.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 115))
+  Using cached setuptools-81.0.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting six==1.17.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 119))
+  Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Requirement already satisfied: sympy==1.14.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 121)) (1.14.0)
+Collecting types-pyyaml==6.0.12.20260724 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 125))
+  Using cached types_pyyaml-6.0.12.20260724-py3-none-any.whl.metadata (1.7 kB)
+Requirement already satisfied: typing-extensions==4.16.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 127)) (4.16.0)
+Requirement already satisfied: typing-inspection==0.4.2 in /home/tdeshane/.local/lib/python3.12/site-packages (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 135)) (0.4.2)
+Collecting uv==0.11.33 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 139))
+  Using cached uv-0.11.33-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+Collecting virtualenv==21.7.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 141))
+  Using cached virtualenv-21.7.0-py3-none-any.whl.metadata (3.5 kB)
+Collecting wheel==0.47.0 (from -r /home/tdeshane/pr-b/dev-no-torch.txt (line 143))
+  Using cached wheel-0.47.0-py3-none-any.whl.metadata (2.3 kB)
+Using cached absl_py-2.5.0-py3-none-any.whl (137 kB)
+Using cached annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Using cached ast_serialize-0.6.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+Using cached cfgv-3.5.0-py2.py3-none-any.whl (7.4 kB)
+Using cached distlib-0.4.3-py2.py3-none-any.whl (470 kB)
+Using cached execnet-2.1.2-py3-none-any.whl (40 kB)
+Using cached filelock-3.32.0-py3-none-any.whl (97 kB)
+Using cached identify-2.6.19-py2.py3-none-any.whl (99 kB)
+Using cached immutabledict-4.3.1-py3-none-any.whl (5.0 kB)
+Using cached librt-0.13.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (531 kB)
+Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (15.1 MB)
+Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+Using cached nodeenv-1.10.0-py2.py3-none-any.whl (23 kB)
+Using cached numpy-2.5.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+Using cached ortools-9.15.6755-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (29.8 MB)
+Using cached pandas-3.0.5-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (11.0 MB)
+Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+Using cached platformdirs-4.11.0-py3-none-any.whl (23 kB)
+Using cached pre_commit-4.6.1-py2.py3-none-any.whl (226 kB)
+Using cached pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+Using cached python_discovery-1.5.0-py3-none-any.whl (34 kB)
+Using cached regex-2026.7.19-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (801 kB)
+Using cached setuptools-81.0.0-py3-none-any.whl (1.1 MB)
+Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+Using cached types_pyyaml-6.0.12.20260724-py3-none-any.whl (20 kB)
+Using cached uv-0.11.33-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (22.2 MB)
+Using cached virtualenv-21.7.0-py3-none-any.whl (5.5 MB)
+Using cached wheel-0.47.0-py3-none-any.whl (32 kB)
+Installing collected packages: mpmath, distlib, wheel, uv, types-pyyaml, six, setuptools, regex, platformdirs, pathspec, numpy, nodeenv, mypy-extensions, librt, immutabledict, identify, filelock, execnet, cfgv, ast-serialize, annotated-types, absl-py, python-discovery, pytest-xdist, mypy, virtualenv, pandas, pre-commit, ortools
+  Attempting uninstall: mpmath
+    Found existing installation: mpmath 1.4.1
+    Uninstalling mpmath-1.4.1:
+      Successfully uninstalled mpmath-1.4.1
+  Attempting uninstall: wheel
+    Found existing installation: wheel 0.48.0
+    Uninstalling wheel-0.48.0:
+      Successfully uninstalled wheel-0.48.0
+  Attempting uninstall: six
+    Found existing installation: six 1.16.0
+    Not uninstalling six at /usr/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'six'. No files were found to uninstall.
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 80.10.2
+    Not uninstalling setuptools at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'setuptools'. No files were found to uninstall.
+  Attempting uninstall: regex
+    Found existing installation: regex 2026.5.9
+    Not uninstalling regex at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'regex'. No files were found to uninstall.
+  Attempting uninstall: numpy
+    Found existing installation: numpy 2.5.2
+    Uninstalling numpy-2.5.2:
+      Successfully uninstalled numpy-2.5.2
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.32.4
+    Uninstalling filelock-3.32.4:
+      Successfully uninstalled filelock-3.32.4
+  Attempting uninstall: annotated-types
+    Found existing installation: annotated-types 0.7.0
+    Not uninstalling annotated-types at /home/tdeshane/.local/lib/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'annotated-types'. No files were found to uninstall.
+
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+vllm 0.20.1 requires torchvision==0.26.0, which is not installed.
+vllm 0.20.1 requires setuptools<81.0.0,>=77.0.3; python_version > "3.11", but you have setuptools 81.0.0 which is incompatible.
+mistral-common 1.11.3 requires numpy<2.4,>=1.25; python_version <= "3.12", but you have numpy 2.5.1 which is incompatible.
+numba 0.65.0 requires numpy<2.5,>=1.22, but you have numpy 2.5.1 which is incompatible.
+Successfully installed absl-py-2.5.0 annotated-types-0.8.0 ast-serialize-0.6.0 cfgv-3.5.0 distlib-0.4.3 execnet-2.1.2 filelock-3.32.0 identify-2.6.19 immutabledict-4.3.1 librt-0.13.0 mpmath-1.3.0 mypy-2.1.0 mypy-extensions-1.1.0 nodeenv-1.10.0 numpy-2.5.1 ortools-9.15.6755 pandas-3.0.5 pathspec-1.1.1 platformdirs-4.11.0 pre-commit-4.6.1 pytest-xdist-3.8.0 python-discovery-1.5.0 regex-2026.7.19 setuptools-81.0.0 six-1.17.0 types-pyyaml-6.0.12.20260724 uv-0.11.33 virtualenv-21.7.0 wheel-0.47.0
+
+===== [2026-08-25T06:17:01Z] parsing torch pin from pyproject.toml =====
+declared torch spec (verbatim): torch~=2.13.0
+
+===== [2026-08-25T06:17:01Z] installing torch at declared spec: torch~=2.13.0 (from CPU index) =====
+Looking in indexes: https://download.pytorch.org/whl/cpu
+Collecting torch~=2.13.0
+  Using cached torch-2.13.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (37 kB)
+Requirement already satisfied: filelock in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (3.32.0)
+Requirement already satisfied: typing-extensions>=4.10.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (4.16.0)
+Requirement already satisfied: setuptools>=77.0.3 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (81.0.0)
+Requirement already satisfied: sympy>=1.13.3 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (3.6.1)
+Requirement already satisfied: jinja2 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (3.1.6)
+Requirement already satisfied: fsspec>=0.8.5 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from torch~=2.13.0) (2026.7.0)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from sympy>=1.13.3->torch~=2.13.0) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages (from jinja2->torch~=2.13.0) (3.0.3)
+Using cached torch-2.13.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (191.8 MB)
+Installing collected packages: torch
+  Attempting uninstall: torch
+    Found existing installation: torch 2.11.0+cpu
+    Not uninstalling torch at /usr/local/lib64/python3.12/site-packages, outside environment /home/tdeshane/pr-b/.venv-supported
+    Can't uninstall 'torch'. No files were found to uninstall.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+vllm 0.20.1 requires torchvision==0.26.0, which is not installed.
+vllm 0.20.1 requires setuptools<81.0.0,>=77.0.3; python_version > "3.11", but you have setuptools 81.0.0 which is incompatible.
+vllm 0.20.1 requires torch==2.11.0, but you have torch 2.13.0+cpu which is incompatible.
+torch-spyre 0.0.1 requires torch~=2.11.0, but you have torch 2.13.0+cpu which is incompatible.
+torch-sendnn 1.3.0+main.1.2d74b5d.0 requires torch<=2.10.0,>=2.5.1, but you have torch 2.13.0+cpu which is incompatible.
+Successfully installed torch-2.13.0+cpu
+torch installed version: 2.13.0+cpu
+
+===== [2026-08-25T06:18:42Z] installing torch-spyre editable from /home/tdeshane/pr-b/torch-spyre (canonical no-deps / no-build-isolation) =====
+CXX = c++ (system compiler; /usr/lib64/ccache/c++ if on PATH)
+cxx_version = c++ (GCC) 14.3.1 20251022 (Red Hat 14.3.1-4)
+Remote version of pip: 26.2.1
+Local version of pip:  26.2.1
+Was pip installed by pip? True
+Using pip 26.2.1 from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip (python 3.12)
+Non-user install because site-packages writeable
+Created temporary directory: /tmp/pip-build-tracker-_kshcymn
+Initialized build tracking at /tmp/pip-build-tracker-_kshcymn
+Created build tracker: /tmp/pip-build-tracker-_kshcymn
+Entered build tracker: /tmp/pip-build-tracker-_kshcymn
+Created temporary directory: /tmp/pip-install-ghtbzd4r
+Created temporary directory: /tmp/pip-ephem-wheel-cache-5uy9v39x
+Obtaining file:///home/tdeshane/pr-b/torch-spyre
+  Added file:///home/tdeshane/pr-b/torch-spyre to build tracker '/tmp/pip-build-tracker-_kshcymn'
+  Checking if build backend supports build_editable: started
+  Running command Checking if build backend supports build_editable
+  Checking if build backend supports build_editable: finished with status 'done'
+  Created temporary directory: /tmp/pip-modern-metadata-b9i7p0h4
+  Preparing editable metadata (pyproject.toml): started
+  Running command Preparing editable metadata (pyproject.toml)
+  Downloading nlohmann/json.hpp...
+  running dist_info
+  creating /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info
+  writing /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/PKG-INFO
+  writing dependency_links to /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/dependency_links.txt
+  writing entry points to /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/entry_points.txt
+  writing requirements to /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/requires.txt
+  writing top-level names to /tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/top_level.txt
+  writing manifest file '/tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/SOURCES.txt'
+  reading manifest file '/tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/SOURCES.txt'
+  adding license file 'LICENSE.txt'
+  writing manifest file '/tmp/pip-modern-metadata-b9i7p0h4/torch_spyre.egg-info/SOURCES.txt'
+  creating '/tmp/pip-modern-metadata-b9i7p0h4/torch_spyre-0.0.1.dist-info'
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+  Source in ./. has version 0.0.1, which satisfies requirement torch_spyre==0.0.1 from file:///home/tdeshane/pr-b/torch-spyre
+  Removed torch_spyre==0.0.1 from file:///home/tdeshane/pr-b/torch-spyre from build tracker '/tmp/pip-build-tracker-_kshcymn'
+Created temporary directory: /tmp/pip-unpack-5q00myhm
+Building wheels for collected packages: torch_spyre
+  Destination directory: /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl
+  Building editable for torch_spyre (pyproject.toml): started
+  Running command Building editable for torch_spyre (pyproject.toml)
+  running editable_wheel
+  creating /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info
+  writing /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/PKG-INFO
+  writing dependency_links to /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/dependency_links.txt
+  writing entry points to /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/entry_points.txt
+  writing requirements to /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/requires.txt
+  writing top-level names to /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/top_level.txt
+  writing manifest file '/tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/SOURCES.txt'
+  reading manifest file '/tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/SOURCES.txt'
+  adding license file 'LICENSE.txt'
+  writing manifest file '/tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre.egg-info/SOURCES.txt'
+  creating '/tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre-0.0.1.dist-info'
+  creating /tmp/pip-ephem-wheel-cache-5uy9v39x/wheels/58/56/58/0856e2c37acfe03468119d92fb47b2e23aa109c71e0c031f10/tmpcnbh8ifl/.tmp-amj48x4j/torch_spyre-0.0.1.dist-info/WHEEL
+  running build_py
+  running build_ext
+  building 'torch_spyre._C' extension
+  creating /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc
+  creating /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed
+  [1/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/logging.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [2/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_config.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/logging_config.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_config.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [3/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_storage_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_storage_impl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_storage_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [4/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/module.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.cpp:17:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [5/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_guard.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_guard.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_guard.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_guard.cpp:21:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [6/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_allocator.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_allocator.cpp:23:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [7/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_device_enum.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_device_enum.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_device_enum.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [8/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_bindings.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/logging_bindings.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/logging_bindings.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [9/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_tensor_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.cpp:17:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_tensor_impl.h:21:10: fatal error: util/sendefs.h: No such file or directory
+     21 | #include <util/sendefs.h>
+        |          ^~~~~~~~~~~~~~~~
+  compilation terminated.
+  [10/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_views.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_views.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_views.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_views.cpp:29:10: fatal error: util/sen_data_convert.h: No such file or directory
+     29 | #include <util/sen_data_convert.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [11/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_mem.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_mem.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_mem.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_mem.h:22,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_mem.cpp:17:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [12/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_stream.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_stream.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_stream.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_stream.h:24,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_stream.cpp:17:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [13/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/prepare_kernel.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/prepare_kernel.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/prepare_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:20,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/prepare_kernel.h:28,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/prepare_kernel.cpp:17:
+  /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: warning: "LOG_IF" redefined
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/prepare_kernel.h:27:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: note: this is the location of the previous definition
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:31:10: fatal error: util/spyrecode.h: No such file or directory
+     31 | #include "util/spyrecode.h"
+        |          ^~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [14/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_kernel.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_kernel.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_kernel.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:23,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_kernel.cpp:34:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:20:
+  /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:31:10: fatal error: util/spyrecode.h: No such file or directory
+     31 | #include "util/spyrecode.h"
+        |          ^~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [15/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/job_plan.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:23,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.cpp:17:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/types.h:4,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:20:
+  /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/job_plan.h:31:10: fatal error: util/spyrecode.h: No such file or directory
+     31 | #include "util/spyrecode.h"
+        |          ^~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [16/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_distributed.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp:21:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef_inl.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/IListRef.h:634,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/DeviceGuard.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/ATen.h:10,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp:17:
+  /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/../spyre_stream.h:24,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_distributed.cpp:33:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/../module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [17/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  FAILED: /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o
+  ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/distributed/spyre_ccl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  In file included from /opt/ibm/spyre/senlib/include/senlib/shared/parse_init_buffer.hpp:33,
+                   from /opt/ibm/spyre/senlib/include/senlib/shared/data_utils.hpp:26,
+                   from /opt/ibm/spyre/senlib/include/vfio/1p0/vfio_wrapper.hpp:21,
+                   from /opt/ibm/spyre/senlib/include/senlib/1p0/vf_wrapper.hpp:40,
+                   from /opt/ibm/spyre/runtime/include/flex/device_interface/device_memory_allocator.hpp:14,
+                   from /opt/ibm/spyre/runtime/include/flex/allocator/flex_allocator.hpp:22,
+                   from /opt/ibm/spyre/runtime/include/flex/flex.hpp:10,
+                   from /opt/ibm/spyre/spyre-comms/include/spyre_comms.hpp:8,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.hpp:21,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.cpp:16:
+  /opt/ibm/spyre/runtime/include/common/logging.hpp:108:9: warning: "LOG_IF" redefined
+    108 | #define LOG_IF(level, boolean_expression) \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/Logging.h:30,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue_inl.h:28,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/ivalue.h:1631,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List_inl.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/List.h:492,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/ATen/core/Variadic.h:7,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/utils/variadic.h:5,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/detail/static.h:4,
+                   from /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include/torch/python.h:4,
+                   from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.hpp:19:
+  /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:83:9: note: this is the location of the previous definition
+     83 | #define LOG_IF(n, condition)                                              \
+        |         ^~~~~~
+  In file included from /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/distributed/spyre_ccl.hpp:28:
+  /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/module.h:21:10: fatal error: util/sen_host_ops.h: No such file or directory
+     21 | #include <util/sen_host_ops.h>
+        |          ^~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+  [18/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/attn_utils.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/attn_utils.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/attn_utils.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [19/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_generator_impl.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_generator_impl.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_generator_impl.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  [20/20] ccache c++ -MMD -MF /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_autocast.o.d -fno-strict-overflow -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -fexceptions -fcf-protection -fexceptions -fcf-protection -fexceptions -fcf-protection -O3 -fPIC '-DPACKAGE_NAME="torch_spyre"' '-DSPYRE_DOWNCAST_ENV="TORCH_SPYRE_DOWNCAST_WARN"' '-DEAGER_MODE_ENV="EAGER_MODE"' -DBOOST_ALL_DYN_LINK -DUSE_SPYRE_CCL '-DMODULE_NAME="torch_spyre._C"' -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc -I/home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/external/nlohmann/include -I/opt/ibm/spyre/runtime/include -I/opt/ibm/spyre/runtime/include/concurrentqueue/moodycamel -I/opt/ibm/spyre/senlib/include -I/opt/ibm/spyre/deeptools/include -I/opt/ibm/spyre/spyre-comms/include -I/opt/ibm/spyre/runtime/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include -I/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/include/torch/csrc/api/include -I/home/tdeshane/pr-b/.venv-supported/include -I/usr/include/python3.12 -c -c /home/tdeshane/pr-b/torch-spyre/torch_spyre/csrc/spyre_autocast.cpp -o /home/tdeshane/pr-b/torch-spyre/build/torch_spyre._C/torch_spyre/csrc/spyre_autocast.o -g -Wall -Wno-deprecated -std=c++20 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=_C
+  ninja: build stopped: subcommand failed.
+  Traceback (most recent call last):
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/utils/cpp_extension.py", line 2893, in _run_ninja_build
+      subprocess.run(
+    File "/usr/lib64/python3.12/subprocess.py", line 571, in run
+      raise CalledProcessError(retcode, process.args,
+  subprocess.CalledProcessError: Command '['ninja', '-v']' returned non-zero exit status 1.
+
+  The above exception was the direct cause of the following exception:
+
+  Traceback (most recent call last):
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+      main()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+      json_out["return_val"] = hook(**hook_input["kwargs"])
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 303, in build_editable
+      return hook(wheel_directory, config_settings, metadata_directory)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/build_meta.py", line 474, in build_editable
+      return self._build_with_temp_dir(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/build_meta.py", line 410, in _build_with_temp_dir
+      self.run_setup()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/build_meta.py", line 317, in run_setup
+      exec(code, locals())
+    File "<string>", line 274, in <module>
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/__init__.py", line 117, in setup
+      return distutils.core.setup(**attrs)  # type: ignore[return-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/core.py", line 186, in setup
+      return run_commands(dist)
+             ^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/core.py", line 202, in run_commands
+      dist.run_commands()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/dist.py", line 1000, in run_commands
+      self.run_command(cmd)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/dist.py", line 1107, in run_command
+      super().run_command(command)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/dist.py", line 1019, in run_command
+      cmd_obj.run()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/editable_wheel.py", line 140, in run
+      self._create_wheel_file(bdist_wheel)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/editable_wheel.py", line 350, in _create_wheel_file
+      files, mapping = self._run_build_commands(dist_name, unpacked, lib, tmp)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/editable_wheel.py", line 273, in _run_build_commands
+      self._run_build_subcommands()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/editable_wheel.py", line 300, in _run_build_subcommands
+      self.run_command(name)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/cmd.py", line 341, in run_command
+      self.distribution.run_command(command)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/dist.py", line 1107, in run_command
+      super().run_command(command)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/dist.py", line 1019, in run_command
+      cmd_obj.run()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/build_ext.py", line 97, in run
+      _build_ext.run(self)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/command/build_ext.py", line 367, in run
+      self.build_extensions()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/utils/cpp_extension.py", line 1289, in build_extensions
+      super().build_extensions()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/command/build_ext.py", line 483, in build_extensions
+      self._build_extensions_serial()
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/command/build_ext.py", line 509, in _build_extensions_serial
+      self.build_extension(ext)
+    File "<string>", line 270, in build_extension
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/command/build_ext.py", line 262, in build_extension
+      _build_ext.build_extension(self, ext)
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/setuptools/_distutils/command/build_ext.py", line 564, in build_extension
+      objects = self.compiler.compile(
+                ^^^^^^^^^^^^^^^^^^^^^^
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/utils/cpp_extension.py", line 1027, in unix_wrap_ninja_compile
+      _write_ninja_file_and_compile_objects(
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/utils/cpp_extension.py", line 2475, in _write_ninja_file_and_compile_objects
+      _run_ninja_build(
+    File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/torch/utils/cpp_extension.py", line 2910, in _run_ninja_build
+      raise RuntimeError(message) from e
+  RuntimeError: Error compiling objects for extension
+  An error occurred when building editable wheel for torch_spyre.
+  See debugging tips in: https://setuptools.pypa.io/en/latest/userguide/development_mode.html#debugging-tips
+  error: subprocess-exited-with-error
+  
+  × Building editable for torch_spyre (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> No available output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  full command: /home/tdeshane/pr-b/.venv-supported/bin/python /home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py build_editable /tmp/tmps1by1b10
+  cwd: /home/tdeshane/pr-b/torch-spyre
+  Building editable for torch_spyre (pyproject.toml): finished with status 'error'
+  ERROR: Failed building editable for torch_spyre
+Failed to build torch_spyre
+error: failed-wheel-build-for-install
+
+× Failed to build installable wheels for some pyproject.toml based projects
+╰─> torch_spyre
+Exception information:
+Traceback (most recent call last):
+  File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_internal/cli/base_command.py", line 109, in _run_wrapper
+    status = _inner_run()
+             ^^^^^^^^^^^^
+  File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_internal/cli/base_command.py", line 102, in _inner_run
+    return self.run(options, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_internal/cli/req_command.py", line 106, in wrapper
+    return func(self, options, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr-b/.venv-supported/lib64/python3.12/site-packages/pip/_internal/commands/install.py", line 531, in run
+    raise InstallWheelBuildError(build_failures)
+pip._internal.exceptions.InstallWheelBuildError: <InstallWheelBuildError: failed-wheel-build-for-install>
+Removed build tracker: '/tmp/pip-build-tracker-_kshcymn'
+
+[FAIL exit=8] pip install -e . --no-deps --no-build-isolation failed — Stage-2 SUPPORTED_CONTROL cannot proceed; leave this failure in place (see /home/tdeshane/pr-b/build_supported.log)

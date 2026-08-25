@@ -1,0 +1,77 @@
+{
+  "pr": 1930,
+  "merged_at": "2026-05-11T20:03:46Z",
+  "merge_commit": "539a1a0c2d54b228c19c982ee80044e210bcde98",
+  "target_pytorch": "2.11",
+  "starting_pytorch": "2.10",
+  "diff_stats": {"files": 11, "additions": 647, "deletions": 81},
+  "consequences": [
+    {
+      "category": "VERSION_BOOKKEEPING",
+      "location": "pyproject.toml, installation.md, upstream_tests*.yaml, project-overview/SKILL.md",
+      "mechanical": true,
+      "notes": "Six lines in pyproject (3 active + 3 commented), version-string comments in CI workflows, one docs table row, one skill reference."
+    },
+    {
+      "category": "LOCKFILE_REGENERATION",
+      "location": "uv.lock, requirements/{build,dev,run}.txt",
+      "mechanical": true,
+      "notes": "Regenerated via tools/update-requirements.sh; largest single portion of the diff by line count."
+    },
+    {
+      "category": "PYTHON_API_BREAK",
+      "location": "torch_spyre/_monkey_patch.py:200",
+      "mechanical": false,
+      "surface": "torch._C._dynamo.guards.GuardManager.add_lambda_guard",
+      "delta": "PT 2.11 added a required third arg user_stack. Old (lambda, verbose_code_parts) 2-arg form no longer accepted.",
+      "fix": "Pass guard.user_stack as third arg.",
+      "discovery": "test suite run by author; called out in review reply",
+      "notes": "Not visible until an actual guarded compile runs; not a signature grep."
+    },
+    {
+      "category": "DOWNSTREAM_DEPENDENCY_LAG",
+      "location": "profiling infrastructure",
+      "mechanical": false,
+      "surface": "profiler/kineto",
+      "delta": "Broke on 2.11; partially due to parallel runtime changes.",
+      "fix": "Deferred to PT 2.12 upgrade PR.",
+      "discovery": "post-merge issue-close comment",
+      "notes": "PT bump work spans multiple PRs — profiler was NOT fixed in this PR despite being broken by it."
+    },
+    {
+      "category": "CI_INFRASTRUCTURE_CHANGE",
+      "location": ".github/workflows/upstream_tests*.yaml (comments only)",
+      "mechanical": true,
+      "notes": "Logic is version-agnostic (dynamic pyproject read)."
+    },
+    {
+      "category": "CI_INFRASTRUCTURE_CHANGE",
+      "location": "multi-arch test images",
+      "mechanical": false,
+      "surface": "s390x / ppc64le runners",
+      "delta": "Merge gated on x86 alone once a parallel infrastructure PR (#1997) landed multi-arch test images.",
+      "notes": "The infra to test the bump landed IN PARALLEL, not before."
+    },
+    {
+      "category": "TEST_EXPECTATION_CHANGE",
+      "location": "two upstream tests",
+      "mechanical": false,
+      "surface": "unnamed",
+      "delta": "Two upstream tests started failing but were dismissed as 'failing for different known issues.'",
+      "notes": "Merged with these red; ambient tolerance for pre-existing upstream-test noise."
+    },
+    {
+      "category": "REPO_HOUSEKEEPING",
+      "location": ".claude/skills/upgrade-pytorch-version/SKILL.md",
+      "mechanical": false,
+      "notes": "This PR AUTHORED the upgrade skill. Skill-writing was folded into the upgrade PR."
+    },
+    {
+      "category": "MERGE_HYGIENE",
+      "location": "codegen/*",
+      "mechanical": false,
+      "delta": "PR started before #1875 removed the codegen tree; original diff contained edits to since-removed files. Reviewer flagged; author rebased.",
+      "notes": "Long-running upgrade branches drift against fast-moving repo internals."
+    }
+  ]
+}

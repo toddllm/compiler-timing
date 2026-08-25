@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "replays": [
+    {
+      "from": "2.11",
+      "to": "2.12",
+      "pr": 2218,
+      "mechanical_files_prescribed_and_needed": 5,
+      "mechanical_files_prescribed_but_not_needed": 2,
+      "mechanical_files_needed_but_not_prescribed": 2,
+      "substantive_breaks_specifically_predicted": 0,
+      "substantive_breaks_watch_category_matched": 4,
+      "substantive_breaks_watch_category_missed": 1,
+      "silent_correctness_predicted": 0,
+      "silent_correctness_actual": 3
+    },
+    {
+      "from": "2.12",
+      "to": "2.13",
+      "pr": 3374,
+      "mechanical_files_prescribed_and_needed": 5,
+      "mechanical_files_prescribed_but_not_needed": 2,
+      "mechanical_files_needed_but_not_prescribed": 4,
+      "substantive_breaks_specifically_predicted": 0,
+      "substantive_breaks_watch_category_matched": 2,
+      "substantive_breaks_watch_category_missed": 2,
+      "silent_correctness_predicted": 0,
+      "silent_correctness_actual": 1,
+      "forward_compat_skill_independent_prediction": [
+        "load_pyobj_interpreter -> getGlobalPyInterpreter (byte-identical fix in cases/historical-replay-pt213/)"
+      ]
+    }
+  ],
+  "aggregate_findings": {
+    "mechanical_hit_rate": 1.0,
+    "mechanical_overshoot_rate": "consistent 2 files (upstream_tests*.yaml comment edits — not always needed)",
+    "substantive_prediction_hit_rate": 0.0,
+    "silent_correctness_prediction_hit_rate": 0.0,
+    "categories_missed_across_both_replays": [
+      "SILENT_CORRECTNESS_CHANGE from internal-behavior drift in an unchanged API"
+    ]
+  }
+}

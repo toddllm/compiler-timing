@@ -1,0 +1,83 @@
+name: upstream-pytorch-tests-beta
+
+# One of torch-spyre's four "trunk" (push-to-main) workflows -- see
+# torch_spyre_tests.yaml, model_ops_tests.yaml, upstream_tests.yaml for the
+# others. No test_type input here, so no trunk wiring beyond this label.
+on:
+  # Run automatically on every merge to main
+  push:
+    branches: [main]
+    paths-ignore:
+      - tests/docs/**
+      - docs/**
+      - README.md
+      - CODEOWNERS
+      - .github/workflows/config_integrity_checker.yaml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  # Build the torch_spyre._C extension ONCE and publish it as a wheel; the
+  # matrix job below installs that single wheel instead of recompiling per entry.
+  build:
+    name: Build torch-spyre wheel (once)
+    # Compile-only: needs the backend image + SDK toolchain but NO physical Spyre
+    # card, so it targets the cardless spyre_pf_x0 pool and leaves card runners
+    # for the test jobs.
+    runs-on:
+      - x86_64
+      - spyre_pf_x0
+      - linux
+      - image_spyre_backend
+    timeout-minutes: 40
+    steps:
+      - name: Checkout composite actions
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: torch-spyre
+
+      - uses: ./.github/actions/gather-runner-info
+        with:
+          verbose: 'true'
+
+      - name: Build torch-spyre wheel
+        uses: ./.github/actions/build-torch-spyre-wheel
+        with:
+          image_label: image_spyre_backend
+
+      - name: Upload torch-spyre wheel
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: torch-spyre-wheel
+          path: torch-spyre/dist/*.whl
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # The per-suite matrix (retry/stall-watching/JUnit-XML reporting via
+  # ./.github/actions/run-test-suite) lives in the reusable
+  # _upstream_tests_beta_matrix.yaml workflow -- shared with
+  # build_test_pytorch_source.yaml so the suite list has a single source of
+  # truth. pytorch_sha is left empty: the release branch is derived from
+  # pyproject.toml, same as before this was extracted.
+  # ---------------------------------------------------------------------------
+  upstream-tests:
+    needs: build
+    uses: ./.github/workflows/_upstream_tests_beta_matrix.yaml
+    with:
+      artifact_name: torch-spyre-wheel

@@ -1,0 +1,48 @@
+{
+  "pr": 3374,
+  "merged_at": "2026-07-29T17:32:57Z",
+  "target_pytorch": "2.13",
+  "starting_pytorch": "2.12",
+  "diff_stats": {"files": 13, "additions": 788, "deletions": 556},
+  "consequences": [
+    {"category": "VERSION_BOOKKEEPING", "mechanical": true, "location": "pyproject.toml, installation.md, project-overview/SKILL.md"},
+    {"category": "LOCKFILE_REGENERATION", "mechanical": true, "location": "uv.lock, requirements/{build,dev,run,lint}.txt"},
+    {
+      "category": "CXX_ABI_BREAK",
+      "mechanical": false,
+      "surface": "c10::impl::PyObjectSlot::load_pyobj_interpreter",
+      "delta": "Removed in PT 2.13; replaced with c10::impl::getGlobalPyInterpreter().",
+      "impact": "torch-spyre C++ build failure at spyre_tensor_impl.cpp:253.",
+      "fix": "One-line rewrite to use the new global getter.",
+      "discovery": "compile-time undefined-symbol.",
+      "forward_compat_case": "cases/historical-replay-pt213/ — the skill independently derived a byte-identical fix ahead of time."
+    },
+    {
+      "category": "INDUCTOR_SEMANTIC_BREAK",
+      "compound_with": ["SILENT_CORRECTNESS_CHANGE"],
+      "mechanical": false,
+      "surface": "torch._inductor.scheduler.Scheduler._try_reorder_loops_for_candidates",
+      "delta": "2.13 computes a loop-reorder for candidate fusions and then DISCARDS it, whereas 2.12 applied it. LX-pinned clones no longer accidentally match consumers' iter order.",
+      "impact": "Silent wrong results: two reductions sharing an LX-resident buffer read a different core's slice than the producer wrote. No exception, no warning.",
+      "fix": "New align_lx_producer_loop_order pre-fusion pass (torch_spyre/_inductor/scheduler.py) added to CustomPreFusionPasses BEFORE build_loop_scheduler_nodes.",
+      "discovery": "test failure — ani300: 'required for PT 2.13, otherwise CI is not green'.",
+      "notes": "Textbook SILENT_CORRECTNESS_CHANGE: no API changed shape; internal upstream rewrite of loop-orders was doing invisible work for us."
+    },
+    {
+      "category": "PROFILER_CHANGE",
+      "compound_with": ["TEST_EXPECTATION_CHANGE"],
+      "mechanical": false,
+      "surface": "profiler + inplace-op tests",
+      "delta": "PT 2.13 polish on top of 2.12's PrivateUse1 profiler introduction.",
+      "fix": "Updated tests/inductor/test_inductor_ops.py + tests/configs/upstream_tests/test_profiler_config.yaml."
+    },
+    {
+      "category": "CI_INFRASTRUCTURE_CHANGE",
+      "mechanical": false,
+      "surface": "upstream tests enablement for 2.13",
+      "delta": "Adding a new PT version to the upstream test suite requires explicit work; ashokponkumar asked seshapad/kmehant to enable 2.13.",
+      "notes": "Not automatic."
+    },
+    {"category": "REPO_HYGIENE_BUNDLING", "mechanical": false, "notes": "'update deps to latest' commit bundled other version bumps into the same PR."}
+  ]
+}
