@@ -388,17 +388,29 @@ oc exec "$POD_NAME" -n "$NS" -- \
         --out-dir /home/tdeshane/forward-smoke \
         --stage-through 3
 
-# 10. For each FORWARD failure: author a hypothesis-first record.
-#     record_failure.py creates the six-file per-failure directory
-#     (01-observation.md through 06-retrospective.md). 04-patch.md
-#     must reference a concrete diff before verify_patch.sh will run.
-oc exec "$POD_NAME" -n "$NS" -- \
-   python3 /home/tdeshane/skill-scripts/record_failure.py \
-   --dir /home/tdeshane/case \
-   --index 1 \
-   --classification REVERSE_ENTRYPOINT_HAZARD \
-   --torch-spyre-loc torch_spyre/__init__.py:20 \
-   --observation /home/tdeshane/observation.txt
+# 10. For each FORWARD failure (or supported failure at F3-live):
+#     author a hypothesis-first record. record_failure.py creates the
+#     six-file per-failure directory (01-observation.md through
+#     06-retrospective.md). 04-patch.md must reference a concrete
+#     diff before verify_patch.sh will run.
+#
+#     The observation body is piped directly from the failing stage's
+#     log — no out-of-band file authoring — so the record is
+#     reproducibly tied to what actually happened.
+#
+#     Example below is for the F3 REVERSE_ENTRYPOINT_HAZARD case
+#     (still live on torch-spyre main at time of writing); swap the
+#     classification and citation for whatever the actual failure is.
+oc exec "$POD_NAME" -n "$NS" -- bash -c '
+    mkdir -p /home/tdeshane/case
+    cat /home/tdeshane/supported-smoke/stage_0.log \
+      | python3 /home/tdeshane/skill-scripts/record_failure.py \
+        --dir /home/tdeshane/case \
+        --index 1 \
+        --classification REVERSE_ENTRYPOINT_HAZARD \
+        --torch-spyre-loc torch_spyre/__init__.py:20 \
+        --stdin
+'
 
 # 11. Verify the patch: assert it moves the ladder at least one
 #     stage past the FORWARD failure AND does not regress

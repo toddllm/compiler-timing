@@ -1,0 +1,8 @@
+{
+  "actual_sha": "c0577575187a039c482a985e9a594816dc711a4c",
+  "build_seconds": null,
+  "fallback_reason": null,
+  "mode": "NIGHTLY_PROXY",
+  "requested_sha": "20e11d662606a2196e3cfe356f4181b5e8b0acf3",
+  "version": "2.15.0.dev20260824+cpu"
+}
