@@ -1,0 +1,4 @@
+# targeted-command extracted from 01-observation.md:
+python -c "import torch_spyre; print('imported ok', flush=True)"
+# --- begin execution ---
+imported ok

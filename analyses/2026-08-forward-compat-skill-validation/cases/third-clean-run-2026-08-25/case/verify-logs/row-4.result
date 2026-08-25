@@ -1,0 +1,1 @@
+{"row": 4, "status": "pass", "duration_s": 14, "notes": "targeted reproducer passed on latest torch 2.15.0.dev20260824+cpu (git c0577575187a039c482a985e9a594816dc711a4c)", "timestamp_utc": "2026-08-25T05:20:26Z"}

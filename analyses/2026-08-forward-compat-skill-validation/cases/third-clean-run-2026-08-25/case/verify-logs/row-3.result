@@ -1,0 +1,1 @@
+{"row": 3, "status": "pass", "duration_s": 26, "notes": "targeted reproducer passed on supported torch 2.13.0+cpu", "timestamp_utc": "2026-08-25T05:20:12Z"}

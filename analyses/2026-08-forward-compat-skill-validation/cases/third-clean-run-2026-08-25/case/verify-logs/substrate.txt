@@ -1,0 +1,11 @@
+verify_patch.sh version: 1
+run_started_utc: 2026-08-25T05:18:16Z
+failure_dir: /home/tdeshane/case/failures/01-reverse-entrypoint-hazard
+venv_supported: /home/tdeshane/supported/.venv-supported
+venv_latest:    /home/tdeshane/forward/.venv-latest
+tree_supported: /home/tdeshane/supported/torch-spyre
+tree_latest:    /home/tdeshane/forward/torch-spyre
+patch_ref: /home/tdeshane/case/failures/01-reverse-entrypoint-hazard/04-patch.diff
+patch_hash: 2dd4b29c74224c83c061b50e6651a4885517dc89
+hostname: unknown
+etc_hostname: tdeshane-forward-compat-2026-08-25

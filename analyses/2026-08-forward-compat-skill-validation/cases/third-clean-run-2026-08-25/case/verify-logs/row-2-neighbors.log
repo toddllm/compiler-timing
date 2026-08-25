@@ -1,0 +1,15 @@
+
+# --- neighbor: tests/test_spyre_lazy_init.py ---
+.                                                                        [100%]
+1 passed in 14.11s
+# neighbor OK: tests/test_spyre_lazy_init.py
+
+# --- neighbor: tests/test_spyre_lazy_silent.py ---
+.                                                                        [100%]
+1 passed in 13.00s
+# neighbor OK: tests/test_spyre_lazy_silent.py
+
+# --- neighbor: tests/test_cpp_extension_available.py ---
+.                                                                        [100%]
+1 passed in 5.93s
+# neighbor OK: tests/test_cpp_extension_available.py

@@ -90,12 +90,16 @@ SCRIPT_VERSION=1
 FAILURE_DIR=""
 VENV_SUPPORTED=""
 VENV_LATEST=""
+TREE_SUPPORTED_ARG=""
+TREE_LATEST_ARG=""
 
 usage() {
     cat >&2 <<'USAGE'
-usage: verify_patch.sh --failure-dir DIR
-                       --venv-supported PATH
-                       --venv-latest    PATH
+usage: verify_patch.sh --failure-dir     DIR
+                       --venv-supported  PATH
+                       --venv-latest     PATH
+                       --tree-supported  PATH
+                       --tree-latest     PATH
 
   --failure-dir     Path to a failures/NN-<slug>/ directory previously
                     created by record_failure.py. Its 04-patch.md must
@@ -107,6 +111,16 @@ usage: verify_patch.sh --failure-dir DIR
   --venv-latest     Virtualenv with torch at the latest upstream pytorch
                     main SHA the patch was authored against. Row 4 uses
                     this; Rows 1/2/5/7 use it as the default.
+  --tree-supported  torch-spyre source tree built into --venv-supported.
+                    Row 3 applies the patch here.
+  --tree-latest     torch-spyre source tree built into --venv-latest.
+                    Rows 1/2/4/5/7 apply the patch here.
+
+The tree args are required and explicit because the documented
+layout (setup_supported_env.sh → $WORKDIR/torch-spyre next to
+$WORKDIR/.venv-supported; setup_latest_pytorch_env.sh → same shape)
+puts the tree as a SIBLING of the venv, not an ancestor. Earlier
+walk-up heuristics silently failed on that layout.
 
 Exit codes: 0 VERIFIED; 1 UNVERIFIED; 2 usage error; 3 case not ready.
 USAGE
@@ -114,15 +128,18 @@ USAGE
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --failure-dir)    FAILURE_DIR="${2:-}";    shift 2 ;;
-        --venv-supported) VENV_SUPPORTED="${2:-}"; shift 2 ;;
-        --venv-latest)    VENV_LATEST="${2:-}";    shift 2 ;;
+        --failure-dir)    FAILURE_DIR="${2:-}";        shift 2 ;;
+        --venv-supported) VENV_SUPPORTED="${2:-}";     shift 2 ;;
+        --venv-latest)    VENV_LATEST="${2:-}";        shift 2 ;;
+        --tree-supported) TREE_SUPPORTED_ARG="${2:-}"; shift 2 ;;
+        --tree-latest)    TREE_LATEST_ARG="${2:-}";    shift 2 ;;
         -h|--help)        usage; exit 0 ;;
         *) echo "unknown arg: $1" >&2; usage; exit 2 ;;
     esac
 done
 
-if [ -z "$FAILURE_DIR" ] || [ -z "$VENV_SUPPORTED" ] || [ -z "$VENV_LATEST" ]; then
+if [ -z "$FAILURE_DIR" ] || [ -z "$VENV_SUPPORTED" ] || [ -z "$VENV_LATEST" ] \
+   || [ -z "$TREE_SUPPORTED_ARG" ] || [ -z "$TREE_LATEST_ARG" ]; then
     usage; exit 2
 fi
 
@@ -141,8 +158,20 @@ for label in "supported:$VENV_SUPPORTED" "latest:$VENV_LATEST"; do
     fi
 done
 
+for label in "supported:$TREE_SUPPORTED_ARG" "latest:$TREE_LATEST_ARG"; do
+    kind="${label%%:*}"
+    path="${label#*:}"
+    if [ ! -f "$path/pyproject.toml" ] || [ ! -d "$path/torch_spyre" ]; then
+        echo "error: --tree-$kind is not a torch-spyre checkout: $path" >&2
+        echo "       (expected $path/pyproject.toml and $path/torch_spyre/)" >&2
+        exit 2
+    fi
+done
+
 VENV_SUPPORTED="$(cd "$VENV_SUPPORTED" && pwd)"
 VENV_LATEST="$(cd "$VENV_LATEST" && pwd)"
+TREE_SUPPORTED_ARG="$(cd "$TREE_SUPPORTED_ARG" && pwd)"
+TREE_LATEST_ARG="$(cd "$TREE_LATEST_ARG" && pwd)"
 
 # ---------------------------------------------------------------------
 # Preconditions on the failure directory
@@ -193,6 +222,21 @@ now_s()   { date +%s; }
 # JSON-escape a string using pure bash. Same reason as run_compat_smoke.sh:
 # the very venv under test might be broken, and we still want to write
 # a legible .result file.
+# Source /etc/profile.d/ibm-aiu-setup.sh so downstream torch_spyre
+# imports find libspyre_comms.so.1 / senlib / etc. under
+# /opt/ibm/spyre/*/lib. Meant to be called inside a row's subshell
+# AFTER `source $venv/bin/activate` — the setup script uses
+# unbound-var references (e.g. `_IBM_AIU_SETUP`) that trip `set -u`,
+# so we bracket with `set +u` and put it back afterwards.
+source_ibm_aiu_env() {
+    set +u
+    # shellcheck disable=SC1091
+    if [ -r /etc/profile.d/ibm-aiu-setup.sh ]; then
+        source /etc/profile.d/ibm-aiu-setup.sh >/dev/null 2>&1 || true
+    fi
+    set -u
+}
+
 json_escape() {
     local s="$1"
     s="${s//\\/\\\\}"
@@ -247,32 +291,13 @@ apply_patch() {
     fi
 }
 
-# Locate the torch-spyre checkout that the caller's venvs point at.
-# Both venvs must resolve to the same tree — a row-3 against a
-# supported venv that points at a different working copy than row-4
-# would not compose. We infer the tree by walking up from the venv
-# path until we find `pyproject.toml` and `torch_spyre/`.
-locate_tree() {
-    local venv="$1"
-    local cand="$venv"
-    for _ in 1 2 3 4 5 6; do
-        cand="$(dirname "$cand")"
-        if [ -f "$cand/pyproject.toml" ] && [ -d "$cand/torch_spyre" ]; then
-            printf '%s' "$cand"; return 0
-        fi
-    done
-    return 1
-}
-
-TREE_SUPPORTED="$(locate_tree "$VENV_SUPPORTED" || true)"
-TREE_LATEST="$(locate_tree "$VENV_LATEST" || true)"
-
-if [ -z "$TREE_SUPPORTED" ] || [ -z "$TREE_LATEST" ]; then
-    echo "error: could not locate torch-spyre checkout above one or both venvs" >&2
-    echo "       (--venv-supported: ${TREE_SUPPORTED:-<not found>})" >&2
-    echo "       (--venv-latest:    ${TREE_LATEST:-<not found>})" >&2
-    exit 3
-fi
+# Trees came in via required --tree-supported / --tree-latest args
+# above. This block used to walk up from each venv looking for
+# pyproject.toml + torch_spyre/, but the documented setup layout puts
+# the tree as a SIBLING of the venv, not an ancestor — so the walk-up
+# always failed on genuine fresh-pod runs.
+TREE_SUPPORTED="$TREE_SUPPORTED_ARG"
+TREE_LATEST="$TREE_LATEST_ARG"
 
 # ---------------------------------------------------------------------
 # Substrate / patch-hash / refs metadata
@@ -323,6 +348,7 @@ resolve_torch_in_venv() {
     raw="$(
         # shellcheck disable=SC1090
         source "$venv/bin/activate" 2>/dev/null
+        source_ibm_aiu_env
         python - <<'PY' 2>/dev/null
 try:
     import torch
@@ -384,6 +410,7 @@ run_row_1() {
     (
         # shellcheck disable=SC1090
         source "$VENV_LATEST/bin/activate"
+        source_ibm_aiu_env
         cd "$TREE_LATEST"
         # The patch must actually be applied in the working tree for
         # this row to be meaningful. We check that a preceding step
@@ -478,6 +505,7 @@ run_row_2() {
         (
             # shellcheck disable=SC1090
             source "$VENV_LATEST/bin/activate"
+            source_ibm_aiu_env
             cd "$TREE_LATEST"
             export TORCHINDUCTOR_CACHE_DIR="$cache"
             python -m pytest -x -q --no-header "$t"
@@ -530,6 +558,7 @@ run_row_3() {
     (
         # shellcheck disable=SC1090
         source "$VENV_SUPPORTED/bin/activate"
+        source_ibm_aiu_env
         cd "$TREE_SUPPORTED"
         bash -c "$cmd"
     ) >>"$log" 2>&1
@@ -584,6 +613,7 @@ run_row_4() {
     (
         # shellcheck disable=SC1090
         source "$VENV_LATEST/bin/activate"
+        source_ibm_aiu_env
         cd "$TREE_LATEST"
         bash -c "$cmd"
     ) >>"$log" 2>&1
@@ -642,6 +672,7 @@ run_row_5() {
     (
         # shellcheck disable=SC1090
         source "$VENV_LATEST/bin/activate"
+        source_ibm_aiu_env
         cd "$TREE_LATEST"
         python "$oracle"
     ) >>"$log" 2>&1
@@ -677,6 +708,7 @@ run_row_6() {
     py_exec="$(
         # shellcheck disable=SC1090
         source "$VENV_LATEST/bin/activate"
+        source_ibm_aiu_env
         command -v python
     )"
     if [ -z "$py_exec" ]; then
@@ -691,25 +723,72 @@ run_row_6() {
         "$py_exec" -m venv "$venv6"
     } >>"$log" 2>&1
 
+    # Discover the exact torch installed in --venv-latest so Row 6
+    # can install the same one into venv6. `pip wheel torch` alone
+    # goes to PyPI (which gets a completely different, CUDA-tagged
+    # 2.13 wheel), so we must (a) read the local version and (b) use
+    # the same pytorch index the latest venv was populated from.
+    local latest_torch_version
+    latest_torch_version="$(
+        # shellcheck disable=SC1090
+        source "$VENV_LATEST/bin/activate"
+        source_ibm_aiu_env
+        python -c "import torch; print(torch.__version__)" 2>/dev/null
+    )"
+    if [ -z "$latest_torch_version" ]; then
+        echo "row 6: could not read torch version from --venv-latest" >>"$log"
+        t1=$(now_s); dur=$((t1 - t0))
+        write_row_result 6 fail "$dur" "could not read torch version from --venv-latest"
+        return 1
+    fi
+    echo "# latest torch version = $latest_torch_version" >>"$log"
+
+    # NIGHTLY_PROXY setups install torch from the CPU nightly index.
+    # We recognize that by the "+cpu" local tag plus the ".dev" pre-
+    # release tag; if both are present, use the nightly-cpu index.
+    # Otherwise fall back to PyPI (which will match a normal
+    # +cpu / stable install).
+    local torch_index_url=""
+    case "$latest_torch_version" in
+        *".dev"*"+cpu") torch_index_url="https://download.pytorch.org/whl/nightly/cpu" ;;
+        *"+cpu")        torch_index_url="https://download.pytorch.org/whl/cpu"          ;;
+    esac
+    echo "# torch source index = ${torch_index_url:-<default PyPI>}" >>"$log"
+
     (
         # shellcheck disable=SC1090
         source "$venv6/bin/activate"
+        source_ibm_aiu_env
         set -e
         pip install --upgrade pip
-        # Torch itself must be the SAME torch as in --venv-latest —
-        # otherwise Row 6 tests an unrelated pin. We copy it in as a
-        # wheel from the latest venv's site-packages. Falling back to
-        # installing from PyPI would break Row 4's SHA guarantee.
-        latest_torch_wheel_dir="$LOG_DIR/venv6-torch-wheel"
-        rm -rf "$latest_torch_wheel_dir"
-        mkdir -p "$latest_torch_wheel_dir"
-        (
-            # shellcheck disable=SC1090
-            source "$VENV_LATEST/bin/activate"
-            pip wheel torch --no-deps --wheel-dir "$latest_torch_wheel_dir"
-        )
-        pip install --no-index --find-links "$latest_torch_wheel_dir" torch
-        pip install -e "$TREE_LATEST"
+        # Install the same torch version from the same source used by
+        # --venv-latest — no wheel-copy dance (which fetches from PyPI
+        # by default and gets an unrelated 2.13 CUDA wheel). Row 6's
+        # only requirement is that venv6 sees the same torch as venv-
+        # latest; explicit version+index does that.
+        if [ -n "$torch_index_url" ]; then
+            pip install --pre --index-url "$torch_index_url" "torch==$latest_torch_version"
+        else
+            pip install "torch==$latest_torch_version"
+        fi
+        # Install torch-spyre build prereqs from
+        # references/canonical-dev-flow.md. Under --no-build-isolation
+        # pip does NOT create an ephemeral build env, so nanobind /
+        # ninja / pybind11 / cmake / regex must be present in the venv
+        # already; expecttest / wheel / psutil / pytest / numpy /
+        # typing_extensions cover the runtime import path.
+        pip install \
+            nanobind==2.9.2 ninja pybind11 build "cmake~=3.26" regex \
+            expecttest wheel psutil pytest typing_extensions numpy
+        # --no-deps: torch-spyre's pyproject pins torch~=2.13.0 —
+        # if we let pip resolve deps it would downgrade the nightly
+        # torch to 2.13-with-CUDA and defeat the entire venv-latest
+        # SHA guarantee. Every non-torch runtime dep that a bare
+        # `import torch_spyre` reaches is already in this venv6.
+        # --no-build-isolation: canonical dev-flow form, links
+        # against THIS torch (not an ephemeral one PEP 517 would
+        # materialize).
+        pip install -e "$TREE_LATEST" --no-deps --no-build-isolation
     ) >>"$log" 2>&1
     rc=$?
     if [ "$rc" -ne 0 ]; then
@@ -722,6 +801,7 @@ run_row_6() {
     (
         # shellcheck disable=SC1090
         source "$venv6/bin/activate"
+        source_ibm_aiu_env
         python -c "import torch_spyre, sys; print('torch_spyre version =', getattr(torch_spyre, '__version__', '(no __version__)')); sys.exit(0)"
     ) >>"$log" 2>&1
     rc=$?
@@ -767,6 +847,7 @@ run_row_7() {
         (
             # shellcheck disable=SC1090
             source "$VENV_LATEST/bin/activate"
+            source_ibm_aiu_env
             cd "$TREE_LATEST"
             export TORCHINDUCTOR_CACHE_DIR="$cache"
             python -m pytest -x -q --no-header "$t"

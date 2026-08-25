@@ -1,0 +1,1 @@
+{"row": 1, "status": "pass", "duration_s": 14, "notes": "targeted reproducer exit 0 on --venv-latest with patch applied", "timestamp_utc": "2026-08-25T05:18:30Z"}

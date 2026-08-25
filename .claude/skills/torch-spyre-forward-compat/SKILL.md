@@ -414,12 +414,24 @@ oc exec "$POD_NAME" -n "$NS" -- bash -c '
 
 # 11. Verify the patch: assert it moves the ladder at least one
 #     stage past the FORWARD failure AND does not regress
-#     SUPPORTED_CONTROL. Six-row matrix; refuses if any row fails.
+#     SUPPORTED_CONTROL. Seven-row matrix; refuses if any row fails.
+#
+#     Pass the exact failure-dir slug — record_failure.py named it
+#     from the classification you gave it in step 10 (in this example,
+#     REVERSE_ENTRYPOINT_HAZARD → 01-reverse-entrypoint-hazard).
+#     Do NOT use a wildcard: oc exec ships the arg through un-globbed
+#     and verify_patch rejects a literal "01-*".
+#
+#     Trees must be explicit arguments (F14 lesson, 2026-08-25):
+#     they sit as siblings of the venvs, not ancestors — the previous
+#     walk-up heuristic silently failed on the documented layout.
 oc exec "$POD_NAME" -n "$NS" -- \
    bash /home/tdeshane/skill-scripts/verify_patch.sh \
-        --failure-dir /home/tdeshane/case/failures/01-* \
+        --failure-dir    /home/tdeshane/case/failures/01-reverse-entrypoint-hazard \
         --venv-supported /home/tdeshane/supported/.venv-supported \
-        --venv-latest /home/tdeshane/forward/.venv-latest
+        --venv-latest    /home/tdeshane/forward/.venv-latest \
+        --tree-supported /home/tdeshane/supported/torch-spyre \
+        --tree-latest    /home/tdeshane/forward/torch-spyre
 
 # 12. When done, pull the case directory back and tear down the pod.
 oc cp "$NS/$POD_NAME:/home/tdeshane/case" "$CASE_DIR/case"

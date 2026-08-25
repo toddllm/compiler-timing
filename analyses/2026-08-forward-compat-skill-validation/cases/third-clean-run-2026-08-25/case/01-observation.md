@@ -60,3 +60,15 @@ RuntimeError: Failed to load the backend extension: torch_spyre. You can disable
 (State whether the failure reproduces every run, or with what
 fraction. If unknown, run the trigger command three more times
 and record.)
+
+## Trigger
+
+The exact command that reproduces the failure on the affected venv.
+Row 1 / Row 3 / Row 4 of the verification matrix re-run this same
+command with the patch applied and expect exit 0.
+
+targeted-command:
+
+```bash
+python -c "import torch_spyre; print('imported ok', flush=True)"
+```

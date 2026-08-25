@@ -1,0 +1,5 @@
+# Row 5 N/A per 02-diagnosis-hypothesis.md (pure metadata / registration change)
+## Row 5 N/A because
+
+The fix does not touch any tensor-producing code path. It reorders
+module-scope statements in `torch_spyre/__init__.py` so that an

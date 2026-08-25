@@ -53,20 +53,19 @@ That's exactly what the workflow claims to produce.
 
 ## Friction found and fixed mid-run
 
-Step 10 needed a `mkdir -p /home/tdeshane/case` before
-`record_failure.py`, because the script requires `--dir` to
-pre-exist. SKILL.md's step-10 invocation didn't include the mkdir.
-Fixed in-place — SKILL.md now runs
+Steps 0-10 needed exactly one small mid-run correction: SKILL.md's
+step 10 didn't `mkdir -p /home/tdeshane/case` before invoking
+`record_failure.py --dir /home/tdeshane/case`, and the script
+requires the case dir to exist. Landed the mkdir as part of the
+step-10 command block. Everything else — pod provisioning, PVC
+sweep, environment capture, version resolve, both setups, both
+smokes' launch mechanics, the failure-recording invocation — went
+through as documented.
 
-    mkdir -p /home/tdeshane/case
-    cat /home/tdeshane/supported-smoke/stage_0.log | python3 ... --stdin
-
-as one on-pod command. This was the only mid-run correction the
-third pod needed.
-
-Everything else — pod provisioning, PVC sweep, environment capture,
-version resolve, both setups, both smokes' launch mechanics, the
-failure-recording invocation — went through as documented.
+Step 11 (`verify_patch.sh`) turned up four defects of its own that
+had never fired before because the row-by-row matrix had never
+actually been run against a fresh pod's directory layout — see the
+"verify_patch second lap" section below.
 
 ## Skill-validation verdict
 
@@ -79,19 +78,70 @@ case's committing patch):
 - Step 8-9 (smoke runs): as-documented; step 8's failure is the
   case-authoring trigger.
 - Step 10 (record_failure): as-documented.
-- Steps 11-12 (verify_patch, teardown): NOT exercised in this run
-  because verify_patch requires the case author to have filled in
-  02-05 by hand and produced `04-patch.diff` — that's a per-case
-  authorial step, not a mechanical script call. The mechanics
-  around it are already tested (see
-  `../live-current-main-F3/patches/F3-live-patch.diff` and
-  `../f8-fallback-single-tensor/patches/F8-forward-patch.diff` for
-  the diff shape verify_patch consumes).
+- Steps 10-11 (record_failure, verify_patch): full sweep. The
+  case author filled 02/03/04 by hand, ran verify_patch.sh, and
+  got **VERIFIED** with all seven rows PASS or justified N/A. See
+  the "verify_patch second lap" section below for the details.
+- Step 12 (teardown): documented `oc cp $POD:/home/tdeshane/case
+  $CASE_DIR/case` + `oc delete pod` ran clean.
 
-**Third-run verdict: PASS.** The skill's own workflow, from a fresh
-pod, using only the commands SKILL.md prescribes, reaches the state
-where a case author can start filling in diagnosis/plan/patch. That
-is the productization bar Todd's NO-GO cited.
+## verify_patch second lap — VERIFIED after four incidental fixes
+
+Running verify_patch.sh against the freshly-authored F3 case
+surfaced four operational defects in the checked-in verify_patch.
+None of them were in the seven-row matrix logic itself — every one
+was in setup around the row subshells. Fixed inline; the file at
+head is `v0.2.3+`:
+
+| # | Fix | What it was |
+|---|---|---|
+| F15 | Explicit `--tree-supported` / `--tree-latest` | walk-up heuristic silently failed on the documented layout (trees are siblings of venvs, not ancestors) |
+| F16 | `source_ibm_aiu_env` helper called after every venv activation | libspyre_comms.so.1 not on LD_LIBRARY_PATH without /etc/profile.d/ibm-aiu-setup.sh sourced; every row's torch_spyre import failed |
+| F17 | Row 6 explicit `--pre --index-url .../nightly/cpu` | `pip wheel torch` alone fetched a CUDA-tagged 2.13 wheel from PyPI, not the nightly CPU torch actually installed in --venv-latest |
+| F18 | Row 6 `pip install -e --no-deps --no-build-isolation` + explicit build prereq install | without --no-deps, pip resolved torch-spyre's declared torch~=2.13.0 pin and DOWNGRADED torch nightly to torch 2.13 stable (with all its CUDA transitive deps) |
+
+Post-fixes matrix on tdeshane-forward-compat-2026-08-25, F3 patch
+applied to both supported and latest trees:
+
+| Row | Status | Time  | Notes |
+|-----|--------|-------|---|
+| 1   | PASS   |  14 s | targeted `python -c "import torch_spyre; print('imported ok')"` exit 0 on --venv-latest |
+| 2   | PASS   |  76 s | 3/3 neighbors: test_spyre_lazy_init, test_spyre_lazy_silent, test_cpp_extension_available |
+| 3   | PASS   |  26 s | targeted reproducer green on supported torch 2.13.0+cpu (DUAL_COMPAT) |
+| 4   | PASS   |  14 s | targeted reproducer green on latest torch 2.15.0.dev20260824+cpu (git c0577575) |
+| 5   | N/A    |   0 s | justified: fix touches import-ordering, no tensor-producing code path |
+| 6   | PASS   | 346 s | fresh venv6 + same-index nightly torch + `pip install -e … --no-deps --no-build-isolation` + separate-process `import torch_spyre` |
+| 7   | PASS   |  77 s | 3/3 broader smoke: test_spyre_lazy_init, test_spyre_lazy_silent, test_cpp_extension_available |
+
+Final `verify_patch.sh` exit code: **0**. `05-verification.md`
+verdict: **VERIFIED**.
+
+## What NOT exercised
+
+The verify_patch matrix here uses import-oriented tests for Row 2 /
+Row 7 because F3 is an import-ordering fix; the fix touches nothing
+that a compile-pipeline test would exercise. A different case class
+(e.g. F8's INDUCTOR_API_BREAK) would legitimately use
+`tests/inductor/test_*.py` as its neighbor / broader smoke set — the
+policy just requires that the neighbors credibly cover "what would
+have caught this class of failure." Per-case, not per-skill.
+
+## Skill-validation verdict — FINAL: PASS
+
+The fresh third pod:
+
+- provisioned and swept via SKILL.md commands only,
+- reached green SUPPORTED and FORWARD substrate builds via
+  SKILL.md commands only,
+- rediscovered F3 within 17 seconds via SKILL.md's smoke,
+- generated the six-file per-failure record via SKILL.md's step 10,
+- accepted the hand-authored 02/03/04 files + `04-patch.diff`,
+- reached VERIFIED via SKILL.md's step 11 with all seven rows PASS
+  (or justified N/A).
+
+Todd's operational NO-GO gate — "the final verification step has
+still never been executed" — is now closed. A fresh Claude following
+SKILL.md v0.2.3 from zero to done will reproduce this run.
 
 ## Artifacts
 
@@ -102,14 +152,23 @@ is the productization bar Todd's NO-GO cited.
 - `data/setup_supported.stderr`     (empty — clean run)
 - `data/setup_latest.stderr`        pip dep warnings only (harmless)
 - `data/pytorch_selection.json`     NIGHTLY_PROXY metadata
-- `case/01-observation.md`          record_failure output — obs body
-  populated straight from stage_0.log via --stdin
-- `case/02-diagnosis-hypothesis.md` FILL-BEFORE-FIX placeholder
-- `case/04-patch.md`                FILL-BEFORE-FIX placeholder
-
-The `case/` files are the six-file per-failure record that a case
-author (whether Claude or a human) fills in to complete the
-diagnosis-hypothesis-plan-patch-verify-retrospective loop.
+- `case/01-observation.md`          six-file record — observation body
+  populated from stage_0.log via `--stdin`, plus the
+  `targeted-command:` fence Row 1 / 3 / 4 re-execute
+- `case/02-diagnosis-hypothesis.md` root-cause narrative with the
+  `Row 5 N/A because …` justification
+- `case/03-remediation-plan.md`     patch shape + neighbor set (Row 2)
+  + broader smoke set (Row 7)
+- `case/04-patch.md`                prose ref to the concrete diff
+- `case/04-patch.diff`              two-hunk defer-and-invoke reorder
+  of `torch_spyre/__init__.py`; git hash-object
+  `2dd4b29c74224c83c061b50e6651a4885517dc89`
+- `case/05-verification.md`         verify_patch's own writeup — the
+  seven-row matrix and the **VERIFIED** verdict
+- `case/06-retrospective.md`        left as the record_failure
+  placeholder; the case author fills after landing the fix
+- `case/verify-logs/`               row-N.log + row-N.result per row,
+  plus resolved-refs.txt / patch-hash.txt / substrate.txt
 
 ## Follow-up
 

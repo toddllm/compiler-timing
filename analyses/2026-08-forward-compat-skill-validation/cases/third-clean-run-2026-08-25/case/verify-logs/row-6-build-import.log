@@ -1,0 +1,114 @@
+# creating clean venv at /home/tdeshane/case/failures/01-reverse-entrypoint-hazard/verify-logs/venv6 using /home/tdeshane/forward/.venv-latest/bin/python
+# latest torch version = 2.15.0.dev20260824+cpu
+# torch source index = https://download.pytorch.org/whl/nightly/cpu
+Requirement already satisfied: pip in ./case/failures/01-reverse-entrypoint-hazard/verify-logs/venv6/lib64/python3.12/site-packages (23.3.2)
+Collecting pip
+  Using cached pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+Using cached pip-26.2.1-py3-none-any.whl (1.8 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 23.3.2
+    Uninstalling pip-23.3.2:
+      Successfully uninstalled pip-23.3.2
+Successfully installed pip-26.2.1
+Looking in indexes: https://download.pytorch.org/whl/nightly/cpu
+Collecting torch==2.15.0.dev20260824+cpu
+  Using cached torch-2.15.0.dev20260824%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (37 kB)
+Collecting filelock (from torch==2.15.0.dev20260824+cpu)
+  Using cached filelock-3.32.3-py3-none-any.whl.metadata (2.0 kB)
+Collecting typing-extensions>=4.10.0 (from torch==2.15.0.dev20260824+cpu)
+  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting setuptools>=77.0.3 (from torch==2.15.0.dev20260824+cpu)
+  Using cached setuptools-78.1.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting sympy>=1.13.3 (from torch==2.15.0.dev20260824+cpu)
+  Using cached sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting networkx>=2.5.1 (from torch==2.15.0.dev20260824+cpu)
+  Using cached networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+Collecting jinja2 (from torch==2.15.0.dev20260824+cpu)
+  Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec>=0.8.5 (from torch==2.15.0.dev20260824+cpu)
+  Using cached fsspec-2026.7.0-py3-none-any.whl.metadata (10 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch==2.15.0.dev20260824+cpu)
+  Using cached mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->torch==2.15.0.dev20260824+cpu)
+  Using cached MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+Using cached torch-2.15.0.dev20260824%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (196.6 MB)
+Using cached fsspec-2026.7.0-py3-none-any.whl (206 kB)
+Using cached networkx-3.6.1-py3-none-any.whl (2.1 MB)
+Using cached setuptools-78.1.0-py3-none-any.whl (1.3 MB)
+Using cached sympy-1.14.0-py3-none-any.whl (6.3 MB)
+Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Using cached filelock-3.32.3-py3-none-any.whl (98 kB)
+Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+Using cached MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+Installing collected packages: mpmath, typing-extensions, sympy, setuptools, networkx, MarkupSafe, fsspec, filelock, jinja2, torch
+
+Successfully installed MarkupSafe-3.0.2 filelock-3.32.3 fsspec-2026.7.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.6.1 setuptools-78.1.0 sympy-1.14.0 torch-2.15.0.dev20260824+cpu typing-extensions-4.16.0
+Collecting nanobind==2.9.2
+  Using cached nanobind-2.9.2-py3-none-any.whl.metadata (1.8 kB)
+Collecting ninja
+  Using cached ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.1 kB)
+Collecting pybind11
+  Using cached pybind11-3.1.0-py3-none-any.whl.metadata (10 kB)
+Collecting build
+  Using cached build-1.5.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting cmake~=3.26
+  Using cached cmake-3.31.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.3 kB)
+Collecting regex
+  Using cached regex-2026.7.19-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting expecttest
+  Using cached expecttest-0.3.0-py3-none-any.whl.metadata (3.8 kB)
+Collecting wheel
+  Using cached wheel-0.48.0-py3-none-any.whl.metadata (2.3 kB)
+Collecting psutil
+  Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+Collecting pytest
+  Using cached pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Requirement already satisfied: typing_extensions in ./case/failures/01-reverse-entrypoint-hazard/verify-logs/venv6/lib64/python3.12/site-packages (4.16.0)
+Collecting numpy
+  Using cached numpy-2.5.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting packaging>=24.0 (from build)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pyproject_hooks (from build)
+  Using cached pyproject_hooks-1.2.0-py3-none-any.whl.metadata (1.3 kB)
+Collecting iniconfig>=1.0.1 (from pytest)
+  Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest)
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest)
+  Using cached pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Using cached nanobind-2.9.2-py3-none-any.whl (243 kB)
+Using cached cmake-3.31.10-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (27.8 MB)
+Using cached ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (180 kB)
+Using cached pybind11-3.1.0-py3-none-any.whl (319 kB)
+Using cached build-1.5.0-py3-none-any.whl (26 kB)
+Using cached regex-2026.7.19-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (801 kB)
+Using cached expecttest-0.3.0-py3-none-any.whl (8.2 kB)
+Using cached wheel-0.48.0-py3-none-any.whl (33 kB)
+Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Using cached pytest-9.1.1-py3-none-any.whl (386 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Using cached numpy-2.5.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+Using cached pyproject_hooks-1.2.0-py3-none-any.whl (10 kB)
+Installing collected packages: nanobind, regex, pyproject_hooks, pygments, pybind11, psutil, pluggy, packaging, numpy, ninja, iniconfig, expecttest, cmake, wheel, pytest, build
+
+Successfully installed build-1.5.0 cmake-3.31.10 expecttest-0.3.0 iniconfig-2.3.0 nanobind-2.9.2 ninja-1.13.0 numpy-2.5.2 packaging-26.3 pluggy-1.6.0 psutil-7.2.2 pybind11-3.1.0 pygments-2.21.0 pyproject_hooks-1.2.0 pytest-9.1.1 regex-2026.7.19 wheel-0.48.0
+Obtaining file:///home/tdeshane/forward/torch-spyre
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: torch_spyre
+  Building editable for torch_spyre (pyproject.toml): started
+  Building editable for torch_spyre (pyproject.toml): still running...
+  Building editable for torch_spyre (pyproject.toml): finished with status 'done'
+  Created wheel for torch_spyre: filename=torch_spyre-0.0.1-0.editable-cp312-cp312-linux_x86_64.whl size=8345 sha256=3efd8be5d995d5346da73f6c9d947599d3ea6e01b9bbe48fe6070e05d08d9c57
+  Stored in directory: /tmp/pip-ephem-wheel-cache-kzq3juni/wheels/85/f1/11/6b9f986730eb766a56104c4fda711792df99c91875c8b90b41
+Successfully built torch_spyre
+Installing collected packages: torch_spyre
+Successfully installed torch_spyre-0.0.1
+torch_spyre version = (no __version__)
