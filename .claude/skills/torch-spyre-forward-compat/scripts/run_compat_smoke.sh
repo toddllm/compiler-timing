@@ -422,27 +422,48 @@ run_stage_3() {
     t0=$(now_s)
     : >"$log"
 
-    # Locate the torch-spyre checkout so the test paths resolve. The
-    # skill's setup_supported_env.sh puts the venv at
-    # $WORKDIR/.venv-supported and the tree at $WORKDIR/torch-spyre/.
-    # Walk up from the venv until we find either `tests/inductor`
-    # directly or a `torch-spyre/tests/inductor` sibling.
+    # Locate the torch-spyre checkout so the test paths resolve.
+    #
+    # Preference order:
+    #   1. TORCH_SPYRE_TREE env var — the authoritative override the
+    #      setup scripts already use. If set, honor it.
+    #   2. Walk up from the venv looking for tests/inductor or a
+    #      torch-spyre/tests/inductor sibling — matches the layout
+    #      setup_supported_env.sh produces
+    #      ($WORKDIR/.venv-supported, $WORKDIR/torch-spyre/).
+    #
+    # Rationale (F9, 2026-08-24): on the fresh pod, /home/tdeshane
+    # contains BOTH forward-tree/torch-spyre (the tree we built the
+    # forward venv against) AND torch-spyre (a stale checkout from
+    # prior sessions). Under NIGHTLY_PROXY the forward venv lives at
+    # /home/tdeshane/forward/.venv-latest, so the walk-up hits
+    # /home/tdeshane/torch-spyre first and Stage 3 runs the wrong
+    # tests against the right venv. Honoring $TORCH_SPYRE_TREE lets
+    # the caller — or the pytorch_selection.json chain — pin it.
     local tree=""
-    local cand="$VENV"
-    for _ in 1 2 3 4 5; do
-        cand="$(dirname "$cand")"
-        if [ -d "$cand/tests/inductor" ]; then
-            tree="$cand"; break
-        fi
-        if [ -d "$cand/torch-spyre/tests/inductor" ]; then
-            tree="$cand/torch-spyre"; break
-        fi
-    done
+    if [ -n "${TORCH_SPYRE_TREE:-}" ] && [ -d "${TORCH_SPYRE_TREE}/tests/inductor" ]; then
+        tree="$TORCH_SPYRE_TREE"
+        echo "# torch_spyre_tree = $tree (from TORCH_SPYRE_TREE env)" >>"$log"
+    else
+        local cand="$VENV"
+        for _ in 1 2 3 4 5; do
+            cand="$(dirname "$cand")"
+            if [ -d "$cand/tests/inductor" ]; then
+                tree="$cand"; break
+            fi
+            if [ -d "$cand/torch-spyre/tests/inductor" ]; then
+                tree="$cand/torch-spyre"; break
+            fi
+        done
+    fi
     if [ -z "$tree" ]; then
-        write_result 3 fail 0 "could not locate torch-spyre checkout from venv path $VENV"
+        write_result 3 fail 0 "could not locate torch-spyre checkout from venv path $VENV (set TORCH_SPYRE_TREE to override)"
         return 1
     fi
-    echo "# torch_spyre_tree = $tree" >>"$log"
+    # log the resolved tree unless we already did (env-override branch above)
+    if [ -z "${TORCH_SPYRE_TREE:-}" ]; then
+        echo "# torch_spyre_tree = $tree (walked up from venv)" >>"$log"
+    fi
 
     local any_fail=0
     local any_timeout=0
