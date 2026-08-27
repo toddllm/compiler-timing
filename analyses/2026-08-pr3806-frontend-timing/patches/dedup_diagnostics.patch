@@ -1,0 +1,308 @@
+Diagnostic-only patch for torch_spyre/_inductor/dedup_constants.py at a9316b3.
+
+Adds sub-timers and a gold-vs-name_to_users comparison, gated on
+TORCH_SPYRE_DEDUP_DIAG=1. When the env var is unset the code paths
+are inert; the pass runs unchanged (identical Python semantics as
+today's implementation).
+
+Apply on the pod as:
+
+    cd $HOME/pr3806/torch-spyre
+    git checkout a9316b381 --detach                            # or a fresh worktree
+    git apply --3way path/to/dedup_diagnostics.patch
+    # Also place dedup_diagnostics.py next to the target file:
+    cp path/to/dedup_diagnostics.py \
+        torch_spyre/_inductor/dedup_diagnostics.py
+
+Verify: with TORCH_SPYRE_DEDUP_DIAG unset, the pass' Python behavior
+is unchanged. With TORCH_SPYRE_DEDUP_DIAG=1 and SPYRE_DEDUP_DIAG_OUT
+pointing to a writable JSON path, an atexit hook writes the records.
+Set SPYRE_DEDUP_DIAG_MAX_PER_DUPLICATE to cap per-duplicate records
+if a very-large workload would blow up the JSON (default 10000).
+
+The diff below was generated with ``diff -u`` against a9316b3's
+pristine ``torch_spyre/_inductor/dedup_constants.py``. To regenerate:
+
+    diff -u --label a/torch_spyre/_inductor/dedup_constants.py \
+             --label b/torch_spyre/_inductor/dedup_constants.py \
+             ORIGINAL DIAGNOSED > dedup_diagnostics.patch
+
+--- a/torch_spyre/_inductor/dedup_constants.py
++++ b/torch_spyre/_inductor/dedup_constants.py
+@@ -12,6 +12,9 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
++import os
++import time
++
+ import torch
+ from torch._inductor.graph import GraphLowering
+ from torch._inductor.ir import ComputedBuffer, Operation
+@@ -21,10 +24,18 @@
+ from .insert_restickify import NameSwapHandler
+ from .logging_utils import get_inductor_logger
+ from .provenance import merge_provenance
++from . import dedup_diagnostics as _diag
+ 
+ logger = get_inductor_logger("dedup_constants")
+ 
+ 
++# Diagnostic-only helpers. All inert unless TORCH_SPYRE_DEDUP_DIAG=1.
++_diag_perf_counter_ns = time.perf_counter_ns
++_DIAG_MAX_PER_DUPLICATE = int(
++    os.environ.get("SPYRE_DEDUP_DIAG_MAX_PER_DUPLICATE", "10000")
++)
++
++
+ def _constant_key(op: SpyreConstantFallback) -> tuple:
+     """Normalised (value, dtype, device) identity key for a SpyreConstantFallback."""
+     layout = op.layout
+@@ -53,6 +64,9 @@
+     operations: list[Operation],
+     dup: SpyreConstantFallback,
+     canonical: SpyreConstantFallback,
++    *,
++    _diag_record=None,
++    _diag_gold_ops=None,
+ ) -> None:
+     """Rewrite every ComputedBuffer consumer of dup to read canonical instead."""
+     D = dup.get_name()
+@@ -64,37 +78,92 @@
+         logger.debug("dedup_and_promote_constants: skipping output constant %s", D)
+         return
+ 
++    diag_enabled = _diag_record is not None
++    if diag_enabled:
++        rec = _diag_record
++        rec.n_ops_scanned += len(operations)
++        by_type = rec.n_get_read_writes_by_type
++        get_rw_ns = 0
++        probe_ns = 0
++        patch_ns = 0
++
+     for op in operations:
+         if op is dup or op is canonical:
+             continue
+-        rw = op.get_read_writes()
+-        if not any(dep.name == D for dep in rw.reads):
+-            continue
+-        if isinstance(op, ComputedBuffer):
+-            _patch_inner_fn(op, name_map)
++        if diag_enabled:
++            t0 = _diag_perf_counter_ns()
++            rw = op.get_read_writes()
++            t1 = _diag_perf_counter_ns()
++            get_rw_ns += (t1 - t0)
++            rec.n_get_read_writes_calls += 1
++            tname = type(op).__name__
++            by_type[tname] = by_type.get(tname, 0) + 1
++            hit = any(dep.name == D for dep in rw.reads)
++            t2 = _diag_perf_counter_ns()
++            probe_ns += (t2 - t1)
++            if not hit:
++                continue
++            rec.n_consumer_hits += 1
++            if _diag_gold_ops is not None:
++                _diag_gold_ops.append(op)
++            if isinstance(op, ComputedBuffer):
++                t3 = _diag_perf_counter_ns()
++                _patch_inner_fn(op, name_map)
++                t4 = _diag_perf_counter_ns()
++                patch_ns += (t4 - t3)
++            else:
++                raise AssertionError(
++                    f"dedup_and_promote_constants: unsupported consumer type "
++                    f"{type(op).__name__} reads constant {D!r} — cannot rewrite"
++                )
+         else:
+-            raise AssertionError(
+-                f"dedup_and_promote_constants: unsupported consumer type "
+-                f"{type(op).__name__} reads constant {D!r} — cannot rewrite"
+-            )
++            rw = op.get_read_writes()
++            if not any(dep.name == D for dep in rw.reads):
++                continue
++            if isinstance(op, ComputedBuffer):
++                _patch_inner_fn(op, name_map)
++            else:
++                raise AssertionError(
++                    f"dedup_and_promote_constants: unsupported consumer type "
++                    f"{type(op).__name__} reads constant {D!r} — cannot rewrite"
++                )
+ 
++    if diag_enabled:
++        rec.get_read_writes_ns += get_rw_ns
++        rec.reads_probe_ns += probe_ns
++        rec.patch_inner_fn_ns += patch_ns
+ 
++
+ def _drop_constant(
+     operations: list[Operation],
+     dup: SpyreConstantFallback,
+     canonical: SpyreConstantFallback,
++    *,
++    _diag_record=None,
+ ) -> None:
+     """Remove a duplicate constant from the graph and update bookkeeping."""
+     D = dup.get_name()
+     C = canonical.get_name()
+     op_name = dup.get_operation_name()
++    diag = _diag_record is not None
++    if diag:
++        t_mp0 = _diag_perf_counter_ns()
+     merge_provenance(
+         [canonical, dup],
+         canonical,
+         pass_name="dedup_and_promote_constants",
+         reason="duplicate constant",
+     )
++    if diag:
++        t_mp1 = _diag_perf_counter_ns()
++        _diag_record.merge_provenance_ns += (t_mp1 - t_mp0)
++        t_rm0 = _diag_perf_counter_ns()
+     operations.remove(dup)
++    if diag:
++        t_rm1 = _diag_perf_counter_ns()
++        _diag_record.operations_remove_ns += (t_rm1 - t_rm0)
++        _diag_record.n_operations_remove_calls += 1
++        t_bk0 = _diag_perf_counter_ns()
+     V.graph.removed_buffers.add(D)
+     V.graph.name_to_buffer.pop(D, None)
+     V.graph.name_to_op.pop(op_name, None)
+@@ -103,9 +172,34 @@
+     extra_users = V.graph.name_to_users.pop(D, [])
+     if extra_users:
+         V.graph.name_to_users.setdefault(C, []).extend(extra_users)
++    if diag:
++        t_bk1 = _diag_perf_counter_ns()
++        _diag_record.bookkeeping_ns += (t_bk1 - t_bk0)
+     logger.debug("dedup_and_promote_constants: merged %s into canonical %s", D, C)
+ 
+ 
++def _snapshot_name_to_users_for_diag(dup_name: str) -> dict:
++    """Snapshot name_to_users[D] BEFORE _drop_constant folds it away."""
++    entries = list(V.graph.name_to_users.get(dup_name, []))
++    unique_names: set[str] = set()
++    unwrap_failures = 0
++    consumer_types: dict[str, int] = {}
++    for entry in entries:
++        t = type(entry).__name__
++        consumer_types[t] = consumer_types.get(t, 0) + 1
++        name = _diag.unwrap_tensorbox_to_op_name(entry)
++        if name is None:
++            unwrap_failures += 1
++            continue
++        unique_names.add(name)
++    return {
++        "raw_entry_count": len(entries),
++        "unique_op_names": unique_names,
++        "unwrap_failures": unwrap_failures,
++        "consumer_types": consumer_types,
++    }
++
++
+ def dedup_and_promote_constants(graph: GraphLowering) -> None:
+     """Deduplicate SpyreConstantFallback ops and move them to the head of operations.
+ 
+@@ -120,31 +214,98 @@
+     Mutates operations in place.
+     """
+     operations = graph.operations
++    diag_on = _diag.is_enabled()
++    rec = _diag.RECORDER.new_record(graph_id=getattr(graph, "graph_id", None)) if diag_on else None
++    if diag_on:
++        rec.n_ops_at_entry = len(operations)
++        t_total_0 = _diag_perf_counter_ns()
++
+     # --- Step 1: group by identity key ---
++    if diag_on:
++        t_g0 = _diag_perf_counter_ns()
+     groups: dict[tuple, list[SpyreConstantFallback]] = {}
+     for op in operations:
+         if not isinstance(op, SpyreConstantFallback):
+             continue
+         key = _constant_key(op)
+         groups.setdefault(key, []).append(op)
++    if diag_on:
++        t_g1 = _diag_perf_counter_ns()
++        rec.grouping_ns = t_g1 - t_g0
++        rec.n_constants = sum(len(g) for g in groups.values())
++        rec.n_groups = len(groups)
++        rec.n_groups_multi = sum(1 for g in groups.values() if len(g) > 1)
++        rec.n_duplicates = sum(len(g) - 1 for g in groups.values() if len(g) > 1)
+ 
+     # --- Step 2: dedup ---
++    per_dup_kept = 0
+     for key, group in groups.items():
+         if len(group) <= 1:
+             continue
+         canonical = group[0]
+         for dup in group[1:]:
+-            _redirect_consumers(operations, dup, canonical)
+-            _drop_constant(operations, dup, canonical)
++            if diag_on:
++                nu_snap = _snapshot_name_to_users_for_diag(dup.get_name())
++                gold_ops: list[Operation] = []
++                t_r0 = _diag_perf_counter_ns()
++                _redirect_consumers(
++                    operations, dup, canonical,
++                    _diag_record=rec, _diag_gold_ops=gold_ops,
++                )
++                t_r1 = _diag_perf_counter_ns()
++                rec.redirect_ns += (t_r1 - t_r0)
+ 
++                t_d0 = _diag_perf_counter_ns()
++                _drop_constant(operations, dup, canonical, _diag_record=rec)
++                t_d1 = _diag_perf_counter_ns()
++                rec.drop_ns += (t_d1 - t_d0)
++
++                if per_dup_kept < _DIAG_MAX_PER_DUPLICATE:
++                    gold_names = {op.get_operation_name() for op in gold_ops}
++                    nu_names = nu_snap["unique_op_names"]
++                    tp = gold_names & nu_names
++                    fp = nu_names - gold_names
++                    fn = gold_names - nu_names
++                    rec.per_duplicate.append({
++                        "dup_name": dup.get_name(),
++                        "canonical_name": canonical.get_name(),
++                        "gold_consumer_ops": sorted(gold_names),
++                        "gold_consumer_count": len(gold_names),
++                        "nu_raw_entry_count": nu_snap["raw_entry_count"],
++                        "nu_unique_op_count": len(nu_names),
++                        "nu_true_positives": len(tp),
++                        "nu_false_positives": len(fp),
++                        "nu_false_negatives": len(fn),
++                        "nu_false_positive_ops": sorted(fp),
++                        "nu_false_negative_ops": sorted(fn),
++                        "nu_unwrap_failures": nu_snap["unwrap_failures"],
++                        "nu_consumer_types": nu_snap["consumer_types"],
++                    })
++                    per_dup_kept += 1
++            else:
++                _redirect_consumers(operations, dup, canonical)
++                _drop_constant(operations, dup, canonical)
++
+     # --- Step 3: front-load surviving constants ---
++    if diag_on:
++        t_f0 = _diag_perf_counter_ns()
+     constants = [op for op in operations if isinstance(op, SpyreConstantFallback)]
+     if not constants:
++        if diag_on:
++            t_f1 = _diag_perf_counter_ns()
++            rec.front_load_ns = t_f1 - t_f0
++            t_total_1 = _diag_perf_counter_ns()
++            rec.dedup_total_ns = t_total_1 - t_total_0
+         return
+     non_constants = [
+         op for op in operations if not isinstance(op, SpyreConstantFallback)
+     ]
+     operations[:] = constants + non_constants
++    if diag_on:
++        t_f1 = _diag_perf_counter_ns()
++        rec.front_load_ns = t_f1 - t_f0
++        t_total_1 = _diag_perf_counter_ns()
++        rec.dedup_total_ns = t_total_1 - t_total_0
+     logger.debug(
+         "dedup_and_promote_constants: %d constant(s) promoted to front of operations",
+         len(constants),
