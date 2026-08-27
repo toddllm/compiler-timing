@@ -1,0 +1,652 @@
+# `dedup_and_promote_constants` — Phase 2 Plan & Evidence Framework
+
+Companion to `notes/dedup-source-analysis.md`. This is the pre-measurement
+plan and the framework for the six-section decision report the phase must
+produce. Section A (exact-source corrections) is filled in now.
+Sections B–F are stubs pointing to the exact tables the analyzer emits;
+they get populated after the sweep runs.
+
+**No production optimization is implemented in this phase.** Every deliverable
+here is either (a) diagnostic instrumentation gated off by default, or
+(b) additive unit tests that lock in current behavior.
+
+## Contents
+
+- [0. Source basis](#0-source-basis)
+- [A. Exact-source corrections](#a-exact-source-corrections)
+- [Pre-dedup pass mutation table](#pre-dedup-pass-mutation-table)
+- [Batch-removal safety, redone at `a9316b3`](#batch-removal-safety-redone-at-a9316b3)
+- [Diagnostic instrumentation plan](#diagnostic-instrumentation-plan)
+- [Unit-test plan](#unit-test-plan)
+- [A vs E decision framework](#a-vs-e-decision-framework)
+- [B. Measured cost decomposition (stub — post-run)](#b-measured-cost-decomposition-stub--post-run)
+- [C. Consumer-index evidence (stub — post-run)](#c-consumer-index-evidence-stub--post-run)
+- [D. A-vs-E engineering decision (stub — post-run)](#d-a-vs-e-engineering-decision-stub--post-run)
+- [E. Predicted new complexity (stub — post-run)](#e-predicted-new-complexity-stub--post-run)
+- [F. Exact next implementation experiment (stub — post-run)](#f-exact-next-implementation-experiment-stub--post-run)
+
+## 0. Source basis
+
+Every claim in this document is against these SHAs. Do not read
+against any other version.
+
+| component        | version                                                            | on this laptop                                   |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------------------ |
+| torch-spyre      | `a9316b381fb66013945b0a5fa6159ae7c782e1d9` ("PR #3806 head")       | `~/multi-spyre-testing/repos/torch-spyre`         |
+| upstream PyTorch | `cf30153c4c131c8164ee7798e5022d810682e2cb` (torch 2.13.0+cpu)      | `~/dt-inductor.1/pytorch` (fetched, not checked out) |
+| Python           | 3.12.13 (RHEL 9.6 pod)                                             | —                                                |
+
+Cross-check: study's `data/env-probe.json` records
+`torch=2.13.0+cpu`, `torch.version.git_version=cf30153c...`,
+`torch_spyre_repo.git_rev_parse_HEAD=a9316b381...`. Study README §Environment
+matches.
+
+## A. Exact-source corrections
+
+Delta between the previous report (source read at `0e8f7f257`, June)
+and the actual measured version at `a9316b3`. Only files that
+materially affect the dedup optimization are listed.
+
+**Conclusions that hold unchanged:**
+
+- `dedup_and_promote_constants` algorithm shape: group by
+  `(value, dtype, device)` → per-duplicate `_redirect_consumers` +
+  `_drop_constant` → front-load. Same steps, same order.
+- `_redirect_consumers` walks all of `graph.operations` and calls
+  `op.get_read_writes()` on each op. Same code.
+- `_drop_constant` calls `operations.remove(dup)`; still `O(N)` per
+  duplicate on a Python list.
+- Cleanups on `V.graph.{removed_buffers, name_to_buffer, name_to_op,
+  name_to_users}` unchanged.
+- `NameSwapHandler` (in `insert_restickify.py`) unchanged; still the
+  mechanism `_patch_inner_fn` uses.
+- Upstream torch 2.13 `GraphLowering.name_to_users` behavior unchanged
+  from the pattern I described: populated at lowering by
+  `register_users_of(result)`, called from `graph.py:2141` (moved from
+  1822 in the earlier tree but same call site semantically). Value
+  entries are `TensorBox` instances; keys are the read-name set from
+  `TensorBox.get_read_names()`. `ComputedBuffer.get_read_writes` is
+  still uncached at 2.13 (torch/_inductor/ir.py:5281). `Buffer.make_loader`
+  still emits `ops.load(self.name, ...)` (ir.py:5065).
+
+**Conclusions that changed (or need to change) at `a9316b3`:**
+
+1. **`_drop_constant` calls `merge_provenance([canonical, dup], canonical,
+   pass_name="dedup_and_promote_constants", reason="duplicate constant")`
+   before `operations.remove(dup)`**. This did not exist at
+   `0e8f7f257`. `merge_provenance` (source at
+   `torch_spyre/_inductor/provenance.py:303-323`, and its helpers
+   `_union_origins`, `_append_transform`):
+
+   - Unions `dup.origins` (and `canonical.origins`) into `canonical.origins`
+     in place (`_union_origins`).
+   - Clears `canonical.origin_node` to None.
+   - Appends a `ProvenanceTransform(kind="fusion", pass_name=...,
+     reason=...)` to `canonical`'s `_spyre_prov_history`.
+
+   It mutates only `canonical` and reads only `[canonical, dup]`. It
+   does not touch `graph.operations`, `name_to_users`,
+   `name_to_buffer`, `name_to_op`, or `removed_buffers`. **Therefore
+   merge_provenance is cleanly separable from any operations-list
+   surgery: call it once per duplicate on the canonical, before
+   scheduling the duplicate for batch removal.**
+
+2. **`CustomPreSchedulingPasses` ordering** at `a9316b3` is the full
+   20-pass pipeline the study measured. Pre-dedup mutating passes
+   (from `passes.py:447-486`), in order:
+   `deadcode_elimination, propagate_named_dims, validate_named_dims,
+   assign_dim_hints, _maybe_reorder_unhinted_interlopers,
+   _maybe_coarse_tile_hints, split_multi_ops,
+   propagate_spyre_tensor_layouts, validate_ops,
+   optimize_restickify_locations, finalize_layouts, insert_restickify,
+   enforce_indirect_access_layout, insert_post_mutation_restickify,
+   insert_bmm_padding, dedup_and_promote_constants`.
+
+   Two new passes vs `0e8f7f257`: `enforce_indirect_access_layout` and
+   `insert_post_mutation_restickify`. Both need mutation-table entries
+   (below).
+
+3. **The previous report's batch-removal sketch (§7)** did not include
+   the `merge_provenance` call. Any real implementation must preserve
+   it. The corrected sketch is in the batch-removal section below.
+
+4. **The "output-name skip" latent-bug observation** (previous report §8):
+   still present at `a9316b3`, byte-identical code path. The pass still
+   skips `_redirect_consumers` for output-name duplicates but proceeds
+   to `_drop_constant` (which is where `operations.remove` and
+   `merge_provenance` live). Reachability and severity are still
+   unanswered; do not couple this to the performance work.
+
+## Pre-dedup pass mutation table
+
+Rows are passes that run between the earliest pass that can affect a
+constant's consumer set and `dedup_and_promote_constants`, in
+pipeline order (`passes.py:447-486` at `a9316b3`).
+
+Columns:
+
+- **ops list**: mutates `graph.operations`?
+- **inner_fn / reads rewrite**: patches a consumer's `inner_fn` with a
+  `NameSwapHandler` or otherwise rewrites what the consumer reads?
+- **updates `name_to_users`**: writes to `graph.name_to_users`?
+- **can over-report `name_to_users[D]` (FP)**: after this pass, can a
+  buffer name D correctly still be in `name_to_users[D]` even though
+  the referenced TensorBox no longer really reads D?
+- **can under-report `name_to_users[D]` (FN)**: can this pass introduce
+  a new real reader of D without a corresponding entry in `name_to_users[D]`?
+
+| pass                                | ops list                  | inner_fn / reads rewrite | updates `name_to_users` | FP possible | FN possible |
+| ----------------------------------- | ------------------------- | ------------------------ | ----------------------- | ----------- | ----------- |
+| `deadcode_elimination`              | removes dead ops          | no                       | no                      | yes¹        | no          |
+| `propagate_named_dims`              | metadata only             | no                       | no                      | no          | no          |
+| `validate_named_dims`               | no writes                 | no                       | no                      | no          | no          |
+| `assign_dim_hints`                  | metadata only             | no                       | no                      | no          | no          |
+| `_maybe_reorder_unhinted_interlopers` | reorder only            | no                       | no                      | no          | no          |
+| `_maybe_coarse_tile_hints`          | metadata only             | no                       | no                      | no          | no          |
+| `split_multi_ops`                   | removes+inserts (`run_node`) | patches inner_fn²      | yes (via `run_node`)    | yes²        | no³         |
+| `propagate_spyre_tensor_layouts`    | metadata only             | no                       | no                      | no          | no          |
+| `validate_ops`                      | no writes                 | no                       | no                      | no          | no          |
+| `optimize_restickify_locations`     | metadata only             | no                       | no                      | no          | no          |
+| `finalize_layouts`                  | writes `restickify_plan`  | no                       | no                      | no          | no          |
+| `insert_restickify`                 | inserts (`run_node`) + `remove/insert` reorder | patches consumer inner_fn (name-swap old→new restickify buffer) | yes (via `run_node`) | yes⁴ | no³ |
+| `enforce_indirect_access_layout`    | via `insert_restickify_on_node_inputs` | patches consumer inner_fn | yes (indirect) | yes⁴ | no³ |
+| `insert_post_mutation_restickify`   | inserts (`run_node`) + reorder | rewrites mutation-op layout; does not swap constant reads | yes (via `run_node`) | no⁵ | no³ |
+| `insert_bmm_padding`                | inserts (`run_node`) + reorder; `_rebuild_matmul` via `replace_computed_buffer_body` | patches matmul inner_fn (y-loader → padded buffer) | yes (via `run_node`)   | no⁶ | no³ |
+
+Footnotes:
+
+1. **`deadcode_elimination` — FP:** a dead consumer op is removed from
+   `graph.operations` but its stale entry in
+   `name_to_users[<any buffer it read>]` is not cleaned. Downstream code
+   that trusts `name_to_users` will see a `TensorBox` that maps back
+   (via `TensorBox → StorageBox → ComputedBuffer`) to an op that no
+   longer exists in `operations`. **This is the primary FP source for
+   name_to_users[D] at dedup time.** Impact on dedup: over-reports
+   candidates. Mitigation: filter candidates through
+   `get_read_writes` (their reads may still be D even though they were
+   dropped) OR check `op is in operations`. The dropped op will not be
+   in `V.graph.name_to_op` after DCE either (DCE adds writes to
+   `removed_buffers` but does not touch `name_to_op` — see
+   `torch_spyre/_inductor/deadcode_elimination.py:88-97`).
+
+2. **`split_multi_ops` — FP:** the pass replaces multi-output ops with
+   split single-output ops using `run_node`, `operations.remove/insert`,
+   and inner_fn patches (`torch_spyre/_inductor/split_multi_ops.py` at
+   `a9316b3`). Its new nodes get `register_users_of`'d via `run_node`.
+   Its inner_fn patches use `NameSwapHandler` on downstream consumers.
+   Result: the *new* consumers appear in `name_to_users` correctly; the
+   *old* multi-output op's TensorBox may still be listed in
+   `name_to_users[<what it used to read>]`, but the old op is removed
+   from `operations`, so this is functionally a subset of the DCE-FP
+   case.
+
+3. **FN never happens** across all mutating passes because every new
+   reader of a buffer is introduced through `graph_lowering.run_node`,
+   which calls `register_users_of(result)` (upstream
+   `torch/_inductor/graph.py:2141`). New readers automatically appear
+   in `name_to_users[<the buffer they read>]`. Every pass in the table
+   that creates new consumers uses `run_node`.
+
+4. **`insert_restickify` / `enforce_indirect_access_layout` — FP:**
+   After these passes, a consumer's inner_fn is patched via
+   `NameSwapHandler({old_name: new_restickify_name})`. The consumer's
+   TensorBox is still in `name_to_users[old_name]` from lowering time,
+   but its live `get_read_writes` no longer contains `old_name`. If
+   `old_name` happens to be a constant we later dedup, this is an FP.
+   In practice constants themselves are not the "old_name" that gets
+   restickified — restickify targets user tensors between layouts —
+   so this FP path is unlikely to matter for constant readers. But
+   note: if `enforce_indirect_access_layout` ever restickified a fill
+   ComputedBuffer that read a constant, then the fill's `name_to_users`
+   entry pointing at *the fill's* consumers would go stale — irrelevant
+   to constants, but noted for completeness.
+
+5. **`insert_post_mutation_restickify` — no FP for constants:** this
+   pass targets slice-mutation ops (`hasattr(op, '_restickify_plan')`)
+   which are `ComputedBuffer` mutation writes, not fill Pointwise
+   buffers over constants. It inserts restickify buffers before/after
+   mutation ops. Constants' `name_to_users` entries are not touched.
+
+6. **`insert_bmm_padding` — no FP for constants (subtle):** this pass
+   creates NEW `SpyreConstantFallback` ops via `lower_pad_sequence`
+   (which calls `run_node` on a `constant_pad_nd` FX node). Those new
+   constants and their fill-Pointwise consumers are registered fresh
+   in `name_to_users` on the same `run_node` call
+   (`torch_spyre/_inductor/pass_utils.py:1202-1290` at `a9316b3`). The
+   pass also patches the matmul's inner_fn via
+   `_rebuild_matmul` / `replace_computed_buffer_body`, but that swap
+   targets y's data buffer, NOT the padding constant — the matmul was
+   never a direct reader of the constant to begin with. Fresh constants
+   from this pass have pristine `name_to_users` entries; older
+   constants (e.g. from `torch.full` or `lower_full`) untouched by
+   this pass.
+
+**Overall summary:** `name_to_users[D]` at dedup time can only *over-report*
+consumers of D, never under-report. The over-report is bounded by (a)
+consumers dropped by DCE, and (b) consumers whose inner_fn was
+name-swapped away from D by an earlier pass. Both are mitigated by
+retaining a per-candidate `get_read_writes` filter in any
+`name_to_users`-based redirect implementation.
+
+## Batch-removal safety, redone at `a9316b3`
+
+Same argument as `dedup-source-analysis.md §7`, updated for
+`merge_provenance`:
+
+```python
+# Batched-removal sketch. Preserves ALL current per-duplicate work
+# except the operations.remove(dup) call, which is deferred to Step 3.
+
+dead_ids: set[int] = set()
+
+for key, group in groups.items():
+    if len(group) <= 1:
+        continue
+    canonical = group[0]
+    for dup in group[1:]:
+        _redirect_consumers(operations, dup, canonical)
+
+        # Preserved verbatim from _drop_constant:
+        D = dup.get_name()
+        C = canonical.get_name()
+        op_name = dup.get_operation_name()
+
+        merge_provenance(
+            [canonical, dup],
+            canonical,
+            pass_name="dedup_and_promote_constants",
+            reason="duplicate constant",
+        )
+        # NOTE: no operations.remove(dup) here.
+        V.graph.removed_buffers.add(D)
+        V.graph.name_to_buffer.pop(D, None)
+        V.graph.name_to_op.pop(op_name, None)
+        extra_users = V.graph.name_to_users.pop(D, [])
+        if extra_users:
+            V.graph.name_to_users.setdefault(C, []).extend(extra_users)
+
+        dead_ids.add(id(dup))
+
+# --- Step 3: front-load surviving constants, filtering out dead dups. ---
+survivors = [op for op in operations if id(op) not in dead_ids]
+constants = [op for op in survivors if isinstance(op, SpyreConstantFallback)]
+if not constants:
+    operations[:] = survivors
+    return
+non_constants = [op for op in survivors if not isinstance(op, SpyreConstantFallback)]
+operations[:] = constants + non_constants
+```
+
+Safety obligations against the exit invariants (see previous report §2):
+
+1. **Constants front-loaded, original relative order preserved.** The
+   rebuild filters `operations` (already topologically ordered), then
+   partitions preserving order — identical to today.
+
+2. **`SpyreConstantFallback` corresponding to a name in
+   `removed_buffers` is absent from `operations` at exit.** Achieved
+   by `id(dup) not in dead_ids`. Note: the check must be `id`, not
+   `is not`, because `dead_ids` is a set. Identity check matches what
+   `_redirect_consumers` already does inline (`op is dup or op is
+   canonical`), which does not compare via `__eq__` either — safe.
+
+3. **`operations.remove(dup)` was O(N).** Its removal is what buys us
+   the wall-clock. The final `operations[:] = ...` is one O(N)
+   pass regardless of `D`.
+
+4. **Do earlier duplicates need to be absent from `operations` when
+   later duplicates are processed?** Restated argument at `a9316b3`:
+   `_redirect_consumers` scans every op and calls `get_read_writes`.
+   For a still-present-in-list previous duplicate `dup1`:
+
+   - `dup1 is dup2 or dup1 is canonical` is False → falls through the
+     inline skip.
+   - `dup1.get_read_writes()` returns an empty read set (constants
+     have no inputs, inherited from `InputsKernel.get_read_writes` at
+     upstream `torch/_inductor/ir.py:5716` — same call at 2.13).
+   - `any(dep.name == D2 for dep in {})` is False → skipped.
+
+   No corrupt patch. Adds one extra iteration per still-present
+   previous dup; the outer `_redirect_consumers` per-duplicate cost
+   grows by `O(number-of-previous-dups)`, which sums across the pass
+   to `O(D²)` — trivially dwarfed by the `O(N)` per-iteration and
+   ignored in the analysis. Acceptable.
+
+5. **Later `_redirect_consumers` calls do not re-scan a `dead_ids`
+   member as a candidate consumer** — same reason as (4): dead dups
+   have empty read sets and fail the `any(dep.name == Dnext ...)`
+   check.
+
+6. **`merge_provenance` order.** Currently called once per duplicate.
+   In the batched variant, still called once per duplicate before the
+   `dead_ids.add`. Same semantics.
+
+7. **`name_to_users[C]` fold order.** Currently folds one duplicate at
+   a time in canonical-order-of-iteration. In the batched variant,
+   same iteration order — identical result.
+
+8. **`removed_buffers`, `name_to_buffer.pop`, `name_to_op.pop`.** All
+   preserved verbatim.
+
+Batch removal at `a9316b3` is safe under the pass's stated invariants
+and under the two new observations at this SHA (merge_provenance and
+the extra pre-dedup passes).
+
+## Diagnostic instrumentation plan
+
+Three artifacts land in `patches/`, all inert unless
+`TORCH_SPYRE_DEDUP_DIAG=1`.
+
+- **`patches/dedup_diagnostics.py`** — recorder module. Aggregates
+  per-invocation sub-timers and per-duplicate `name_to_users` snapshots
+  into a `DedupRecord`. atexit dump to `$SPYRE_DEDUP_DIAG_OUT`. Has
+  a TensorBox-unwrap helper (`unwrap_tensorbox_to_op_name`) for the
+  index comparison; failures are counted, never fatal.
+
+- **`patches/dedup_diagnostics.patch`** — diff against
+  `torch_spyre/_inductor/dedup_constants.py` at `a9316b3`. Adds
+  aggregate `perf_counter_ns` counters around each hot region:
+
+  - `grouping_ns` (Step 1)
+  - `redirect_ns` (Step 2 outer for `_redirect_consumers`)
+  - `get_read_writes_ns` (inside redirect)
+  - `reads_probe_ns` (`any(dep.name == D ...)`)
+  - `patch_inner_fn_ns`
+  - `drop_ns` (Step 2 outer for `_drop_constant`)
+  - `merge_provenance_ns`
+  - `operations_remove_ns`
+  - `bookkeeping_ns` (`removed_buffers`/`name_to_buffer`/
+    `name_to_op`/`name_to_users` folds)
+  - `front_load_ns` (Step 3)
+  - `dedup_total_ns`
+
+  And counts:
+
+  - `n_ops_at_entry, n_constants, n_groups, n_groups_multi,
+    n_duplicates`
+  - `n_ops_scanned, n_get_read_writes_calls,
+    n_get_read_writes_by_type, n_consumer_hits,
+    n_operations_remove_calls`
+
+  Per-duplicate blocks include the gold/name_to_users comparison:
+  `gold_consumer_ops`, `nu_raw_entry_count`, `nu_unique_op_count`,
+  `nu_true_positives`, `nu_false_positives`, `nu_false_negatives`,
+  `nu_false_positive_ops`, `nu_false_negative_ops`,
+  `nu_unwrap_failures`, `nu_consumer_types`. Cap of
+  `SPYRE_DEDUP_DIAG_MAX_PER_DUPLICATE=10000` per invocation to bound
+  JSON size.
+
+- **`patches/run_dedup_diag.sh`** — sweep script. Todd's three points
+  (H=8, Lq=512, Lk ∈ {1024, 4096, 8192}), three cold samples each,
+  fresh `TORCHINDUCTOR_CACHE_DIR` per sample. Uses the existing
+  `workload_harness.py`. Writes one JSON per sample under
+  `$DATA_DIR/dedup-<Lq>x<Lk>-run<N>.json`.
+
+- **`patches/analyze_dedup_diag.py`** — reads all JSONs and emits the
+  Markdown tables required by Sections B and C of this report.
+  Includes a headline verdict: is `n_false_negatives == 0` across the
+  sweep?
+
+### Perturbation control
+
+The added timers are aggregate counters, not per-call events. Each
+adds two `perf_counter_ns()` reads (~40 ns on modern CPUs) around
+code paths that already spend microseconds or more. For the largest
+measured point (`n_ops_scanned ≈ 1.1M`, `n_get_read_writes_calls ≈ 1.1M`)
+the added overhead is at most ~90 ms — well under 1% of the ~225 s
+dedup wall-clock. The `per_duplicate` recording adds one Python-level
+dict per duplicate (~256 at the largest point) — cheap.
+
+The gold-vs-name_to_users comparison is inside the diagnostic path
+only. It does NOT run the linear scan a second time — it observes
+the existing scan by having `_redirect_consumers` append hits to a
+list under a keyword-arg. Zero extra passes over `operations`.
+
+### One-time perturbation check
+
+To verify the diagnostics do not distort the measurement, plan an
+extra "diagnostics-off" run of the baseline point (Lq=512, Lk=1024)
+on the same pod with `TORCH_SPYRE_DEDUP_DIAG=0` and
+`TORCH_SPYRE_TIMING=1`. Compare `pass:...:dedup_and_promote_constants`
+timing between the diag-off and diag-on runs. If they agree within
+2%, treat the diagnostic runs as trustworthy proxies for the
+wall-clock split.
+
+## Unit-test plan
+
+Add `tests/inductor/test_dedup_constants_more.py` (already staged in
+`patches/`). Four tests, all against the current unmodified pass:
+
+- `test_zero_consumer_duplicate` — asserts bookkeeping cleanup on
+  dropped constants, and skips itself if the workload does not
+  actually produce a zero-consumer duplicate.
+- `test_many_consumer_duplicate` — three bmms sharing a padding
+  constant; canonical must be read by more than one live buffer.
+- `test_name_to_users_canonical_fold` — the canonical's
+  `name_to_users` entry contains at least the pre-dedup users of the
+  duplicates. Load-bearing for scratchpad planning.
+- `test_provenance_merged` — canonical's `_spyre_prov_history`
+  contains a `ProvenanceTransform` with
+  `pass_name == "dedup_and_promote_constants"`.
+
+All four should pass unchanged against `a9316b3`. If any fails, the
+current behavior is different from what this document assumes —
+investigate before proceeding.
+
+Register the new file in
+`tests/configs/torch_spyre_tests/inductor/` (existing
+`test_dedup_constants_config.yaml` shows the format —
+`unlisted_test_mode: mandatory_success`).
+
+### Output-name latent bug
+
+Separate observation. `_redirect_consumers` at `a9316b3` skips the
+redirect when `D in V.graph.get_output_names()`, but the caller
+still runs `_drop_constant` unconditionally. Consequence: an
+output-name duplicate is removed from `operations`, gets its
+`removed_buffers` / `name_to_buffer` / `name_to_op` /
+`name_to_users` entries cleaned, and its provenance is merged into
+canonical — but its consumers still emit `ops.load(D_name)` at
+codegen time, which will fail.
+
+Not part of this performance work. Reachability question: can a
+`SpyreConstantFallback` (which has no inputs and represents a
+compile-time constant fill value) ever be a graph output? A fresh
+`torch.full(..., 0.0)` in the graph could conceivably be if the
+compiled function returns it directly, but that's a pathological
+program. Recommendation: file this as a separate defect (short
+reproducer, or a note that we searched and could not construct one),
+independent of the perf refactor.
+
+## A vs E decision framework
+
+Restate the two designs so the post-run decision is grounded in
+identical criteria.
+
+**Option A — use `V.graph.name_to_users[D]` as candidate index**
+
+```python
+def _redirect_consumers_via_index(operations, dup, canonical):
+    D = dup.get_name(); C = canonical.get_name()
+    if D in V.graph.get_output_names():
+        return
+    seen = set()
+    for tb in V.graph.name_to_users.get(D, []):
+        op = _unwrap(tb)                  # TensorBox → ComputedBuffer
+        if op is None or id(op) in seen:
+            continue
+        seen.add(id(op))
+        rw = op.get_read_writes()
+        if not any(dep.name == D for dep in rw.reads):
+            continue                       # FP filter
+        if isinstance(op, ComputedBuffer):
+            _patch_inner_fn(op, {D: C})
+        else:
+            raise AssertionError(...)
+```
+
+Complexity: `O(|name_to_users[D]|)` per duplicate + one
+`get_read_writes` per candidate. On the current workload
+`|name_to_users[D]|` is expected to be ~1 (one fill Pointwise per
+padding constant); measurement will confirm.
+
+Costs:
+
+- Depends on upstream `name_to_users` staying populated across every
+  pre-dedup pass — mitigated by the FN=0 argument in the mutation
+  table.
+- Requires TensorBox-unwrap; can fail on ReinterpretView / MultiOutput /
+  DonatedBuffer intermediaries. Failures counted, not fatal.
+- Depends on the FP filter to shed stale entries.
+
+**Option E — build fresh local reverse index once at pass entry**
+
+```python
+def _build_reverse_consumer_index(operations):
+    idx = defaultdict(list)               # buffer_name -> list[Operation]
+    for op in operations:
+        rw = op.get_read_writes()
+        for dep in rw.reads:
+            idx[dep.name].append(op)
+    return idx
+
+def dedup_and_promote_constants(graph):
+    operations = graph.operations
+    consumers_by_name = _build_reverse_consumer_index(operations)
+    # groups = ...
+    for key, group in groups.items():
+        if len(group) <= 1: continue
+        canonical = group[0]
+        for dup in group[1:]:
+            D = dup.get_name()
+            for op in consumers_by_name.get(D, []):
+                if op is dup or op is canonical: continue
+                if isinstance(op, ComputedBuffer):
+                    _patch_inner_fn(op, {D: canonical.get_name()})
+                else:
+                    raise AssertionError(...)
+            _drop_constant_bookkeeping(op, dup, canonical)
+            dead_ids.add(id(dup))
+    # ... front-load rebuild
+```
+
+Complexity: `O(N)` scan once (with `get_read_writes` on every op,
+same call as the current inner loop but only ONCE), then
+`O(|consumers_by_name[D]|)` per duplicate. No per-candidate
+`get_read_writes` filter needed — the index was built from live
+reads.
+
+Costs:
+
+- One `O(N)` sweep at pass entry, always. On the current workload
+  this is one `_redirect_consumers`-style scan; ~201.8 µs · N ≈ 220 ms
+  at the largest measured point (Lq=1024, Lk=8192, N=4356). That's
+  <0.1% of the current 225 s wall-clock at that point.
+- No dependency on cross-pass `name_to_users` correctness. Robust to
+  future compiler-pass additions.
+- Simple correctness proof: the index is a materialization of the
+  same `get_read_writes` calls the current algorithm makes; per-dup
+  behavior is a subset. Batch removal semantics unchanged.
+- The reverse index becomes stale as we patch inner_fns. Question to
+  resolve during measurement: does the algorithm ever look up
+  `consumers_by_name[X]` for an X we've already patched? A quick
+  first-principles check: we build the index once for the buffer
+  reads AT PASS ENTRY, then patch inner_fn to swap D → C for
+  consumers of D. After patching, that consumer's live
+  `get_read_writes` no longer contains D, but we never re-query
+  `consumers_by_name[D]` — we've already processed D. When we later
+  process another dup D2 (different value), we query
+  `consumers_by_name[D2]`, and D2 is a different constant; a
+  consumer's inner_fn was NOT swapped for D2. So the index entry for
+  D2 is still valid at the time we consume it, unless the same
+  consumer reads BOTH D and D2 — which is unlikely for padding
+  constants (one fill per padded buffer) but not disallowed by the
+  IR. The correctness of E depends on: **can a single
+  ComputedBuffer read two different SpyreConstantFallback names**?
+  For the padding-constant case at hand, no (each fill Pointwise
+  reads exactly its own fill value). For a hypothetical general
+  case, an implementation of E should still be correct because
+  patching the same consumer twice with two different name-maps
+  simply stacks two `NameSwapHandler`s in its `inner_fn` closure —
+  each translates its own key. The stacked handlers are the
+  same mechanism used elsewhere in torch-spyre (see
+  `_rebuild_matmul` at `padding.py:151`, which stacks over any
+  existing name-swap). So E is correct even under the general case.
+
+**Decision axes to evaluate post-run:**
+
+| axis                                              | A (name_to_users)                   | E (fresh local index) |
+| ------------------------------------------------- | ----------------------------------- | --------------------- |
+| Asymptotic complexity                             | `O(D · U)` + FP filter              | `O(N + Σ_D U_D)`      |
+| Cost overhead at entry                            | 0                                   | one `O(N)` sweep      |
+| Depends on upstream `name_to_users` freshness     | yes                                 | no                    |
+| Depends on cross-pass `register_users_of` correctness | yes                             | no                    |
+| TensorBox-unwrap complexity in the hot path       | yes (mitigated)                     | no                    |
+| Correctness argument size                         | needs FN=0 empirical evidence + FP filter | one-page             |
+| Robustness to future compiler-pass changes        | fragile                             | robust                |
+| Maintainability                                   | knows upstream Inductor internals   | reads only local API |
+| Testability                                       | need to add FN-detection assertion  | straightforward       |
+| Wall-clock estimate at largest point (Lk=8192)    | ~<10 ms (n_users ≈ 1)               | ~220 ms (1 sweep)      |
+
+The post-run decision is D — but the tilt in this framework matches
+Todd's read: **E wins unless A's constant factor is at least an
+order of magnitude better and FN=0 is confirmed empirically**.
+
+## B. Measured cost decomposition (stub — post-run)
+
+Populated by `patches/analyze_dedup_diag.py` after the sweep runs.
+Expected table structure:
+
+| point (Lq×Lk) | samples | total (ms) | grouping | redirect(scan) | get_read_writes | list_remove | merge_provenance | bookkeeping | front_load | other |
+
+Plus a percent-of-total version.
+
+## C. Consumer-index evidence (stub — post-run)
+
+| point | dups | median gold consumers/dup | median NU raw/dup | median NU unique/dup | Σ TP | Σ FP | Σ FN | Σ unwrap fail | consumer types (count) |
+
+Plus a verdict: is `Σ FN == 0` across the sweep?
+
+## D. A-vs-E engineering decision (stub — post-run)
+
+Fill in against the criteria table above with the actual measured
+numbers. Recommendation: A, E, or "something else supported by
+evidence." Prose paragraph justifying the choice.
+
+## E. Predicted new complexity (stub — post-run)
+
+Derive from the decision. Example if E wins:
+
+```text
+build local reverse index:  O(N · f)     where f is the median
+                                          get_read_writes cost per op
+                                          (measured in B)
+redirect consumers:         O(Σ_D U_D)   where U_D is measured in C
+batch removal:              O(N)         one rebuild
+bookkeeping:                O(D + user folds)
+
+overall approximately:
+O(N · f + Σ_D U_D + N)
+```
+
+Compute the expected wall-clock at the three points using the
+measured `f`, `U_D`, and `N`. Do not claim a specific speedup ratio
+until the actual algorithm change is measured — the prediction
+serves as a sanity check, not as a promise.
+
+## F. Exact next implementation experiment (stub — post-run)
+
+Give one narrowly-scoped next patch, no more. Format:
+
+- Goal: (one sentence)
+- Scope: (files touched, LOC estimate)
+- Preserves: (list of behaviors)
+- Test plan: (tests to run)
+- Measurement plan: (sweep points to compare against)
+- Success criterion: (numerical or behavioral)
+- What is explicitly out of scope: (list)
+
+Do not merge A and E, or A and B, into a single change. Land the
+chosen algorithm as one commit; land batch removal (if not already
+subsumed) as a second commit if it is separable in the chosen design;
+otherwise as one commit with the rationale in the message.
