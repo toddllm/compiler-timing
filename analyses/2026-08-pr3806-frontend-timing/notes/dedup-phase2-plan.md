@@ -592,61 +592,289 @@ The post-run decision is D — but the tilt in this framework matches
 Todd's read: **E wins unless A's constant factor is at least an
 order of magnitude better and FN=0 is confirmed empirically**.
 
-## B. Measured cost decomposition (stub — post-run)
+## B. Measured cost decomposition
 
-Populated by `patches/analyze_dedup_diag.py` after the sweep runs.
-Expected table structure:
+Sweep: three H=8 points, three cold samples each, executed on the
+`tdeshane-compiler-timing-dev-v2` pod (RHEL 9.6, Python 3.12.13,
+torch 2.13.0+cpu, torch-spyre at `a9316b381`). Raw records in
+`data-diag/dedup-512x{1024,4096,8192}-run{1,2,3}.json`. Analyzer
+output (medians) reproduced verbatim from `analyze_dedup_diag.py`:
 
-| point (Lq×Lk) | samples | total (ms) | grouping | redirect(scan) | get_read_writes | list_remove | merge_provenance | bookkeeping | front_load | other |
+**Wall-clock split (median ms per point):**
 
-Plus a percent-of-total version.
+| point (Lq×Lk) | samples | total | grouping | redirect(scan) | get_read_writes | list_remove | merge_provenance | bookkeeping | front_load | other |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 512×1024      | 3 |   976.9 | 0.10 |  1.52 |   967.65 |  0.27 | 0.27 | 0.07 | 0.08 | 0.21 |
+| 512×4096      | 3 | 15697.1 | 0.26 | 21.82 | 15568.04 |  3.21 | 1.54 | 0.32 | 0.34 | 0.82 |
+| 512×8192      | 3 | 62189.4 | 0.49 | 84.62 | 61687.57 | 12.80 | 3.91 | 0.70 | 0.94 | 1.73 |
 
-## C. Consumer-index evidence (stub — post-run)
+**Percent of dedup total:**
+
+| point | grouping | redirect(scan) | get_read_writes | list_remove | merge_provenance | bookkeeping | front_load | other |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 512×1024 | 0.0% | 0.2% | **99.1%** | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| 512×4096 | 0.0% | 0.1% | **99.2%** | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| 512×8192 | 0.0% | 0.1% | **99.2%** | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+
+The wall-clock split lands in essentially the same shape at every
+point: `get_read_writes` from inside `_redirect_consumers` is 99.1–
+99.2% of dedup time; everything else is measurement noise. In
+particular:
+
+- **`operations.remove(dup)`** takes 0.27 / 3.21 / 12.80 ms at the
+  three points — 0.02–0.03% of dedup total. The previously-suspected
+  "second `O(N × D)` term" is real in the source but negligible in
+  wall-clock. Batch removal as a standalone change saves at most
+  ~13 ms out of ~62 s at the largest point.
+- **`merge_provenance`** is 0.27 / 1.54 / 3.91 ms — even smaller.
+  It must still be preserved in any refactor (correctness), but is
+  not a performance signal.
+- **Grouping + `reads_probe` + `patch_inner_fn` + `bookkeeping` +
+  `front_load`** together are <1% at every point.
+
+The measured coefficient `total_ms · 1000 / (N × D)`:
+
+| point | N | D | N × D | median µs/(N·D) | ns per `get_read_writes` |
+|---|---:|---:|---:|---:|---:|
+| 512×1024 |  276 |  16 |    4,416 | **221.2** | ~226,900 |
+| 512×4096 | 1092 |  64 |   69,888 | **224.6** | ~229,800 |
+| 512×8192 | 2180 | 128 |  279,040 | **222.9** | ~227,900 |
+
+The `study` fit was `t ≈ 201.8 µs × (N × D)`; the diag-on rerun is
+about 10% higher, consistent with the two `perf_counter_ns()` reads
+per scanned op (the reads-probe timer inside the inner loop). The
+per-call cost of `ComputedBuffer.get_read_writes()` is remarkably
+stable at ~228 µs regardless of graph size — as expected for a
+per-op `extract_read_writes(inner_fn, size)` walk of a Pointwise
+body.
+
+## C. Consumer-index evidence
+
+Gold set was captured by observing the current linear scan from
+inside `_redirect_consumers`; the `V.graph.name_to_users[D]`
+snapshot was taken BEFORE `_drop_constant` folded it into
+`name_to_users[C]`. Both operate on the SAME dedup invocation, so
+the comparison is head-to-head at each duplicate.
 
 | point | dups | median gold consumers/dup | median NU raw/dup | median NU unique/dup | Σ TP | Σ FP | Σ FN | Σ unwrap fail | consumer types (count) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 512×1024 |  48 | 1 | 1 | 1 |   0 |  45 |  48 | 3 | TensorBox=48 |
+| 512×4096 | 192 | 1 | 1 | 1 |   0 | 189 | 192 | 3 | TensorBox=192 |
+| 512×8192 | 384 | 1 | 1 | 1 |   0 | 381 | 384 | 3 | TensorBox=384 |
+| **total** | **624** | | | | **0** | **615** | **624** | **9** | TensorBox=624 |
 
-Plus a verdict: is `Σ FN == 0` across the sweep?
+**Verdict — Option A is dead.**
 
-## D. A-vs-E engineering decision (stub — post-run)
+- `Σ TP = 0` — the current scan's actual consumers **never** appear
+  in `V.graph.name_to_users[D]` for this workload. Not "rarely" —
+  never.
+- `Σ FN = 624` — every gold consumer (1 per dup, 624 total) is
+  MISSING from `name_to_users`.
+- `Σ FP = 615` — for 615 / 624 duplicates, `name_to_users[D]`
+  contains exactly one entry pointing at an operation that does NOT
+  read D. The remaining 9 are unwrap failures (TensorBox → ComputedBuffer
+  fails).
 
-Fill in against the criteria table above with the actual measured
-numbers. Recommendation: A, E, or "something else supported by
-evidence." Prose paragraph justifying the choice.
+**Why (source-level explanation).**
 
-## E. Predicted new complexity (stub — post-run)
+`insert_bmm_padding` at `torch_spyre/_inductor/padding.py:284` calls
+`lower_pad_sequence`, which invokes `graph_lowering.run_node(pad_fx)`
+on a `constant_pad_nd` FX node. `constant_pad_nd`'s decomposition
+inside a single `run_node` produces four IR ops (from
+`pass_utils.py:1215–1219`):
 
-Derive from the decision. Example if E wins:
+1. `ComputedBuffer` — output buffer allocation
+2. `SpyreConstantFallback` — the fill constant `D`
+3. `ComputedBuffer` — the fill Pointwise (whose `inner_fn` emits
+   `ops.load(D)`)
+4. `ComputedBuffer` — the copy Pointwise
+
+`register_users_of(result)` at upstream `graph.py:2141` runs
+**once**, on the TensorBox returned by `run_node` — which is the
+final output TensorBox for the whole `constant_pad_nd`, not each
+internal ComputedBuffer. `TensorBox.get_read_names()` returns the
+read names of that top-level buffer; the fill Pointwise buffer (the
+actual reader of D) never gets a `register_users_of` call and so
+never enters `name_to_users[D]`.
+
+What IS in `name_to_users[D]`: 615 of 624 entries are TensorBoxes
+that unwrap to the ORIGINAL constant Buffer itself (its own name is
+in its `get_read_names()` — see upstream `ir.py:5278`,
+`Buffer.get_read_names → OrderedSet([self.get_name()])`). That is,
+the constant TensorBox lists itself as a "user of itself" at
+lowering time. The 9 unwrap failures are TensorBoxes whose
+`.data.data` is not a ComputedBuffer — likely intermediate
+`ReinterpretView` / `MultiOutput` nodes from the `constant_pad_nd`
+decomposition; those also do not point at the fill Pointwise.
+
+To make Option A work, we would need `run_node` (or
+`register_users_of`) to walk into `constant_pad_nd`'s IR
+decomposition and register every internal ComputedBuffer that reads
+the constant. That is an upstream Inductor change, not a torch-spyre
+change, and it would need to be justified against the whole
+population of readers, not just this pass. Out of scope.
+
+## D. A-vs-E engineering decision
+
+**Recommendation: Option E (fresh local reverse index built once at
+pass entry), plus batch removal.**
+
+Filled-in decision table (updated with measured numbers):
+
+| axis                                              | A (name_to_users)                  | E (fresh local index)              |
+| ------------------------------------------------- | ----------------------------------- | ---------------------------------- |
+| Asymptotic complexity                             | `O(D · U)` + FP filter              | `O(N · f) + O(Σ_D U_D)`            |
+| Cost overhead at entry                            | 0                                   | one `O(N)` sweep, ~228 µs · N      |
+| False-negative rate on the measured workload      | **624 / 624 (100%)**                | 0 by construction                  |
+| Depends on upstream `name_to_users` freshness     | yes — and freshness is provably not maintained by `run_node` for decomposed FX nodes | no |
+| Depends on cross-pass `register_users_of` correctness | yes                             | no                                 |
+| TensorBox-unwrap complexity in the hot path       | yes (mitigated); 9 unwrap failures / 624 in the measurement | no |
+| Correctness argument size                         | requires an upstream Inductor change to `register_users_of` OR a workload-specific search of `name_to_users` fallback list | one paragraph — the index is a materialization of the same `get_read_writes` calls the current algorithm makes |
+| Robustness to future compiler-pass changes        | fragile — any new pass that adds a decomposed lowering with an internal constant reader inherits the same FN                | robust                             |
+| Wall-clock estimate at largest point (Lk=8192)    | infeasible without the upstream fix | one `O(N)` sweep ≈ 2180 × 228 µs ≈ **497 ms**, plus O(D) for the redirects ≈ ~30 ms; total ≈ ~530 ms |
+
+Option A is not viable without an upstream `register_users_of`
+change. Even if we shipped the FP-filter-only variant (fall back to
+the linear scan when `name_to_users[D]` misses), the fallback path
+would fire 100% of the time on this workload — it would BE the
+linear scan.
+
+Option E delivers the intended `O(N × D) → O(N)` collapse with no
+upstream dependencies. Batch removal composes trivially with E (the
+dead-ids set is populated in the same loop) and preserves
+`merge_provenance` semantics unchanged.
+
+## E. Predicted new complexity
+
+With Option E + batch removal at `a9316b3`:
 
 ```text
-build local reverse index:  O(N · f)     where f is the median
-                                          get_read_writes cost per op
-                                          (measured in B)
-redirect consumers:         O(Σ_D U_D)   where U_D is measured in C
-batch removal:              O(N)         one rebuild
-bookkeeping:                O(D + user folds)
+build local reverse index:  O(N · f_grw)          f_grw ≈ 228 µs per op
+                                                   (measured, ComputedBuffer path)
+redirect consumers:         O(Σ_D U_D)             Σ U_D == D on this workload
+                                                   (1 gold consumer per dup)
+bookkeeping (per dup):      O(1)                   merge_provenance, dict pops,
+                                                   name_to_users fold
+batch removal (Step 3):     O(N)                   one filter+partition rebuild
 
-overall approximately:
-O(N · f + Σ_D U_D + N)
+overall wall-clock ≈ N · f_grw  +  D · (c_patch + c_bookkeeping)  +  N · c_filter
 ```
 
-Compute the expected wall-clock at the three points using the
-measured `f`, `U_D`, and `N`. Do not claim a specific speedup ratio
-until the actual algorithm change is measured — the prediction
-serves as a sanity check, not as a promise.
+Predicted wall-clock per point:
 
-## F. Exact next implementation experiment (stub — post-run)
+| point | N | D | N · f_grw | D · (patch + bookkeeping) | total predicted | current measured | ratio |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 512×1024 |  276 |  16 |   ~63 ms | 16 · ~40 µs ≈ 0.6 ms |   ~64 ms |    977 ms | **~15×** |
+| 512×4096 | 1092 |  64 |  ~249 ms | 64 · ~40 µs ≈ 2.6 ms |  ~252 ms | 15,697 ms | **~62×** |
+| 512×8192 | 2180 | 128 |  ~497 ms | 128 · ~40 µs ≈ 5.1 ms | ~503 ms | 62,189 ms | **~123×** |
 
-Give one narrowly-scoped next patch, no more. Format:
+The `40 µs` per-dup cost is a conservative sum of `merge_provenance`
+(median ~30 µs at Lk=8192: 3908 µs / 128), `patch_inner_fn` (median
+~5 µs), and dict operations. Filter+partition at the end is one
+`O(N)` list pass, small compared to the `f_grw · N` scan.
 
-- Goal: (one sentence)
-- Scope: (files touched, LOC estimate)
-- Preserves: (list of behaviors)
-- Test plan: (tests to run)
-- Measurement plan: (sweep points to compare against)
-- Success criterion: (numerical or behavioral)
-- What is explicitly out of scope: (list)
+Predicted absolute speedup grows with `D` because we eliminate a
+D-fold repetition of the same `O(N · f_grw)` work. At the largest
+point, the prediction is a **123× speedup** (62 s → 0.5 s). Do NOT
+promise 123× — measure it after landing E. The prediction only
+serves as a sanity check that the algorithmic change is worth
+doing.
 
-Do not merge A and E, or A and B, into a single change. Land the
-chosen algorithm as one commit; land batch removal (if not already
-subsumed) as a second commit if it is separable in the chosen design;
-otherwise as one commit with the rationale in the message.
+Note that the prediction assumes `f_grw` stays at ~228 µs when we
+call it in a single sweep at pass entry rather than nested in a
+per-duplicate scan. This is expected — the inner_fn walk is
+deterministic — but should be verified in the first measurement of
+the E implementation.
+
+## F. Exact next implementation experiment
+
+**Goal.** Replace the O(N × D) consumer scan in
+`_redirect_consumers` with a single O(N) build of a local
+`consumers_by_name` dict at the top of
+`dedup_and_promote_constants`, and defer per-duplicate
+`operations.remove(dup)` calls to a single Step 3 filter+partition
+rebuild.
+
+**Scope.** One file: `torch_spyre/_inductor/dedup_constants.py`.
+Estimated diff: +30 / −10 lines.
+
+**Preserves (correctness obligations):**
+
+- Grouping key `(value, dtype, device)` and canonical selection
+  (`group[0]`) unchanged.
+- `merge_provenance([canonical, dup], canonical, pass_name=...)`
+  called once per duplicate before the duplicate is scheduled for
+  removal, identical to today's `_drop_constant`.
+- `V.graph.removed_buffers.add(D)`,
+  `V.graph.name_to_buffer.pop(D, None)`,
+  `V.graph.name_to_op.pop(op_name, None)`, and the
+  `name_to_users[D] → name_to_users[C]` fold — all preserved,
+  same order.
+- Output-name skip (`if D in V.graph.get_output_names(): return`)
+  preserved. The latent bug in the current handling of that skip
+  path (removes dup but skips redirect) is NOT touched by this
+  refactor; it remains a separate defect.
+- Non-`ComputedBuffer` consumer raises `AssertionError` — preserve.
+- Final `operations[:] = constants + non_constants` order —
+  preserve, filtered via `id(dup) not in dead_ids`.
+
+**Test plan.**
+
+1. `tests/inductor/test_dedup_constants.py` — the five existing
+   tests must pass.
+2. `tests/inductor/test_dedup_constants_more.py` (this phase adds
+   these):
+    - `test_zero_consumer_duplicate` — skipped-if-not-reproducible
+      today; if the E implementation produces a zero-consumer dup,
+      it should still cleanly remove and fold.
+    - `test_many_consumer_duplicate` — canonical read by more than
+      one live ComputedBuffer.
+    - `test_name_to_users_canonical_fold` — canonical's
+      `name_to_users` entry contains at least the pre-dedup users.
+    - `test_provenance_merged` — canonical carries a
+      `ProvenanceTransform` with
+      `pass_name == "dedup_and_promote_constants"`.
+3. `tests/inductor/test_padding.py::test_padding_constants_deduped`
+   — end-to-end correctness (torch.testing.assert_close of Spyre
+   vs CPU).
+4. `pre-commit run --all-files` — style/lint.
+
+**Measurement plan.** Same three points, same pod:
+
+- Run `run_dedup_diag.sh` first on the E branch to capture the
+  same DedupRecord shape post-change. Expected: `n_ops_scanned`
+  drops from `N × D` to ~`N`; `n_get_read_writes_calls` drops
+  similarly.
+- Also run the study's plain `run_sweep.sh` (no dedup diag) to
+  compare against the phase-1 dataset directly.
+- Verdict: dedup wall-clock at Lk=8192 should drop from ~55 s
+  (study) / ~62 s (diag-on) to well under 1 s.
+
+**Success criterion:**
+
+- All tests pass.
+- `dedup_and_promote_constants` wall-clock at (H=8, Lq=512,
+  Lk=8192) < 2 s (target: <1 s; hard ceiling: <5 s).
+- The measured/predicted-model consistency check: post-change
+  wall-clock ≈ `N · f_grw + O(D)`; if it is materially higher,
+  investigate before merging.
+
+**Explicitly out of scope for this experiment:**
+
+- Option A (`name_to_users`) — proven dead in section D.
+- Any upstream Inductor change (e.g. teaching `register_users_of`
+  to walk decomposed lowerings).
+- Optimization of `optimize_restickify_locations` or
+  `_maybe_scratchpad_planning` — separate investigations
+  (findings.md §9 tracks them).
+- Fixing the output-name skip bug — noted separately in section A.
+- Caching `get_read_writes()` more aggressively — subsumed by E
+  (which calls it N times, not N × D times).
+
+Land as **one commit** (algorithm change + batch removal folded
+together). Rationale in the commit message: they are already
+coupled in the design — the local index and the dead-ids set are
+populated in the same loop; separating them would either require
+maintaining two loops or leaving `operations.remove(dup)` as an
+O(N × D) tail on an otherwise O(N) pass. Commit message must cite
+this phase-2 report by path and SHA.
