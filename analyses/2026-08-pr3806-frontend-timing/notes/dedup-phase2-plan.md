@@ -135,6 +135,21 @@ Columns:
 - **can under-report `name_to_users[D]` (FN)**: can this pass introduce
   a new real reader of D without a corresponding entry in `name_to_users[D]`?
 
+**Methodological note (correction).** The original version of this
+table analyzed only pass MUTATIONS *after* index construction — i.e.
+"does this pass update `name_to_users` correctly given that the
+index was already populated at lowering time?" That was insufficient.
+The later Section C measurement showed that `name_to_users` was
+already incomplete at *creation time*: when a single `run_node` call
+lowers an FX node whose decomposition produces internal IR consumers
+(e.g. `constant_pad_nd` → allocate + `SpyreConstantFallback` +
+fill Pointwise + copy Pointwise), `register_users_of` runs once on
+the top-level returned `TensorBox` and does not visit the internal
+`ComputedBuffer`s that were created along the way. Any pass whose
+lowering path goes through such a decomposition can leave
+`name_to_users[<internal reader's target>]` under-populated. The FN
+column below has been rewritten to reflect this.
+
 | pass                                | ops list                  | inner_fn / reads rewrite | updates `name_to_users` | FP possible | FN possible |
 | ----------------------------------- | ------------------------- | ------------------------ | ----------------------- | ----------- | ----------- |
 | `deadcode_elimination`              | removes dead ops          | no                       | no                      | yes¹        | no          |
@@ -143,15 +158,15 @@ Columns:
 | `assign_dim_hints`                  | metadata only             | no                       | no                      | no          | no          |
 | `_maybe_reorder_unhinted_interlopers` | reorder only            | no                       | no                      | no          | no          |
 | `_maybe_coarse_tile_hints`          | metadata only             | no                       | no                      | no          | no          |
-| `split_multi_ops`                   | removes+inserts (`run_node`) | patches inner_fn²      | yes (via `run_node`)    | yes²        | no³         |
+| `split_multi_ops`                   | removes+inserts (`run_node`) | patches inner_fn²      | yes (via `run_node`)    | yes²        | yes³        |
 | `propagate_spyre_tensor_layouts`    | metadata only             | no                       | no                      | no          | no          |
 | `validate_ops`                      | no writes                 | no                       | no                      | no          | no          |
 | `optimize_restickify_locations`     | metadata only             | no                       | no                      | no          | no          |
 | `finalize_layouts`                  | writes `restickify_plan`  | no                       | no                      | no          | no          |
-| `insert_restickify`                 | inserts (`run_node`) + `remove/insert` reorder | patches consumer inner_fn (name-swap old→new restickify buffer) | yes (via `run_node`) | yes⁴ | no³ |
-| `enforce_indirect_access_layout`    | via `insert_restickify_on_node_inputs` | patches consumer inner_fn | yes (indirect) | yes⁴ | no³ |
-| `insert_post_mutation_restickify`   | inserts (`run_node`) + reorder | rewrites mutation-op layout; does not swap constant reads | yes (via `run_node`) | no⁵ | no³ |
-| `insert_bmm_padding`                | inserts (`run_node`) + reorder; `_rebuild_matmul` via `replace_computed_buffer_body` | patches matmul inner_fn (y-loader → padded buffer) | yes (via `run_node`)   | no⁶ | no³ |
+| `insert_restickify`                 | inserts (`run_node`) + `remove/insert` reorder | patches consumer inner_fn (name-swap old→new restickify buffer) | yes (via `run_node`) | yes⁴ | yes³ |
+| `enforce_indirect_access_layout`    | via `insert_restickify_on_node_inputs` | patches consumer inner_fn | yes (indirect) | yes⁴ | yes³ |
+| `insert_post_mutation_restickify`   | inserts (`run_node`) + reorder | rewrites mutation-op layout; does not swap constant reads | yes (via `run_node`) | no⁵ | yes³ |
+| `insert_bmm_padding`                | inserts (`run_node`) + reorder; `_rebuild_matmul` via `replace_computed_buffer_body` | patches matmul inner_fn (y-loader → padded buffer) | yes (via `run_node`)   | no⁶ | **yes — measured** ⁶ |
 
 Footnotes:
 
@@ -160,8 +175,7 @@ Footnotes:
    `name_to_users[<any buffer it read>]` is not cleaned. Downstream code
    that trusts `name_to_users` will see a `TensorBox` that maps back
    (via `TensorBox → StorageBox → ComputedBuffer`) to an op that no
-   longer exists in `operations`. **This is the primary FP source for
-   name_to_users[D] at dedup time.** Impact on dedup: over-reports
+   longer exists in `operations`. Impact on dedup: over-reports
    candidates. Mitigation: filter candidates through
    `get_read_writes` (their reads may still be D even though they were
    dropped) OR check `op is in operations`. The dropped op will not be
@@ -172,20 +186,28 @@ Footnotes:
 2. **`split_multi_ops` — FP:** the pass replaces multi-output ops with
    split single-output ops using `run_node`, `operations.remove/insert`,
    and inner_fn patches (`torch_spyre/_inductor/split_multi_ops.py` at
-   `a9316b3`). Its new nodes get `register_users_of`'d via `run_node`.
-   Its inner_fn patches use `NameSwapHandler` on downstream consumers.
-   Result: the *new* consumers appear in `name_to_users` correctly; the
-   *old* multi-output op's TensorBox may still be listed in
-   `name_to_users[<what it used to read>]`, but the old op is removed
-   from `operations`, so this is functionally a subset of the DCE-FP
-   case.
+   `a9316b3`). The `run_node`-inserted top-level TensorBox gets
+   `register_users_of`'d; the *old* multi-output op's TensorBox may
+   still be listed in `name_to_users[<what it used to read>]` after
+   removal, a subset of the DCE-FP case.
 
-3. **FN never happens** across all mutating passes because every new
-   reader of a buffer is introduced through `graph_lowering.run_node`,
-   which calls `register_users_of(result)` (upstream
-   `torch/_inductor/graph.py:2141`). New readers automatically appear
-   in `name_to_users[<the buffer they read>]`. Every pass in the table
-   that creates new consumers uses `run_node`.
+3. **FN — the actual mechanism.** `register_users_of(result)` at
+   upstream `torch/_inductor/graph.py:2141` (`register_users_of`
+   defined at graph.py:1128–1136 in torch 2.13) walks only the
+   top-level `TensorBox` returned by `run_node` — specifically it
+   calls `value.get_read_names()` on each returned `TensorBox` and
+   appends *that TensorBox* to `name_to_users[read_name]` for every
+   name in that read-name set. It does NOT recursively enter
+   `TensorBox.data.data` and register the internal ComputedBuffers
+   the lowering produced. Consequence: any lowering path whose FX
+   decomposition produces internal `ComputedBuffer`s that read a
+   buffer name never registers those internal readers under that
+   buffer name in `name_to_users`. This is not specific to
+   `constant_pad_nd`; it applies to any lowering that decomposes into
+   multiple IR-level ops that share a name-based read edge, wherever
+   the top-level returned TensorBox is not itself the reader. Every
+   pass in the table that lowers via `run_node` inherits this FN
+   possibility for its internal readers.
 
 4. **`insert_restickify` / `enforce_indirect_access_layout` — FP:**
    After these passes, a consumer's inner_fn is patched via
@@ -195,11 +217,7 @@ Footnotes:
    `old_name` happens to be a constant we later dedup, this is an FP.
    In practice constants themselves are not the "old_name" that gets
    restickified — restickify targets user tensors between layouts —
-   so this FP path is unlikely to matter for constant readers. But
-   note: if `enforce_indirect_access_layout` ever restickified a fill
-   ComputedBuffer that read a constant, then the fill's `name_to_users`
-   entry pointing at *the fill's* consumers would go stale — irrelevant
-   to constants, but noted for completeness.
+   so this FP path is unlikely to matter for constant readers.
 
 5. **`insert_post_mutation_restickify` — no FP for constants:** this
    pass targets slice-mutation ops (`hasattr(op, '_restickify_plan')`)
@@ -207,26 +225,35 @@ Footnotes:
    buffers over constants. It inserts restickify buffers before/after
    mutation ops. Constants' `name_to_users` entries are not touched.
 
-6. **`insert_bmm_padding` — no FP for constants (subtle):** this pass
-   creates NEW `SpyreConstantFallback` ops via `lower_pad_sequence`
-   (which calls `run_node` on a `constant_pad_nd` FX node). Those new
-   constants and their fill-Pointwise consumers are registered fresh
-   in `name_to_users` on the same `run_node` call
-   (`torch_spyre/_inductor/pass_utils.py:1202-1290` at `a9316b3`). The
-   pass also patches the matmul's inner_fn via
-   `_rebuild_matmul` / `replace_computed_buffer_body`, but that swap
-   targets y's data buffer, NOT the padding constant — the matmul was
-   never a direct reader of the constant to begin with. Fresh constants
-   from this pass have pristine `name_to_users` entries; older
-   constants (e.g. from `torch.full` or `lower_full`) untouched by
-   this pass.
+6. **`insert_bmm_padding` — measured FN.** Corrected from the earlier
+   claim that its fill-Pointwise consumers were "registered fresh in
+   `name_to_users`". They are not. The pass calls `lower_pad_sequence`
+   (`torch_spyre/_inductor/pass_utils.py:1202–1290`) which invokes
+   `graph_lowering.run_node(pad_fx)` on a single
+   `torch.ops.aten.constant_pad_nd.default` FX node. That single
+   `run_node` produces four IR operations inside the decomposition
+   (documented in the `lower_pad_sequence` docstring at
+   pass_utils.py:1215–1219):
+    1. output-buffer allocation `ComputedBuffer`
+    2. the `SpyreConstantFallback` fill constant
+    3. a fill Pointwise `ComputedBuffer` that reads the constant
+    4. a copy Pointwise `ComputedBuffer`
+   By footnote 3, `register_users_of` sees only the top-level
+   returned TensorBox for the whole `constant_pad_nd`, so
+   `name_to_users[<constant_name>]` does NOT receive an entry for
+   the fill Pointwise (item 3), which is the live reader of the
+   constant. Section C measures this: 624 / 624 gold consumers were
+   missing from `name_to_users[D]` across the sweep.
 
-**Overall summary:** `name_to_users[D]` at dedup time can only *over-report*
-consumers of D, never under-report. The over-report is bounded by (a)
-consumers dropped by DCE, and (b) consumers whose inner_fn was
-name-swapped away from D by an earlier pass. Both are mitigated by
-retaining a per-candidate `get_read_writes` filter in any
-`name_to_users`-based redirect implementation.
+**Overall summary (corrected).** For duplicates produced by
+`insert_bmm_padding` in this workload, `name_to_users[D]` at dedup
+time contains neither the true consumer nor a general FP over the
+true-consumer set — it typically holds the constant's own TensorBox
+self-reference, or nothing that unwraps to a live operation.
+`name_to_users` is therefore not a sound consumer source for this
+pass under the current Torch 2.13 / torch-spyre lowering behavior.
+This is a scoped, measured claim; it does not generalize to arbitrary
+uses of `name_to_users` elsewhere in upstream Inductor.
 
 ## Batch-removal safety, redone at `a9316b3`
 
@@ -640,13 +667,32 @@ The measured coefficient `total_ms · 1000 / (N × D)`:
 | 512×4096 | 1092 |  64 |   69,888 | **224.6** | ~229,800 |
 | 512×8192 | 2180 | 128 |  279,040 | **222.9** | ~227,900 |
 
-The `study` fit was `t ≈ 201.8 µs × (N × D)`; the diag-on rerun is
-about 10% higher, consistent with the two `perf_counter_ns()` reads
-per scanned op (the reads-probe timer inside the inner loop). The
-per-call cost of `ComputedBuffer.get_read_writes()` is remarkably
-stable at ~228 µs regardless of graph size — as expected for a
-per-op `extract_read_writes(inner_fn, size)` walk of a Pointwise
-body.
+The `study` fit was `t ≈ 201.8 µs × (N × D)`; the diag-on rerun sits
+at ~222 µs. An earlier draft of this document attributed the ~10%
+difference to overhead from the diagnostic timers. That was
+plausible but not demonstrated. **Follow-up perturbation check**
+(6 interleaved cold samples at Lq=512, Lk=1024,
+data at `data-perturb/`) contradicts the timer-overhead hypothesis:
+
+| variant  | dedup wall-clock (ms) per sample | median  |
+|----------|----------------------------------|---------|
+| DIAG-OFF | 979.0 / 955.4 / 973.2            | 973.2   |
+| DIAG-ON  | 990.3 / 985.2 / 970.4            | 985.2   |
+
+Same-environment DIAG-ON is only +1.23% slower than DIAG-OFF at the
+median. Individual samples overlap across the two variants (the
+lowest DIAG-ON of 970.4 ms is lower than two of the three DIAG-OFF
+samples). The ~10% delta between the original study's 201.8 µs
+coefficient and the diag sweep's ~222 µs coefficient is therefore
+**not** attributable to the diagnostic timers. It is more likely
+ordinary run-to-run / pod-state / interpreter variation across the
+weeks between the two datasets. The per-call cost of
+`ComputedBuffer.get_read_writes()` is remarkably stable at ~228 µs
+regardless of graph size — as expected for a per-op
+`extract_read_writes(inner_fn, size)` walk of a Pointwise body — and
+this stability suggests that either coefficient is a defensible
+estimate of the pre-refactor pass cost; do not read the ~10% gap as
+evidence of any specific instrumentation cost.
 
 ## C. Consumer-index evidence
 
@@ -663,7 +709,16 @@ the comparison is head-to-head at each duplicate.
 | 512×8192 | 384 | 1 | 1 | 1 |   0 | 381 | 384 | 3 | TensorBox=384 |
 | **total** | **624** | | | | **0** | **615** | **624** | **9** | TensorBox=624 |
 
-**Verdict — Option A is dead.**
+**Verdict — `name_to_users` is not a sound consumer source for this
+pass/workload under the current Torch 2.13 / torch-spyre lowering
+behavior.**
+
+Scoped claim. This is not a universal statement about `name_to_users`
+elsewhere in Inductor; it is a statement about the specific pattern
+`constant_pad_nd` → decomposed fill Pointwise → `SpyreConstantFallback`
+reader produced by `insert_bmm_padding` on this workload, plus the
+`register_users_of` behavior described in the mutation-table
+footnote 3.
 
 - `Σ TP = 0` — the current scan's actual consumers **never** appear
   in `V.graph.name_to_users[D]` for this workload. Not "rarely" —
@@ -733,11 +788,11 @@ Filled-in decision table (updated with measured numbers):
 | Robustness to future compiler-pass changes        | fragile — any new pass that adds a decomposed lowering with an internal constant reader inherits the same FN                | robust                             |
 | Wall-clock estimate at largest point (Lk=8192)    | infeasible without the upstream fix | one `O(N)` sweep ≈ 2180 × 228 µs ≈ **497 ms**, plus O(D) for the redirects ≈ ~30 ms; total ≈ ~530 ms |
 
-Option A is not viable without an upstream `register_users_of`
-change. Even if we shipped the FP-filter-only variant (fall back to
-the linear scan when `name_to_users[D]` misses), the fallback path
-would fire 100% of the time on this workload — it would BE the
-linear scan.
+Option A is not viable on this workload without an upstream
+`register_users_of` change. Even if we shipped the FP-filter-only
+variant (fall back to the linear scan when `name_to_users[D]`
+misses), the fallback path would fire 100% of the time on this
+workload — it would BE the linear scan.
 
 Option E delivers the intended `O(N × D) → O(N)` collapse with no
 upstream dependencies. Batch removal composes trivially with E (the
