@@ -44,26 +44,40 @@ for group in groups.values():
 New:
 
 ```python
+# Whether Step 2 runs depends only on "does any duplicate exist?".
+has_duplicates = any(len(group) > 1 for group in groups.values())
+
+# Which duplicate names need consumer indexing. Filters out graph
+# outputs -- pristine _redirect_consumers already skips those --
+# so we don't widen the index for work the pass never performs.
 duplicate_names = {
     dup.get_name()
     for group in groups.values() if len(group) > 1
     for dup in group[1:]
+    if dup.get_name() not in V.graph.get_output_names()
 }
 
-if duplicate_names:
-    consumers_by_name = _build_reverse_consumer_index(  # single O(N) sweep
-        graph.operations, duplicate_names,
+if has_duplicates:
+    # Build the reverse index only when there's a non-output
+    # duplicate to redirect for; when every duplicate is a graph
+    # output the index build (one get_read_writes call per op) is
+    # skipped entirely -- but Step 2 still iterates so
+    # _drop_constant runs for those output-name duplicates.
+    consumers_by_name = (
+        _build_reverse_consumer_index(graph.operations, duplicate_names)
+        if duplicate_names
+        else {}
     )
     for group in groups.values():
         if len(group) <= 1:
             continue
         canonical = group[0]
         for dup in group[1:]:
-            for op in consumers_by_name.get(dup.get_name(), []):
-                if op is dup or op is canonical:
-                    continue
-                _patch_inner_fn(op, {D: C})
-            graph.operations.remove(dup)                 # unchanged
+            _redirect_consumers(               # skips for output-name dups
+                consumers_by_name.get(dup.get_name(), []),
+                dup, canonical,
+            )
+            _drop_constant(graph.operations, dup, canonical)  # unchanged
 ```
 
 The reverse-index builder de-duplicates matched buffer names
@@ -89,8 +103,12 @@ deliberately preserved.
   intentionally not batched in this change.
 - **Grouping** and **Step-3 front-loading** remain `O(N)`.
 - **No-duplicate fast path** preserved: when no group has more
-  than one entry, no `get_read_writes()` calls are made at all
-  (guarded by an explicit `if duplicate_names:`).
+  than one entry, `has_duplicates == False` and no
+  `get_read_writes()` calls are made at all.
+- **All-output-duplicates path** preserved: when every duplicate
+  is a graph output, `duplicate_names` is empty and the index
+  build is skipped, but `has_duplicates == True` so Step 2 still
+  runs `_drop_constant` on those duplicates exactly as pristine.
 
 This is **not** a claim that the whole pass is `O(N)`.
 
@@ -147,64 +165,99 @@ algorithm and this change at `Lq=512, Lk=1024`. Compared:
 
 Result: **EQUIVALENT — no semantic differences detected**.
 
+## Files changed
+
+Two files:
+
+- `torch_spyre/_inductor/dedup_constants.py` — the pass change.
+- `tests/inductor/test_dedup_constants.py` — the five existing
+  dedup tests plus the new deterministic tests added by this PR.
+
 ## Tests
 
-Adds `tests/inductor/test_dedup_constants_more.py` with nine new
-deterministic tests (no `skipTest`):
+The existing `tests/inductor/test_dedup_constants.py` gains two
+new test classes alongside `TestDedupConstants` (its five
+existing tests are unchanged):
 
-Five pass-level tests. Each runs the real pre-scheduling pipeline
-through `insert_bmm_padding`, then invokes
-`dedup_and_promote_constants` by hand:
+**`TestDedupConstantsPassLevel`** — pass-level tests. Each runs
+the real pre-scheduling pipeline through `insert_bmm_padding`,
+then invokes `dedup_and_promote_constants` by hand and asserts on
+the resulting state. Terminates the compile with a dedicated
+`_TestStopSignal` sentinel so any other exception (including a
+real `AssertionError` inside the callback) surfaces normally.
 
 - `test_zero_consumer_duplicate` — a duplicate with no live
   consumers is still cleanly removed and its bookkeeping cleaned.
 - `test_one_duplicate_many_consumers` — two distinct live
   `ComputedBuffer`s reading the same duplicate name D are both
   redirected to the canonical.
+- `test_one_consumer_reads_two_duplicates_same_group` — one live
+  `ComputedBuffer` reads two duplicates from the same dedup group.
+  Uses real `NameSwapHandler` composition; verifies both
+  duplicates absent from the consumer's live reads after dedup
+  and only the canonical present. This is the case where the
+  snapshot approach and a live-rescan implementation could
+  plausibly diverge.
+- `test_all_output_name_duplicates_still_dropped` — when every
+  duplicate is a graph output, the reverse-index scope collapses
+  to empty (zero `get_read_writes` calls) but every duplicate is
+  still passed through `_drop_constant`; every duplicate op is
+  removed, every duplicate buffer name is in `removed_buffers`,
+  absent from `name_to_buffer` and `name_to_op`, canonical
+  survives. Guards against re-gating Step 2 on the output-filtered
+  set.
 - `test_name_to_users_fold_exact` — post-dedup
   `name_to_users[canonical]` is exactly the identity-preserving
   concatenation of pre-dedup canonical + all duplicate entries;
   each duplicate key is absent.
 - `test_provenance_transform_appended` — canonical carries
   `n_dups_in_group` new `ProvenanceTransform` entries with
-  `pass_name == "dedup_and_promote_constants"`,
-  `kind == "fusion"`, `reason == "duplicate constant"`.
+  `pass_name == "dedup_and_promote_constants"`, `kind == "fusion"`,
+  `reason == "duplicate constant"`.
 - `test_no_duplicates_fast_path` — a workload with no
-  multi-constant group triggers ZERO
+  multi-constant group triggers zero
   `ComputedBuffer.get_read_writes` calls inside dedup. Guards
-  the fast-path invariant.
+  the D=0 fast-path invariant.
+- `test_reverse_index_scales_with_N_not_D` — patches
+  `ComputedBuffer.get_read_writes` to count calls and asserts
+  `calls <= n_ops_at_entry` on a duplicate-bearing graph (D>=2).
+  Verified locally that a synthetic "rebuild index inside
+  per-duplicate loop" regression fails this guard (28 calls on a
+  17-op graph). This is the guardrail for the optimization
+  itself.
 
-Four unit tests. Directly exercise
-`_build_reverse_consumer_index` with a small
-`SimpleNamespace`-based mock (no Spyre device required):
+**`TestBuildReverseConsumerIndex`** — standalone unit tests over
+`_build_reverse_consumer_index` using lightweight `SimpleNamespace`
+mocks. No Spyre device required.
 
-- `test_op_with_two_deps_same_name_appears_once` — the critical
-  behavior-preservation check: an op whose reads contain two
-  distinct dep objects with the same name D appears exactly once
-  in `consumers_by_name[D]`.
-- `test_op_with_two_deps_different_names` — an op that reads D1
-  and D2 appears once in each of `consumers_by_name[D1]` and
+- `test_op_with_two_deps_same_name_appears_once` — an op with two
+  distinct dep objects sharing a name appears exactly once in the
+  index (behavior-preservation for the pristine "patch once per
+  (op, dup)" rule).
+- `test_op_with_two_deps_different_names` — an op reading D1 and
+  D2 appears once in each of `consumers_by_name[D1]` and
   `consumers_by_name[D2]`.
 - `test_op_with_no_duplicate_reads_absent_from_index` —
-  non-duplicate names do not leak into the index.
+  non-duplicate names don't leak into the index.
 - `test_multiple_ops_deterministic_order` — ops appear in
   `graph.operations` order.
+- `test_returned_mapping_is_plain_dict_not_defaultdict` — the
+  returned mapping is a plain `dict`; `idx["absent"]` raises
+  `KeyError`; `idx.get("absent")` does not install the key.
 
 ## Test results
 
-Full run against this branch's tree in a Spyre PF test
-environment (Python 3.12, torch 2.13.0+cpu):
+Full run in a Spyre PF test environment (Python 3.12, torch
+2.13.0+cpu):
 
 ```
-tests/inductor/test_dedup_constants.py           (5 existing)      5 pass
-tests/inductor/test_dedup_constants_more.py      (5 pass-level)    5 pass
-tests/inductor/test_dedup_constants_more.py      (4 unit)          4 pass
-tests/inductor/test_padding.py::test_padding_constants_deduped     1 pass
+tests/inductor/test_dedup_constants.py                       18 pass
+   (TestDedupConstants: 5, TestDedupConstantsPassLevel: 8,
+    TestBuildReverseConsumerIndex: 5)
+tests/inductor/test_padding.py::test_padding_constants_deduped   1 pass
 tests/inductor/test_opspec_tiling.py::TestOpSpecTiling::test_flash 1 pass
-                                                            = 16 pass, 0 skipped
+                                                       Total: 20 pass, 0 skipped
 ```
-
-`test_flash` completed in ~104 s cold.
 
 ## Not in this PR
 
@@ -221,8 +274,8 @@ tests/inductor/test_opspec_tiling.py::TestOpSpecTiling::test_flash 1 pass
   scope change; this PR stays in torch-spyre.
 - **The known output-name behavior in `_redirect_consumers`**
   where a duplicate whose name is in `V.graph.get_output_names()`
-  is skipped for redirect but its bookkeeping still runs.
-  Preserved verbatim; not addressed here.
+  is skipped for redirect but `_drop_constant` still runs.
+  Preserved verbatim by this PR; not addressed here.
 
 Additional raw measurement artifacts and diagnostic traces are
 retained separately.
