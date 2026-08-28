@@ -1,0 +1,32 @@
+Test execution against E-only implementation (torch-spyre-E's
+dedup_constants.py replaced with dedup_constants_E_only.py)
+
+$ python -m pytest tests/inductor/test_dedup_constants.py \
+                   tests/inductor/test_dedup_constants_more.py \
+                   tests/inductor/test_padding.py::TestInsertPaddingIR::test_padding_constants_deduped \
+                   -v -p no:logging
+
+collected 11 items
+
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_constants_at_front PASSED [  9%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_dedup_across_same_dtype_pad_sequences PASSED [ 18%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_different_dtype_constants_not_merged PASSED [ 27%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_no_orphans_in_name_to_buffer PASSED [ 36%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_surviving_constant_at_index_zero PASSED [ 45%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_name_to_users_fold_exact PASSED [ 54%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_no_duplicates_fast_path PASSED [ 63%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_one_duplicate_many_consumers PASSED [ 72%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_provenance_transform_appended PASSED [ 81%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_zero_consumer_duplicate PASSED [ 90%]
+tests/inductor/test_padding.py::TestInsertPaddingIR::test_padding_constants_deduped PASSED [100%]
+
+======================= 11 passed, 11 warnings in 15.36s =======================
+
+Environment:
+  torch-spyre baseline: a9316b381 (PR #3806 head)
+  torch-spyre dedup_constants.py: swapped to E-only variant
+  torch: 2.13.0+cpu
+  Python: 3.12.13 (RHEL 9.6)
+  Spyre device: available (pod tdeshane-compiler-timing-dev-v2)
+  TORCH_SPYRE_DEDUP_DIAG: unset
+  TORCH_SPYRE_TIMING: unset

@@ -227,10 +227,14 @@ def main() -> int:
     )
 
     device = "spyre"
+    torch.manual_seed(0xAFFE)
     queries = torch.randn(B, H, args.Lq, D, device=device, dtype=torch.float16)
     keys = torch.randn(B, H, args.Lk, D, device=device, dtype=torch.float16)
     values = torch.randn(B, H, args.Lk, D, device=device, dtype=torch.float16)
-    mask = torch.zeros(B, H, args.Lq, args.Lk, device=device, dtype=torch.float16)
+    causal = torch.tril(torch.ones(args.Lq, args.Lk, dtype=torch.bool))
+    mask_cpu = torch.zeros(1, 1, args.Lq, args.Lk, dtype=torch.float16)
+    mask_cpu.masked_fill_(~causal, float("-inf"))
+    mask = mask_cpu.to(device)
 
     with _patch.object(passes, "CustomPreSchedulingPasses", _CapturePasses):
         compiled = torch.compile(flash, fullgraph=True)
