@@ -1,0 +1,1 @@
+inductor: build constant consumer index once in dedup_and_promote_constants

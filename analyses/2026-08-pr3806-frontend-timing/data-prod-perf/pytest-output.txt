@@ -1,0 +1,53 @@
+Test execution against the production E-only implementation
+(patches/dedup_constants_E_only.py + repeated-read-dep fix,
+dual-import shim for NameSwapHandler for a9316b381 compatibility)
+
+Pod: tdeshane-compiler-timing-dev-v2
+Base tree: torch-spyre @ a9316b381 (with dedup_constants.py
+           replaced by the production version)
+Python: 3.12.13, torch 2.13.0+cpu
+
+=== Run 1: existing + new dedup tests + E2E padding ===
+
+$ python -m pytest tests/inductor/test_dedup_constants.py \
+                   tests/inductor/test_dedup_constants_more.py \
+                   tests/inductor/test_padding.py::TestInsertPaddingIR::test_padding_constants_deduped \
+                   -v -p no:logging
+
+collected 15 items
+
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_constants_at_front PASSED [  6%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_dedup_across_same_dtype_pad_sequences PASSED [ 13%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_different_dtype_constants_not_merged PASSED [ 20%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_no_orphans_in_name_to_buffer PASSED [ 26%]
+tests/inductor/test_dedup_constants.py::TestDedupConstants::test_surviving_constant_at_index_zero PASSED [ 33%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_name_to_users_fold_exact PASSED [ 40%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_no_duplicates_fast_path PASSED [ 46%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_one_duplicate_many_consumers PASSED [ 53%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_provenance_transform_appended PASSED [ 60%]
+tests/inductor/test_dedup_constants_more.py::TestDedupConstantsPassLevel::test_zero_consumer_duplicate PASSED [ 66%]
+tests/inductor/test_dedup_constants_more.py::TestBuildReverseConsumerIndex::test_multiple_ops_deterministic_order PASSED [ 73%]
+tests/inductor/test_dedup_constants_more.py::TestBuildReverseConsumerIndex::test_op_with_no_duplicate_reads_absent_from_index PASSED [ 80%]
+tests/inductor/test_dedup_constants_more.py::TestBuildReverseConsumerIndex::test_op_with_two_deps_different_names PASSED [ 86%]
+tests/inductor/test_dedup_constants_more.py::TestBuildReverseConsumerIndex::test_op_with_two_deps_same_name_appears_once PASSED [ 93%]
+tests/inductor/test_padding.py::TestInsertPaddingIR::test_padding_constants_deduped PASSED [100%]
+
+======================= 15 passed, 11 warnings in 15.58s =======================
+
+=== Run 2: PR #3806 test_flash ===
+
+$ python -m pytest tests/inductor/test_opspec_tiling.py::TestOpSpecTiling::test_flash \
+                   -v -p no:logging
+
+collected 1 item
+
+tests/inductor/test_opspec_tiling.py::TestOpSpecTiling::test_flash PASSED [100%]
+
+======================== 1 passed in 104.17s (0:01:44) =========================
+
+=== Summary ===
+
+Total tests: 16
+Passed: 16
+Failed: 0
+Skipped: 0

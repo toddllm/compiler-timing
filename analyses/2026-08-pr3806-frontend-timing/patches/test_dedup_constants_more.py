@@ -337,7 +337,13 @@ class TestDedupConstantsPassLevel(_BaseDedupPassTest):
 
         def cb(graph: GraphLowering) -> bool:
             from torch_spyre._inductor.dedup_constants import _constant_key
-            from torch_spyre._inductor.insert_restickify import NameSwapHandler
+            try:
+                from torch_spyre._inductor.pass_utils import NameSwapHandler
+            except ImportError:
+                # Older torch-spyre (pre-move) hosted NameSwapHandler in
+                # insert_restickify. Support both so this test runs on
+                # a9316b381 and current main.
+                from torch_spyre._inductor.insert_restickify import NameSwapHandler
 
             constants = self._constants_in(graph.operations)
             groups: dict[tuple, list[SpyreConstantFallback]] = {}
@@ -665,6 +671,95 @@ class TestDedupConstantsPassLevel(_BaseDedupPassTest):
             if not assertions_ran["ok"]:
                 raise
         self.assertTrue(assertions_ran["ok"])
+
+
+# ---------------------------------------------------------------------------
+# Unit test for _build_reverse_consumer_index (dedup_and_promote_constants
+# E-only refactor). Standalone — does not need the Spyre device.
+# ---------------------------------------------------------------------------
+
+
+class TestBuildReverseConsumerIndex(unittest.TestCase):
+    """Guardrail for the E-only reverse-index construction.
+
+    The pristine ``_redirect_consumers`` patches a matching op at most
+    once per duplicate constant, regardless of how many separate
+    dependency objects in ``op.get_read_writes().reads`` happen to
+    share the same buffer name (a single op with two distinct
+    ``ops.load(D, ...)`` at different indices produces two MemoryDep
+    with the same ``.name``). The E-only index must preserve that:
+    each op appears at most once in ``consumers_by_name[name]``.
+    """
+
+    def _fake_dep(self, name: str) -> Any:
+        """A minimal Dep-like object with just ``.name``."""
+        from types import SimpleNamespace
+        return SimpleNamespace(name=name)
+
+    def _fake_op(self, deps: list[Any]) -> Any:
+        """A minimal Operation-like object whose get_read_writes returns
+        an object with ``.reads`` == the given deps.
+        """
+        from types import SimpleNamespace
+        rw = SimpleNamespace(reads=deps)
+        return SimpleNamespace(get_read_writes=lambda: rw)
+
+    def test_op_with_two_deps_same_name_appears_once(self) -> None:
+        """An op whose reads contain two distinct dep objects with the
+        same name D appears exactly once in consumers_by_name[D].
+        """
+        from torch_spyre._inductor.dedup_constants import (
+            _build_reverse_consumer_index,
+        )
+
+        op = self._fake_op([self._fake_dep("bufD"), self._fake_dep("bufD")])
+        idx = _build_reverse_consumer_index([op], {"bufD"})
+        self.assertEqual(len(idx["bufD"]), 1)
+        self.assertIs(idx["bufD"][0], op)
+
+    def test_op_with_two_deps_different_names(self) -> None:
+        """An op whose reads contain two distinct duplicate names D1
+        and D2 appears once in each of consumers_by_name[D1] and
+        consumers_by_name[D2].
+        """
+        from torch_spyre._inductor.dedup_constants import (
+            _build_reverse_consumer_index,
+        )
+
+        op = self._fake_op([self._fake_dep("bufD1"), self._fake_dep("bufD2")])
+        idx = _build_reverse_consumer_index([op], {"bufD1", "bufD2"})
+        self.assertEqual(len(idx["bufD1"]), 1)
+        self.assertEqual(len(idx["bufD2"]), 1)
+        self.assertIs(idx["bufD1"][0], op)
+        self.assertIs(idx["bufD2"][0], op)
+
+    def test_op_with_no_duplicate_reads_absent_from_index(self) -> None:
+        """An op that reads only non-duplicate names does not appear
+        in the index at all.
+        """
+        from torch_spyre._inductor.dedup_constants import (
+            _build_reverse_consumer_index,
+        )
+
+        op = self._fake_op([self._fake_dep("bufX"), self._fake_dep("bufY")])
+        idx = _build_reverse_consumer_index([op], {"bufD"})
+        self.assertNotIn("bufD", idx)
+        self.assertNotIn("bufX", idx)
+        self.assertNotIn("bufY", idx)
+
+    def test_multiple_ops_deterministic_order(self) -> None:
+        """Ops are appended in graph.operations order, preserving
+        determinism for later passes and for debugging."""
+        from torch_spyre._inductor.dedup_constants import (
+            _build_reverse_consumer_index,
+        )
+
+        op1 = self._fake_op([self._fake_dep("bufD")])
+        op2 = self._fake_op([self._fake_dep("bufD"), self._fake_dep("bufD")])
+        op3 = self._fake_op([self._fake_dep("bufOther")])
+        op4 = self._fake_op([self._fake_dep("bufD")])
+        idx = _build_reverse_consumer_index([op1, op2, op3, op4], {"bufD"})
+        self.assertEqual(idx["bufD"], [op1, op2, op4])
 
 
 if __name__ == "__main__":

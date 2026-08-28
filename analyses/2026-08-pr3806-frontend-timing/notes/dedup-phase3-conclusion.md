@@ -248,12 +248,16 @@ Concrete next step (for a follow-up phase):
 - Open a torch-spyre PR titled roughly "dedup: replace per-dup
   consumer scan with local reverse index (~N×D → ~N
   `get_read_writes` calls)".
-- Content: exactly the E-only diff plus the four deterministic
-  new tests. `patches/dedup_constants_E_only.py` in this repo is
-  the reference; strip the diagnostic instrumentation for the
-  merged version (leave the fast-path gate, the reverse-index
-  build, and the redirect-via-index call; drop the `_diag_record`
-  wiring).
+- Content: exactly the E-only diff plus the deterministic new
+  tests (five pass-level tests: zero-consumer, one-duplicate-many-
+  consumers, name_to_users fold, provenance, no-duplicate fast
+  path; plus four unit tests for the reverse-index construction:
+  op-with-two-deps-same-name, op-with-two-deps-different-names,
+  op-with-no-duplicate-reads, multiple-ops-deterministic-order).
+  `patches/dedup_constants_E_only.py` in this repo is the
+  reference; strip the diagnostic instrumentation for the merged
+  version (leave the fast-path gate, the reverse-index build, and
+  the redirect-via-index call; drop the `_diag_record` wiring).
 - Cite this repo's notes/dedup-phase2-plan.md and notes/
   dedup-phase3-conclusion.md as external evidence.
 - Recommend Todd merge the phase-1/2/3 reports back into

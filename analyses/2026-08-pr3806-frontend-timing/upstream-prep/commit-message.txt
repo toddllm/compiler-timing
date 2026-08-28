@@ -1,0 +1,75 @@
+inductor: build constant consumer index once in dedup_and_promote_constants
+
+dedup_and_promote_constants scans graph.operations and calls
+op.get_read_writes() on every op, once per duplicate constant it
+merges. On graphs where duplicate count grows with graph size --
+the case for insert_bmm_padding's constant_pad_nd decomposition --
+this creates near-quadratic frontend compile behavior in program
+size.
+
+Build a live reverse consumer index once per invocation, scoped
+to duplicate buffer names, and reuse it for all duplicates. The
+get_read_writes() calls the pristine pass made inside its
+per-duplicate scan happen only once per op now, in a single sweep,
+and consumer discovery becomes a dictionary lookup.
+
+The reverse-index builder de-duplicates matched buffer names
+within each op's read set, so an op with two distinct MemoryDep
+objects sharing a name still appears at most once in the index
+under that name -- matching the pristine algorithm's
+"patch once per (op, dup)" behavior.
+
+_drop_constant's per-duplicate operations.remove(dup) is
+deliberately preserved. It runs D times, each an O(N) list scan,
+but its measured cost is 0.02-0.03% of pristine dedup time; not
+worth batching in this change.
+
+Complexity claim (precise):
+  * Consumer-discovery term: pristine D full scans of
+    graph.operations, each calling get_read_writes on every op ->
+    single scan. get_read_writes calls fall from ~N*D to ~N.
+  * Per-duplicate operations.remove: unchanged; still O(N*D)
+    overall but measured negligible.
+  * No-duplicate fast path preserved: no get_read_writes calls
+    when no group has more than one entry.
+
+Measured pass-local speedup on tests/inductor/test_opspec_tiling.py
+::TestOpSpecTiling::test_flash (H=8, Lq=512), 3 cold samples per
+point, DIAG-OFF:
+
+  point    pristine  new     pass-local
+  Lk=1024   0.87 s   0.060 s  14x
+  Lk=4096  14.11 s   0.250 s  57x
+  Lk=8192  54.65 s   0.492 s  111x
+
+get_read_writes call counts (DIAG-ON):
+
+  point   N    D    pristine (N*D)  new (N)  reduction
+  Lk=1024  276  16     4,416          276      16x
+  Lk=4096 1092  64    69,888        1,092      64x
+  Lk=8192 2180 128   279,040        2,180     128x
+
+Whole-compile impact: pass-local win is enormous but end-to-end
+impact is small because DXP backend dominates cold compile at
+scale. At Lk=8192, saves ~54 s of ~2380 s compile_fx (~2.3%);
+dxp_standalone is ~92% of compile_fx.
+
+Semantic equivalence verified at Lq=512, Lk=1024 by comparing
+normalized post-dedup state (graph.operations, surviving
+constants, removed_buffers, name_to_buffer keys, name_to_op
+keys, name_to_users entries, per-consumer live reads,
+provenance history). EQUIVALENT -- no differences detected.
+
+Adds 9 deterministic tests to tests/inductor/test_dedup_constants_more.py
+(5 pass-level + 4 unit tests over _build_reverse_consumer_index).
+Zero skips. Existing tests unchanged and pass. Existing E2E
+padding test and the PR #3806 test_flash both pass.
+
+Not in this change: batch removal of operations.remove (measured
+within noise, ships separately if desired); upstream Inductor
+changes to register_users_of; the known output-name
+_redirect-skip-but-still-drop behavior in _redirect_consumers is
+unchanged.
+
+Full evidence trail (raw JSONs, semantic diffs, pytest output)
+in an external repository; see the PR description for pointers.

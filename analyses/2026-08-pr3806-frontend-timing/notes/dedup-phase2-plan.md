@@ -794,10 +794,16 @@ variant (fall back to the linear scan when `name_to_users[D]`
 misses), the fallback path would fire 100% of the time on this
 workload — it would BE the linear scan.
 
-Option E delivers the intended `O(N × D) → O(N)` collapse with no
-upstream dependencies. Batch removal composes trivially with E (the
-dead-ids set is populated in the same loop) and preserves
-`merge_provenance` semantics unchanged.
+Option E delivers the intended `O(N × D) → O(N)` collapse on the
+**dominant consumer-discovery term** with no upstream dependencies.
+Note this is not a claim that the whole pass becomes `O(N)`: the
+per-duplicate `operations.remove(dup)` in `_drop_constant` still
+runs D times, each an O(N) list scan, contributing an O(N × D)
+tail. That tail is measured at 0.02–0.03% of pristine dedup time
+(Section B) and is intentionally not batched in the recommended
+change. Batch removal composes trivially with E (the dead-ids set
+is populated in the same loop) and preserves `merge_provenance`
+semantics unchanged.
 
 ## E. Predicted new complexity
 
@@ -931,5 +937,20 @@ together). Rationale in the commit message: they are already
 coupled in the design — the local index and the dead-ids set are
 populated in the same loop; separating them would either require
 maintaining two loops or leaving `operations.remove(dup)` as an
-O(N × D) tail on an otherwise O(N) pass. Commit message must cite
+O(N × D) tail. Note that even with batch removal the pass is not
+strictly O(N) — Step 1 grouping is O(N); Step 2 is O(N · f_grw)
+for the reverse-index build plus O(Σ_D U_D) for the redirects;
+Step 3 is O(N) for the filter/partition. Commit message must cite
 this phase-2 report by path and SHA.
+
+**Correction (post-Phase-3).** After measurement, we chose to
+ship E-only WITHOUT batch removal — batch removal was measured
+within noise (see `notes/dedup-phase3-conclusion.md` §4). So the
+recommended production change leaves the O(N × D) per-duplicate
+list-remove tail intact. That tail is 0.02–0.03% of pristine
+dedup time and unimportant to defend. The defensible claim is
+narrower: E-only turns the *dominant consumer-discovery term*
+from ~D full scans of `graph.operations` (each calling
+`op.get_read_writes()` on every op) into a single scan; the
+`get_read_writes()` call count falls from approximately N × D to
+approximately N. See phase-3 conclusion for the final wording.
