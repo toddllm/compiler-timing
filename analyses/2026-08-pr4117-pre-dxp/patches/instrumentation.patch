@@ -1,0 +1,387 @@
+--- a/torch_spyre/_inductor/passes.py	2026-08-28 19:14:43
++++ b/torch_spyre/_inductor/passes.py	2026-08-28 20:41:05
+@@ -37,6 +37,7 @@
+ 
+ from .logging_utils import get_inductor_logger
+ from .provenance import SpyreGraphTransformObserver, reset_provenance_warnings
++from . import timing_recorder as _tr
+ 
+ from .padding import insert_bmm_padding, insert_restickify_padding
+ from .temp_passes import (
+@@ -174,8 +175,12 @@
+         # FX-graph passes are already observed by upstream Inductor's
+         # GraphTransformObserver (populates node.meta["from_node"]); no Spyre
+         # observer is wrapped here.
+-        for p in self.passes:
+-            p(graph)
++        pipeline_name = type(self).__name__
++        with _tr.stage(f"pipeline:{pipeline_name}", passes=len(self.passes)):
++            for p in self.passes:
++                name = _get_pass_name(p)
++                with _tr.stage(f"pass:{pipeline_name}:{name}"):
++                    p(graph)
+ 
+     def uuid(self) -> Any | None:
+         return _uuid(self.passes)
+@@ -196,14 +201,23 @@
+         # This pipeline is a per-compile entry point for the observed passes,
+         # so clear the dedup here so each compile warns afresh.
+         reset_provenance_warnings()
+-        for pass_fn in self.passes:
+-            name = _get_pass_name(pass_fn)
+-            observer = SpyreGraphTransformObserver(target, name, kind="node")
+-            with observer:
+-                target = pass_fn(target)
+-                # Reconcile the returned list while recursively inspecting the
+-                # underlying buffers through scheduler get_nodes().
+-                observer.target = target
++        pipeline_name = type(self).__name__
++        with _tr.stage(
++            f"pipeline:{pipeline_name}",
++            passes=len(self.passes),
++            input_nodes=len(target),
++        ):
++            for pass_fn in self.passes:
++                name = _get_pass_name(pass_fn)
++                observer = SpyreGraphTransformObserver(target, name, kind="node")
++                with observer, _tr.stage(
++                    f"pass:{pipeline_name}:{name}",
++                    input_nodes=len(target),
++                ):
++                    target = pass_fn(target)
++                    # Reconcile the returned list while recursively inspecting the
++                    # underlying buffers through scheduler get_nodes().
++                    observer.target = target
+         return target
+ 
+     def uuid(self) -> Any | None:
+@@ -504,26 +518,45 @@
+                 "BEFORE PRE-SCHEDULING\n%s", format_operations(graph.operations)
+             )
+ 
+-        for pass_fn in self.passes:
+-            pass_name = _get_pass_name(pass_fn)
+-            # `graph` is the same object throughout -- passes mutate
+-            # `graph.operations` in place -- so before/after reconciliation
+-            # is exact here.
+-            with SpyreGraphTransformObserver(graph, pass_name, kind="graphlowering"):
+-                t0 = time.perf_counter()
+-                pass_fn(graph)
+-                elapsed_ms = (time.perf_counter() - t0) * 1000
++        initial_ops = len(graph.operations)
++        with _tr.stage(
++            "pipeline:CustomPreSchedulingPasses",
++            passes=len(self.passes),
++            input_operations=initial_ops,
++        ):
++            for pass_fn in self.passes:
++                pass_name = _get_pass_name(pass_fn)
++                # `graph` is the same object throughout -- passes mutate
++                # `graph.operations` in place -- so before/after reconciliation
++                # is exact here.
++                before_ops = len(graph.operations)
++                with SpyreGraphTransformObserver(
++                    graph, pass_name, kind="graphlowering"
++                ), _tr.stage(
++                    f"pass:CustomPreSchedulingPasses:{pass_name}",
++                    input_operations=before_ops,
++                ) as _ev:
++                    t0 = time.perf_counter()
++                    pass_fn(graph)
++                    elapsed_ms = (time.perf_counter() - t0) * 1000
++                    if _ev is not None:
++                        _ev.meta["output_operations"] = len(graph.operations)
++                        _ev.meta["ops_delta"] = (
++                            len(graph.operations) - before_ops
++                        )
+ 
+-            if logger.isEnabledFor(logging.INFO):
+-                logger.info(
+-                    "elapsed %5dms  %s",
+-                    elapsed_ms,
+-                    pass_name,
+-                )
+-            if logger.isEnabledFor(logging.DEBUG) and _should_log_pass(pass_name):
+-                logger.debug(
+-                    "AFTER %s\n%s", pass_name, format_operations(graph.operations)
+-                )
++                if logger.isEnabledFor(logging.INFO):
++                    logger.info(
++                        "elapsed %5dms  %s",
++                        elapsed_ms,
++                        pass_name,
++                    )
++                if logger.isEnabledFor(logging.DEBUG) and _should_log_pass(pass_name):
++                    logger.debug(
++                        "AFTER %s\n%s",
++                        pass_name,
++                        format_operations(graph.operations),
++                    )
+ 
+         if logger.isEnabledFor(logging.INFO):
+             logger.info("AFTER PRE-SCHEDULING\n%s", format_operations(graph.operations))
+
+--- a/torch_spyre/_inductor/__init__.py	2026-08-28 19:14:43
++++ b/torch_spyre/_inductor/__init__.py	2026-08-28 20:41:54
+@@ -22,6 +22,8 @@
+ 
+ from .propagate_hints import spyre_hint, get_op_hints  # noqa: F401
+ from torch_spyre.profiler._ffdc import CATEGORY_COMPILE_FRONTEND, try_collect
++from . import timing_recorder as _tr
++from . import extra_timers as _extra_timers
+ 
+ _autoload_lock = threading.Lock()
+ 
+@@ -151,44 +153,72 @@
+         def _wrapper(gm, example_inputs, *args, **kwargs):
+             uses_spyre = _uses_spyre(gm, example_inputs)
+ 
++            # FX-node count at compile_fx entry — a graph-size x-axis
++            # independent of pass-internal predictions.
+             try:
+-                if uses_spyre:
+-                    torch.spyre._impl._lazy_init()
+-                    # AOTAutograd uses the dict passed via ``decompositions=``
+-                    # to decompose the joint graph; Spyre-specific
+-                    # decompositions must be applied at this stage so ops like
+-                    # aten.logical_not / aten.ceil / aten.sign are reduced to
+-                    # primitives the Spyre OpFuncs handler implements.
+-                    from torch_spyre._inductor.decompositions import (
+-                        get_spyre_decomp_table,
+-                    )
++                fx_nodes_at_entry = len(list(gm.graph.nodes))
++            except Exception:
++                fx_nodes_at_entry = -1
+ 
+-                    kwargs.setdefault("decompositions", get_spyre_decomp_table())
+-                    # Route inner compilation through _spyre_inner_compile,
+-                    # which re-binds ``get_decomp_fn`` to a picklable
+-                    # module-level callable so the FX graph cache key stays
+-                    # serializable.
+-                    kwargs.setdefault("inner_compile", _spyre_inner_compile)
+-                    # Mark this thread as inside a Spyre compile so the
+-                    # invoke_subgraph HOP re-trace (which happens within this
+-                    # _orig call) threads the Spyre decomp table into its
+-                    # subgraph bodies. Save/restore to stay correct under
+-                    # nested compile_fx calls.
+-                    _prev_in_spyre = getattr(_compile_state, "in_spyre_compile", False)
+-                    _compile_state.in_spyre_compile = True
+-                    try:
+-                        with enable_spyre_context(example_inputs):
+-                            return _orig(gm, example_inputs, *args, **kwargs)
+-                    finally:
+-                        _compile_state.in_spyre_compile = _prev_in_spyre
++            timing_stage_name = (
++                "compile_fx_wrapper" if uses_spyre
++                else "compile_fx_wrapper_non_spyre"
++            )
++            # Install extra timers on first Spyre compile per process; no-op
++            # thereafter and no-op when TORCH_SPYRE_TIMING is off.
++            if uses_spyre:
++                _extra_timers.install_extra_timers()
+ 
+-                # Non-Spyre graphs: no FFDC — avoids capturing unrelated CPU
+-                # compiles.
+-                return _orig(gm, example_inputs, *args, **kwargs)
++            try:
++                with _tr.stage(
++                    timing_stage_name, fx_nodes_at_entry=fx_nodes_at_entry
++                ):
++                    if uses_spyre:
++                        torch.spyre._impl._lazy_init()
++                        # AOTAutograd uses the dict passed via ``decompositions=``
++                        # to decompose the joint graph; Spyre-specific
++                        # decompositions must be applied at this stage so ops
++                        # like aten.logical_not / aten.ceil / aten.sign are
++                        # reduced to primitives the Spyre OpFuncs handler
++                        # implements.
++                        from torch_spyre._inductor.decompositions import (
++                            get_spyre_decomp_table,
++                        )
++
++                        kwargs.setdefault(
++                            "decompositions", get_spyre_decomp_table()
++                        )
++                        # Route inner compilation through _spyre_inner_compile,
++                        # which re-binds ``get_decomp_fn`` to a picklable
++                        # module-level callable so the FX graph cache key stays
++                        # serializable.
++                        kwargs.setdefault(
++                            "inner_compile", _spyre_inner_compile
++                        )
++                        # Mark this thread as inside a Spyre compile so the
++                        # invoke_subgraph HOP re-trace (which happens within this
++                        # _orig call) threads the Spyre decomp table into its
++                        # subgraph bodies. Save/restore to stay correct under
++                        # nested compile_fx calls.
++                        _prev_in_spyre = getattr(
++                            _compile_state, "in_spyre_compile", False
++                        )
++                        _compile_state.in_spyre_compile = True
++                        try:
++                            with enable_spyre_context(example_inputs):
++                                return _orig(gm, example_inputs, *args, **kwargs)
++                        finally:
++                            _compile_state.in_spyre_compile = _prev_in_spyre
++
++                    # Non-Spyre graphs: no FFDC — avoids capturing unrelated CPU
++                    # compiles.
++                    return _orig(gm, example_inputs, *args, **kwargs)
+             except Exception as exc:
+                 if uses_spyre:
+                     try_collect(
+-                        exc, logger=logger, failure_category=CATEGORY_COMPILE_FRONTEND
++                        exc,
++                        logger=logger,
++                        failure_category=CATEGORY_COMPILE_FRONTEND,
+                     )
+                 raise
+ 
+
+--- a/torch_spyre/execution/async_compile.py	2026-08-28 19:14:43
++++ b/torch_spyre/execution/async_compile.py	2026-08-28 20:42:21
+@@ -36,6 +36,7 @@
+ )
+ from torch_spyre._inductor.codegen.bundle import generate_bundle
+ from torch_spyre.profiler._ffdc import CATEGORY_COMPILE_BACKEND, try_collect
++from torch_spyre._inductor import timing_recorder as _tr
+ from .kernel_runner import SpyreSDSCKernelRunner, SpyreUnimplementedRunner
+ 
+ logger = get_inductor_logger("sdsc_compile")
+@@ -115,63 +116,74 @@
+         specs: Sequence[OpSpec | LoopSpec | UnimplementedOp],
+         pool_size: int = 0,
+     ):
+-        unimp = find_unimplemented(list(specs))
+-        if unimp is not None:
+-            logger.warning(
+-                f"WARNING: Compiling unimplemented {unimp.op} to runtime exception"
+-            )
+-            return SpyreUnimplementedRunner(kernel_name, unimp.op)
+-
+-        # Generate SDSC Bundle from OpSpecs
+-        output_dir = get_output_dir(kernel_name)
+-        generate_bundle(kernel_name, output_dir, specs, pool_size=pool_size)
+-
+-        self._provenance_attempt_count += 1
+-        try:
+-            # This is the common fresh-compile/cache-reload boundary: generated
+-            # wrappers have reconstructed the finalized OpSpecs before calling
+-            # sdsc(). Derive the transport-neutral identity here without changing
+-            # the generated wrapper call ABI.
+-            finalized_specs = cast(Sequence[OpSpec | LoopSpec], specs)
+-            kernel_provenance = build_kernel_provenance_descriptor(finalized_specs)
+-        except Exception:  # noqa: BLE001 - provenance must never fail the build
+-            # Keep canonicalization strict rather than issuing an ambiguous
+-            # fallback key. Log the first traceback, then report the complete
+-            # failure count at the generated wrapper's wait() boundary.
+-            self._provenance_failure_count += 1
+-            if self._provenance_failure_count == 1:
++        with _tr.stage("sdsc_total", kernel=kernel_name):
++            unimp = find_unimplemented(list(specs))
++            if unimp is not None:
+                 logger.warning(
+-                    "kernel provenance descriptor construction failed for kernel "
+-                    "%s; continuing without kernel provenance; additional "
+-                    "failures in this compilation will be summarized",
+-                    kernel_name,
+-                    exc_info=True,
++                    f"WARNING: Compiling unimplemented {unimp.op} to runtime exception"
+                 )
+-            kernel_provenance = None
++                return SpyreUnimplementedRunner(kernel_name, unimp.op)
+ 
+-        # Invoke backend compiler of SDSC Bundle
+-        with torch.profiler.record_function(f"dxp_standalone:{kernel_name}"):
+-            try:
+-                subprocess.run(
+-                    ["dxp_standalone", "-d", output_dir],
+-                    check=True,
+-                )
+-            except Exception as exc:
+-                try_collect(
+-                    exc,
+-                    logger=logger,
+-                    failure_category=CATEGORY_COMPILE_BACKEND,
+-                    kernel_name=kernel_name,
+-                    code_dir=output_dir,
+-                )
+-                raise
++            # Generate SDSC Bundle from OpSpecs
++            output_dir = get_output_dir(kernel_name)
++            with _tr.stage(
++                "sdsc_bundle_gen",
++                kernel=kernel_name,
++                n_specs=len(specs),
++            ):
++                generate_bundle(kernel_name, output_dir, specs, pool_size=pool_size)
+ 
+-        return SpyreSDSCKernelRunner(
+-            kernel_name,
+-            output_dir,
+-            kernel_provenance=kernel_provenance,
+-        )
++            self._provenance_attempt_count += 1
++            with _tr.stage("kernel_provenance", kernel=kernel_name):
++                try:
++                    # Fresh-compile/cache-reload boundary: generated wrappers
++                    # have reconstructed finalized OpSpecs before calling
++                    # sdsc(). Derive the transport-neutral identity here.
++                    finalized_specs = cast(Sequence[OpSpec | LoopSpec], specs)
++                    kernel_provenance = build_kernel_provenance_descriptor(
++                        finalized_specs
++                    )
++                except Exception:  # noqa: BLE001
++                    self._provenance_failure_count += 1
++                    if self._provenance_failure_count == 1:
++                        logger.warning(
++                            "kernel provenance descriptor construction failed "
++                            "for kernel %s; continuing without kernel provenance; "
++                            "additional failures in this compilation will be "
++                            "summarized",
++                            kernel_name,
++                            exc_info=True,
++                        )
++                    kernel_provenance = None
+ 
++            # Invoke backend compiler of SDSC Bundle
++            with _tr.stage(
++                "dxp_standalone",
++                kernel=kernel_name,
++                output_dir=output_dir,
++            ):
++                with torch.profiler.record_function(f"dxp_standalone:{kernel_name}"):
++                    try:
++                        subprocess.run(
++                            ["dxp_standalone", "-d", output_dir],
++                            check=True,
++                        )
++                    except Exception as exc:
++                        try_collect(
++                            exc,
++                            logger=logger,
++                            failure_category=CATEGORY_COMPILE_BACKEND,
++                            kernel_name=kernel_name,
++                            code_dir=output_dir,
++                        )
++                        raise
++
++            return SpyreSDSCKernelRunner(
++                kernel_name,
++                output_dir,
++                kernel_provenance=kernel_provenance,
++            )
++
+     def ktir(
+         self, kernel_name: str, specs: Sequence[OpSpec | LoopSpec | UnimplementedOp]
+     ):
+@@ -306,7 +318,8 @@
+         return SpyreSDSCKernelRunner(kernel_name, output_dir)
+ 
+     def wait(self, scope: dict[str, Any]) -> None:
+-        super().wait(scope)
++        with _tr.stage("async_compile_wait"):
++            super().wait(scope)
+         if self._provenance_failure_count:
+             logger.warning(
+                 "kernel provenance disabled for %d/%d compiled Spyre kernels",
