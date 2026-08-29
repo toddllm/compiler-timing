@@ -1,95 +1,100 @@
 """Frontend-only measurement harness for epic #4117.
 
-Runs the normal cold-compile path through backend-input generation and
-stops immediately before ``subprocess.run(["dxp_standalone", ...])`` in
-``torch_spyre.execution.async_compile.SpyreAsyncCompile.sdsc``.
+Runs the normal cold-compile path through backend-input generation.
 
-The stop is implemented by monkey-patching ``subprocess.run`` at the
-call site: when ``TORCH_SPYRE_PRE_DXP_STOP=1`` is set, the patched
-``run`` records the arguments it would have passed to DXP, raises a
-dedicated sentinel exception ``_PreDxpBoundary``, and lets the outer
-harness catch it as the "pre-DXP done" signal.
+Interception modes (via ``--mode``):
 
-Design constraints (per epic #4117 methodology):
+  stop
+      Reach the ``subprocess.run(["dxp_standalone", ...])`` call site,
+      hash and catalog the bundle *before* subprocess.run, emit a
+      ``pre_dxp_boundary_marker`` timing stage, and raise the
+      ``_PreDxpBoundary`` sentinel. `generate_bundle` and
+      `build_kernel_provenance_descriptor` have already completed.
+      DXP itself does not run. Sentinel unwinds through the compile
+      stack; the outer harness catches it and dumps timing JSON.
+      Analysis-only.
 
-  * Preserve normal frontend path — the harness does not stub out
-    ``generate_bundle`` or ``build_kernel_provenance_descriptor``.
-    Everything that runs before ``subprocess.run`` in a production
-    cold compile also runs here.
-  * Do not replace DXP with a fake implementation that could make
-    upstream code take a different branch. The interception is at the
-    subprocess call itself, after every torch-side step.
-  * Verify SDSC bundle fidelity by re-running under a normal (no-stop)
-    mode at one baseline point and comparing the produced bundle
-    directory listing against the pre-DXP-stop run.
+  observe
+      Reach the same call site, hash and catalog the bundle *before*
+      subprocess.run, emit ``pre_dxp_boundary_marker``, THEN delegate
+      to the original ``subprocess.run`` so DXP runs to completion.
+      The compiled artifact fully materializes. Used only for
+      fidelity checks: this run and a paired ``stop`` run produce
+      identical pre-DXP catalogs when the interception did not alter
+      what DXP sees.
 
-Interception mechanism
-----------------------
+  passthrough
+      No interception. Baseline compare — used for sanity/timing
+      comparison against production behavior.
 
-``_install_pre_dxp_stop()`` replaces
-``torch_spyre.execution.async_compile.subprocess.run`` with a function
-that:
-
-  1. captures ``args`` and ``kwargs`` on ``self._captured_dxp_calls``
-     (a class-level attribute on the recorder for the run).
-  2. calls ``timing_recorder.stage("pre_dxp_boundary_marker")`` briefly
-     so the boundary is a queryable event ordinal in the JSON.
-  3. raises ``_PreDxpBoundary``, which the harness in ``main()``
-     catches at the compile-driver level.
-
-The sentinel exception carries the captured call so a caller can
-verify that the process really reached the DXP boundary. This
-distinguishes "stopped as intended" from "compile bailed for some
-other reason."
+The catalog dumped by ``stop`` and ``observe`` at the boundary is
+written to ``$SPYRE_PRE_DXP_CATALOG`` (JSON), keyed by output_dir. It
+records every file the bundle contains, with SHA-256, size, and mode,
+so paired runs can be compared for byte-for-byte identity of the
+INPUT to DXP — not what DXP wrote afterwards.
 
 Environment
 -----------
 
-``TORCH_SPYRE_PRE_DXP_STOP=1``
-    Enable pre-DXP interception. When unset, the harness runs a
-    normal cold compile.
-
-``TORCH_SPYRE_TIMING=1``
-    Also record hierarchical timing into ``$SPYRE_TIMING_OUT``. This
-    is orthogonal to the stop switch; enable both for a full
-    instrumented pre-DXP-only run.
-
-``SPYRE_TIMING_OUT``
-    Path to write the timing JSON. Required when TIMING is on.
-
-Fidelity
---------
-
-Under ``TORCH_SPYRE_PRE_DXP_STOP=1``:
-
-  * ``generate_bundle`` runs to completion. The SDSC bundle exists on
-    disk in ``$TORCHINDUCTOR_CACHE_DIR/.../<kernel_name>/`` at the
-    normal location.
-  * ``build_kernel_provenance_descriptor`` runs (or is caught by its
-    own try/except; identical to normal).
-  * ``subprocess.run`` is not invoked; no DXP output artifacts appear.
-  * ``SpyreSDSCKernelRunner`` is never constructed. The wrapper's first
-    call raises ``_PreDxpBoundary`` from inside ``sdsc()``.
-
-Anything the wrapper's first call would have done after the compiled
-kernel returned (post-DXP path: allocations, runtime kernel launch)
-does not run. The harness is therefore analysis-only.
+``TORCH_SPYRE_TIMING=1``            required
+``SPYRE_TIMING_OUT``                 path for timing JSON dump
+``SPYRE_PRE_DXP_CATALOG``            path for pre-DXP catalog JSON (optional)
 """
 
 from __future__ import annotations
 
 import argparse
 import gc
+import hashlib
+import json
 import os
+import stat
 import sys
 from typing import Any
 
 
-class _PreDxpBoundary(Exception):
-    """Sentinel raised at the subprocess.run(dxp_standalone) call
-    site when TORCH_SPYRE_PRE_DXP_STOP=1.
+# ---- catalog helpers -------------------------------------------------------
 
-    Carries the captured (args, kwargs) so callers can prove the
+def _hash_file(path: str, chunk: int = 65536) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        while buf := fh.read(chunk):
+            h.update(buf)
+    return h.hexdigest()
+
+
+def _catalog_dir(root: str) -> dict[str, dict]:
+    """Return {relpath: {"size", "sha256", "mode"}} for every regular
+    file under ``root``. Symlinks are NOT followed.
+    """
+    out: dict[str, dict] = {}
+    if not os.path.isdir(root):
+        return out
+    for dirpath, _dirs, files in os.walk(root, followlinks=False):
+        for name in files:
+            abs_ = os.path.join(dirpath, name)
+            rel = os.path.relpath(abs_, root)
+            try:
+                st = os.lstat(abs_)
+                if not stat.S_ISREG(st.st_mode):
+                    out[rel] = {"kind": "non-regular", "mode": st.st_mode}
+                    continue
+                out[rel] = {
+                    "size": st.st_size,
+                    "sha256": _hash_file(abs_),
+                    "mode": stat.S_IMODE(st.st_mode),
+                }
+            except OSError as e:
+                out[rel] = {"error": repr(e)}
+    return out
+
+
+# ---- interception ----------------------------------------------------------
+
+class _PreDxpBoundary(Exception):
+    """Sentinel raised at the DXP call site in ``stop`` mode.
+
+    Carries the captured (args, kwargs) so the outer harness can prove
     interception fired at the intended point.
     """
 
@@ -99,44 +104,99 @@ class _PreDxpBoundary(Exception):
         self.dxp_kwargs = dxp_kwargs
 
 
-def _install_pre_dxp_stop() -> None:
-    """Monkey-patch subprocess.run inside torch_spyre.execution.async_compile
-    to record + raise _PreDxpBoundary. Idempotent.
+class _Interception:
+    """Encapsulates the boundary-catalog logic shared by stop and observe.
+
+    ``mode`` selects whether the wrapper raises after catalog capture
+    or delegates to the original ``subprocess.run``.
     """
-    from torch_spyre.execution import async_compile as _ac
 
-    if getattr(_ac, "_pre_dxp_stop_installed", False):
-        return
+    def __init__(self, mode: str, catalog_path: str | None) -> None:
+        assert mode in ("stop", "observe", "passthrough")
+        self.mode = mode
+        self.catalog_path = catalog_path
+        # kernel_name → {"catalog": {...}, "output_dir": ..., "cmd": [...]}
+        self.captured: dict[str, dict] = {}
+        self.orig_run = None
 
-    orig_run = _ac.subprocess.run
+    def install(self) -> None:
+        if self.mode == "passthrough":
+            return
+        from torch_spyre.execution import async_compile as _ac
 
-    def _stub_run(*args, **kwargs):
-        # Sanity: only intercept the DXP subprocess. Any other call
-        # (unlikely from this module, but safe) passes through.
-        cmd = args[0] if args else kwargs.get("args") or []
-        if not (isinstance(cmd, (list, tuple)) and cmd and cmd[0] == "dxp_standalone"):
-            return orig_run(*args, **kwargs)
-        # Emit a boundary marker into the timing record so the
-        # analyzer has an unambiguous event ordinal to align at.
-        # The recorder module is whichever one main() already imported
-        # (upstream torch_spyre one, or the compiler-timing fallback).
-        try:
-            _tr = sys.modules.get("torch_spyre._inductor.timing_recorder") \
-                or sys.modules.get("timing_recorder")
-            if _tr is not None:
-                with _tr.stage("pre_dxp_boundary_marker", cmd=list(cmd)):
-                    pass
-        except Exception:
-            pass
-        raise _PreDxpBoundary(args, kwargs)
+        if getattr(_ac, "_pre_dxp_intercept_installed", False):
+            return
+        self.orig_run = _ac.subprocess.run
 
-    _ac.subprocess.run = _stub_run  # type: ignore[attr-defined]
-    _ac._pre_dxp_stop_installed = True  # type: ignore[attr-defined]
+        def _wrapped_run(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get("args") or []
+            if not (isinstance(cmd, (list, tuple)) and cmd and cmd[0] == "dxp_standalone"):
+                # Anything not addressed to dxp_standalone passes through
+                # untouched (there are none from this module today, but
+                # be defensive).
+                return self.orig_run(*args, **kwargs)
 
+            # Extract the output_dir DXP was told to consume so we can
+            # hash exactly what DXP is about to see. The convention is
+            # ``["dxp_standalone", "-d", <output_dir>]``.
+            output_dir = None
+            for i in range(len(cmd) - 1):
+                if cmd[i] == "-d":
+                    output_dir = cmd[i + 1]
+                    break
+            catalog = _catalog_dir(output_dir) if output_dir else {}
+
+            # Key by output_dir basename; per-kernel dirs use a unique
+            # digest prefix already (see async_compile.get_output_dir).
+            key = os.path.basename(output_dir) if output_dir else f"cmd{len(self.captured)}"
+            self.captured[key] = {
+                "cmd": list(cmd),
+                "output_dir": output_dir,
+                "catalog": catalog,
+            }
+
+            # Emit a boundary marker into the timing record so the
+            # analyzer has a queryable ordinal.
+            try:
+                _tr = sys.modules.get("torch_spyre._inductor.timing_recorder") \
+                    or sys.modules.get("timing_recorder")
+                if _tr is not None:
+                    with _tr.stage(
+                        "pre_dxp_boundary_marker",
+                        cmd=list(cmd),
+                        output_dir=output_dir,
+                        n_files=len(catalog),
+                    ):
+                        pass
+            except Exception:
+                pass
+
+            if self.mode == "stop":
+                raise _PreDxpBoundary(args, kwargs)
+            # observe mode: catalog captured, now delegate.
+            return self.orig_run(*args, **kwargs)
+
+        _ac.subprocess.run = _wrapped_run  # type: ignore[attr-defined]
+        _ac._pre_dxp_intercept_installed = True  # type: ignore[attr-defined]
+
+    def dump_catalog(self) -> None:
+        if self.catalog_path is None:
+            return
+        payload = {
+            "mode": self.mode,
+            "captured": self.captured,
+        }
+        tmp = self.catalog_path + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump(payload, fh, indent=2, sort_keys=True)
+        os.replace(tmp, self.catalog_path)
+
+
+# ---- workloads -------------------------------------------------------------
 
 def _flash_workload(Lq: int, Lk: int):
-    """Same flash-attention closure the study used, so results are
-    directly comparable across analyses.
+    """Same flash-attention closure the prior study used, so results
+    are directly comparable across analyses.
     """
     import math
 
@@ -209,21 +269,15 @@ def _flash_workload(Lq: int, Lk: int):
     mask_cpu.masked_fill_(~causal, float("-inf"))
     mask = mask_cpu.to("spyre")
     return flash, (queries, keys, values, mask), {
-        "B": B,
-        "H": H,
-        "D": D,
-        "Lq": Lq,
-        "Lk": Lk,
-        "b_block_size": b_block_size,
-        "h_block_size": h_block_size,
-        "q_block_size": q_block_size,
-        "kv_block_size": kv_block_size,
+        "B": B, "H": H, "D": D, "Lq": Lq, "Lk": Lk,
+        "b_block_size": b_block_size, "h_block_size": h_block_size,
+        "q_block_size": q_block_size, "kv_block_size": kv_block_size,
     }
 
 
 def _mlp_workload(N_in: int, N_hidden: int, layers: int):
-    """A stack of ``layers`` matmul-plus-bias-plus-gelu blocks. Simple
-    non-flash workload for the epic's "structurally different" ask.
+    """Layer-scaled MLP: hold width moderate, sweep depth. Produces
+    proportional graph growth in FX node count.
     """
     import torch
 
@@ -237,25 +291,23 @@ def _mlp_workload(N_in: int, N_hidden: int, layers: int):
         torch.randn(
             N_in if i == 0 else N_hidden,
             N_hidden if i < layers - 1 else N_in,
-            device="spyre",
-            dtype=torch.float16,
+            device="spyre", dtype=torch.float16,
         )
         for i in range(layers)
     ]
     biases = [
         torch.randn(
             N_hidden if i < layers - 1 else N_in,
-            device="spyre",
-            dtype=torch.float16,
+            device="spyre", dtype=torch.float16,
         )
         for i in range(layers)
     ]
     return mlp, (x, weights, biases), {
-        "N_in": N_in,
-        "N_hidden": N_hidden,
-        "layers": layers,
+        "N_in": N_in, "N_hidden": N_hidden, "layers": layers,
     }
 
+
+# ---- main ------------------------------------------------------------------
 
 def _require_env(name: str) -> str:
     v = os.environ.get(name)
@@ -275,12 +327,17 @@ def main() -> int:
     ap.add_argument("--layers", type=int, default=4)
     ap.add_argument("--out", type=str, required=True, help="timing JSON path")
     ap.add_argument(
-        "--allow-full-dxp",
-        action="store_true",
+        "--mode", choices=["stop", "observe", "passthrough"], default="stop",
         help=(
-            "For fidelity runs only. Do NOT install the pre-DXP stop; "
-            "let the full compile run to completion (including DXP)."
+            "stop = raise sentinel at DXP boundary (analysis-only); "
+            "observe = catalog then let DXP run (fidelity check paired with stop); "
+            "passthrough = no interception (baseline)."
         ),
+    )
+    ap.add_argument(
+        "--catalog", type=str, default=None,
+        help="Path for the pre-DXP catalog JSON. Also read from "
+             "$SPYRE_PRE_DXP_CATALOG if unset.",
     )
     args = ap.parse_args()
 
@@ -289,45 +346,31 @@ def main() -> int:
         print("FATAL: TORCH_SPYRE_TIMING=1 required.", file=sys.stderr)
         return 2
 
+    catalog_path = args.catalog or os.environ.get("SPYRE_PRE_DXP_CATALOG")
+
     import torch
     import torch_spyre  # noqa: F401
-    try:
-        # Preferred: recorder is installed inside torch-spyre (Phase 3+).
-        from torch_spyre._inductor import timing_recorder as _tr
-    except ImportError:
-        # Phase 2 fallback: the recorder lives in the compiler-timing study
-        # tree. Add its patches/ dir to sys.path and import from there so
-        # the harness runs even before the recorder is upstreamed into
-        # torch_spyre.
-        _study_patches = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "..", "..", "2026-08-pr3806-frontend-timing", "patches",
-        )
-        sys.path.insert(0, os.path.normpath(_study_patches))
-        import timing_recorder as _tr  # type: ignore[no-redef]
+    from torch_spyre._inductor import timing_recorder as _tr
 
-    # Meta lines the timing recorder will embed in the JSON.
     _tr.set_run_meta(
         workload=args.workload,
-        allow_full_dxp=bool(args.allow_full_dxp),
-        Lq=args.Lq,
-        Lk=args.Lk,
-        N_in=args.N_in,
-        N_hidden=args.N_hidden,
-        layers=args.layers,
+        mode=args.mode,
+        Lq=args.Lq, Lk=args.Lk,
+        N_in=args.N_in, N_hidden=args.N_hidden, layers=args.layers,
         TORCHINDUCTOR_CACHE_DIR=os.environ["TORCHINDUCTOR_CACHE_DIR"],
         SENCORES=os.environ.get("SENCORES", "<unset>"),
         pod=os.environ.get("HOSTNAME", "<unknown>"),
         torch_version=torch.__version__,
         python_version=sys.version.split()[0],
-        pre_dxp_stop=bool(not args.allow_full_dxp),
+        pre_dxp_catalog_path=catalog_path,
     )
 
     torch.manual_seed(0xAFFE)
 
     if args.workload == "flash":
         if args.Lq is None or args.Lk is None:
-            print("FATAL: --Lq and --Lk required for --workload=flash", file=sys.stderr)
+            print("FATAL: --Lq and --Lk required for --workload=flash",
+                  file=sys.stderr)
             return 2
         fn, inputs, meta = _flash_workload(args.Lq, args.Lk)
     elif args.workload == "mlp":
@@ -336,18 +379,13 @@ def main() -> int:
         raise AssertionError(args.workload)
     _tr.set_run_meta(**meta)
 
-    # Move inputs to device outside timing.
     with _tr.stage("device_init_and_transfer"):
-        # inputs may include a list of tensors (mlp weights); ensure everything
-        # is already on device. The workload builders above already .to()'d
-        # anything they needed to, so this is a no-op unless the inputs are
-        # nested. Left as an explicit event to bracket lazy device init.
         pass
 
     gc.collect()
 
-    if not args.allow_full_dxp:
-        _install_pre_dxp_stop()
+    intercept = _Interception(args.mode, catalog_path)
+    intercept.install()
 
     compiled = torch.compile(fn)
 
@@ -356,13 +394,18 @@ def main() -> int:
     try:
         with _tr.stage("first_call_wall"):
             compiled(*inputs)
+        # observe / passthrough: no exception expected.
+        if args.mode == "observe":
+            hit_boundary = True
+            # captured[*].cmd shows we reached the boundary.
+            for key, rec in intercept.captured.items():
+                boundary_info = {"dxp_cmd_captured": rec["cmd"]}
+                break
     except _PreDxpBoundary as e:
         hit_boundary = True
         cmd = e.dxp_args[0] if e.dxp_args else e.dxp_kwargs.get("args")
         boundary_info = {"dxp_cmd_captured": list(cmd) if cmd else None}
     except Exception as e:  # noqa: BLE001
-        # Unwrap InductorError-style wrappings so we still recognize the
-        # sentinel when dynamo wraps.
         cur: BaseException | None = e
         while cur is not None:
             if isinstance(cur, _PreDxpBoundary):
@@ -372,7 +415,6 @@ def main() -> int:
                 break
             cur = cur.__cause__ or cur.__context__
         if not hit_boundary:
-            # Real error — record it in meta and re-raise after dump.
             _tr.set_run_meta(unexpected_error=repr(e)[:2000])
             _tr.dump_and_finalize(args.out)
             raise
@@ -380,8 +422,10 @@ def main() -> int:
     _tr.set_run_meta(
         pre_dxp_boundary_reached=hit_boundary,
         boundary_info=boundary_info,
+        n_captured_kernels=len(intercept.captured),
     )
     _tr.dump_and_finalize(args.out)
+    intercept.dump_catalog()
     return 0
 
 

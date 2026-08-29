@@ -1,68 +1,84 @@
-# Pre-DXP time attribution — how to read + how to produce
+# Pre-DXP time attribution — methodology + how to produce
 
 **Status: awaiting pod data.** This file will be overwritten with a
-table by `harness/analyze_sweep.py` once `data/sweep/` is populated.
-The framing below stays as a docstring in the analyzer's output
-paragraph so future readers see it.
+median-of-N table by `harness/analyze_sweep.py` once `data/sweep/` is
+populated. The methodology below stays as a docstring in the
+analyzer's output header so readers of the produced table always see
+the framing.
 
-## What the table shows
+## Primary pre-DXP total
 
-`pre_dxp_total` = `first_call_wall − dxp_standalone`.
+Derived directly from timestamps:
 
-Every row is one workload-shape (e.g. `flash-512x1024`). Every column
-is a bucket that Phase 3 instrumentation brackets. All values are
-median-of-N cold samples, in milliseconds.
+    pre_dxp_total_ns = pre_dxp_boundary_marker.t_start_ns
+                       - first_call_wall.t_start_ns
 
-## Bucket definitions
+This is exactly "from first invocation start to the moment
+immediately before the DXP subprocess would have run". The
+`first_call_wall` event's `inclusive_ns` also includes a sentinel
+unwind, which is reported separately as `sentinel_unwind` and
+excluded from the primary total.
 
-| bucket | what it measures | source of the bracket |
-|---|---|---|
-| `dynamo_aot_prelude` | Dynamo + AOTAutograd time upstream of Torch-Spyre's `compile_fx_wrapper` | derived: `first_call_wall − compile_fx_wrapper − dxp_standalone − async_compile_wait` |
-| `graphlowering_run` | Upstream Inductor `GraphLowering.run` (FX → IR lowering) | `extra_timers.install_extra_timers` |
-| `custompresched` | Torch-Spyre's 22-pass `CustomPreSchedulingPasses` pipeline | `pipeline:CustomPreSchedulingPasses` in the instrumentation patch |
-| `scheduler_and_node` | Scheduler ctor + `CustomPreFusionPasses` + upstream fusion + `CustomPostFusionPasses`, derived | `graphlowering_compile_to_fn − sdsc_total − spyre_kernel_codegen − custompresched` |
-| `spyre_kernel_codegen` | `SpyreKernel.codegen_kernel` calls (per emitted kernel) | `extra_timers.install_extra_timers` |
-| `sdsc_bundle_gen` | `generate_bundle` inside `SpyreAsyncCompile.sdsc` | direct `_tr.stage` around the call |
-| `kernel_provenance` | `build_kernel_provenance_descriptor` | direct `_tr.stage` |
-| `async_compile_wait` | `SpyreAsyncCompile.wait` (excludes sdsc, which is called before wait) | direct `_tr.stage` |
-| `unattributed_wrapper` | anything inside `compile_fx_wrapper` no other bucket accounts for | derived |
+## Top-level bucket definitions
 
-`dxp_standalone` is included as a column for reference but is **not
-part of `pre_dxp_total`**. This investigation stops at the DXP
-subprocess boundary by definition.
+Every bucket in the "attribution" section of the produced table is
+directly bracketed or derived from timestamps between direct events —
+none from `parent.inclusive − sum(children)` unless every subtracted
+child is also directly bracketed.
 
-## How to read it
+| bucket | source |
+|---|---|
+| `pre_compile_fx` | `compile_fx_wrapper.t_start − first_call_wall.t_start`. Time before Torch-Spyre's compile_fx wrapper fires — Dynamo tracing, AOTAutograd prelude, torch bookkeeping. |
+| `compile_fx_wrapper` | direct inclusive |
+| `between_compile_and_wait` | `async_compile_wait.t_start − compile_fx_wrapper.t_end`. Setup between compile completion and first-invocation start. |
+| `wait_pre_dxp` | `pre_dxp_boundary_marker.t_start − async_compile_wait.t_start`. Everything inside async_compile_wait upstream of the boundary (sdsc, generate_bundle, kernel_provenance, prefix of the dxp subprocess call). |
 
-1. Look at `pre_dxp_total` at the largest flash shape to know the
-   headroom this investigation can address.
-2. Look at the **percent-of-pre-DXP** section for the same shape to
-   see the share each bucket owns. Anything below 5% is small even
-   perfectly eliminated.
-3. Cross-reference with `tables/scaling.md` — a bucket with a large
-   share and a super-linear slope is the strongest candidate.
-4. For `custompresched`, drill into `tables/pass-detail.md` to see
-   which passes drive the pipeline's share.
+Their sum equals `pre_dxp_total` when reconciliation residual is 0.
+`tables/reconciliation.md` reports the residual for every sample.
 
-## How to run it
+## Full bucket detail
 
-On an instrumented pod:
+The full attribution table also breaks each top-level bucket into
+directly-measured sub-buckets so a reader can drill from
+"compile_fx_wrapper is 87% of pre-DXP time" all the way down to
+"insert_restickify is 12% of compile_fx_wrapper" without any
+subtractive arithmetic — every number is either a direct event
+inclusive time or a timestamp difference between direct events.
+
+## Non-obvious accounting rules
+
+- **SDSC is NOT nested in `compile_fx_wrapper` or
+  `graphlowering_compile_to_fn`.** SDSC (and DXP) fires during the
+  first invocation of the compiled wrapper — i.e. INSIDE
+  `async_compile_wait`, which is a SIBLING of `compile_fx_wrapper`
+  under `first_call_wall`. The analyzer does not subtract SDSC from
+  either of those parents.
+- **`CustomPreSchedulingPasses.__call__`** runs `cost_model_pass`,
+  `dump_cost_model`, and `finalize_work_division_for_scheduler`
+  AFTER the 23-pass loop but BEFORE the pipeline event closes. The
+  pipeline event brackets all of them; nested sub-events isolate the
+  four regions.
+- **`recover_spyre_hints`** runs inside `_spyre_update_scheduler`
+  but OUTSIDE `pipeline:CustomPreSchedulingPasses`. Its own timer
+  captures it.
+- **`_pre_fusion_custom_pass` and `_post_fusion_custom_pass`** fire
+  from inside `Scheduler.__init__`, not `CustomPreSchedulingPasses`.
+  They appear as their own pipeline events.
+
+## How to produce the real table
+
+On an instrumented pod at the frozen SHA:
 
 ```bash
-# One-time setup: apply the instrumentation patch to a torch-spyre checkout.
-export TORCH_SPYRE_REPO=$HOME/pr4117/torch-spyre
-bash patches/apply_instrumentation.sh
-
-# Runtime env for every sample.
 export TORCH_SPYRE_TIMING=1
-
-# Sweep (writes to data/sweep/):
 bash harness/sweep_driver.sh
-
-# Analyze the sweep into notes + tables:
 python3 harness/analyze_sweep.py \
     --sweep-dir data/sweep \
     --out-notes notes \
-    --out-tables notes/tables
+    --out-tables notes/tables \
+    --strict
 ```
 
-Analyzer overwrites this file with the real attribution table.
+`--strict` makes the analyzer exit non-zero if any run failed
+validation, so a sweep with a subtle bug does not silently produce a
+table that trusts partial data.

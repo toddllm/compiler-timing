@@ -1,5 +1,5 @@
---- a/torch_spyre/_inductor/passes.py	2026-08-28 19:14:43
-+++ b/torch_spyre/_inductor/passes.py	2026-08-28 20:41:05
+--- a/torch_spyre/_inductor/passes.py	2026-08-28 20:57:21
++++ b/torch_spyre/_inductor/passes.py	2026-08-28 21:00:27
 @@ -37,6 +37,7 @@
  
  from .logging_utils import get_inductor_logger
@@ -8,7 +8,7 @@
  
  from .padding import insert_bmm_padding, insert_restickify_padding
  from .temp_passes import (
-@@ -174,8 +175,12 @@
+@@ -175,8 +176,12 @@
          # FX-graph passes are already observed by upstream Inductor's
          # GraphTransformObserver (populates node.meta["from_node"]); no Spyre
          # observer is wrapped here.
@@ -23,7 +23,7 @@
  
      def uuid(self) -> Any | None:
          return _uuid(self.passes)
-@@ -196,14 +201,23 @@
+@@ -197,14 +202,23 @@
          # This pipeline is a per-compile entry point for the observed passes,
          # so clear the dedup here so each compile warns afresh.
          reset_provenance_warnings()
@@ -55,7 +55,7 @@
          return target
  
      def uuid(self) -> Any | None:
-@@ -504,26 +518,45 @@
+@@ -510,44 +524,71 @@
                  "BEFORE PRE-SCHEDULING\n%s", format_operations(graph.operations)
              )
  
@@ -69,60 +69,101 @@
 -                pass_fn(graph)
 -                elapsed_ms = (time.perf_counter() - t0) * 1000
 +        initial_ops = len(graph.operations)
++        # Bracket the ENTIRE Spyre-active __call__: pass loop + cost model +
++        # cost dump + finalize_work_division_for_scheduler. Anything the
++        # analyzer attributes to "CustomPreSchedulingPasses" should be
++        # measured, not left as post-loop overhead.
 +        with _tr.stage(
 +            "pipeline:CustomPreSchedulingPasses",
 +            passes=len(self.passes),
 +            input_operations=initial_ops,
 +        ):
-+            for pass_fn in self.passes:
-+                pass_name = _get_pass_name(pass_fn)
-+                # `graph` is the same object throughout -- passes mutate
-+                # `graph.operations` in place -- so before/after reconciliation
-+                # is exact here.
-+                before_ops = len(graph.operations)
-+                with SpyreGraphTransformObserver(
-+                    graph, pass_name, kind="graphlowering"
-+                ), _tr.stage(
-+                    f"pass:CustomPreSchedulingPasses:{pass_name}",
-+                    input_operations=before_ops,
-+                ) as _ev:
-+                    t0 = time.perf_counter()
-+                    pass_fn(graph)
-+                    elapsed_ms = (time.perf_counter() - t0) * 1000
-+                    if _ev is not None:
-+                        _ev.meta["output_operations"] = len(graph.operations)
-+                        _ev.meta["ops_delta"] = (
-+                            len(graph.operations) - before_ops
-+                        )
++            with _tr.stage(
++                "presched_pass_loop",
++                passes=len(self.passes),
++                input_operations=initial_ops,
++            ):
++                for pass_fn in self.passes:
++                    pass_name = _get_pass_name(pass_fn)
++                    # `graph` is the same object throughout -- passes mutate
++                    # `graph.operations` in place -- so before/after reconciliation
++                    # is exact here.
++                    before_ops = len(graph.operations)
++                    with SpyreGraphTransformObserver(
++                        graph, pass_name, kind="graphlowering"
++                    ), _tr.stage(
++                        f"pass:CustomPreSchedulingPasses:{pass_name}",
++                        input_operations=before_ops,
++                    ) as _ev:
++                        t0 = time.perf_counter()
++                        pass_fn(graph)
++                        elapsed_ms = (time.perf_counter() - t0) * 1000
++                        if _ev is not None:
++                            _ev.meta["output_operations"] = len(graph.operations)
++                            _ev.meta["ops_delta"] = (
++                                len(graph.operations) - before_ops
++                            )
  
--            if logger.isEnabledFor(logging.INFO):
--                logger.info(
++                    if logger.isEnabledFor(logging.INFO):
++                        logger.info(
++                            "elapsed %5dms  %s",
++                            elapsed_ms,
++                            pass_name,
++                        )
++                    if logger.isEnabledFor(logging.DEBUG) and _should_log_pass(pass_name):
++                        logger.debug(
++                            "AFTER %s\n%s",
++                            pass_name,
++                            format_operations(graph.operations),
++                        )
++
+             if logger.isEnabledFor(logging.INFO):
+                 logger.info(
 -                    "elapsed %5dms  %s",
 -                    elapsed_ms,
 -                    pass_name,
--                )
++                    "AFTER PRE-SCHEDULING\n%s", format_operations(graph.operations)
+                 )
 -            if logger.isEnabledFor(logging.DEBUG) and _should_log_pass(pass_name):
 -                logger.debug(
 -                    "AFTER %s\n%s", pass_name, format_operations(graph.operations)
 -                )
-+                if logger.isEnabledFor(logging.INFO):
-+                    logger.info(
-+                        "elapsed %5dms  %s",
-+                        elapsed_ms,
-+                        pass_name,
-+                    )
-+                if logger.isEnabledFor(logging.DEBUG) and _should_log_pass(pass_name):
-+                    logger.debug(
-+                        "AFTER %s\n%s",
-+                        pass_name,
-+                        format_operations(graph.operations),
-+                    )
++            # Predicted runtime for this graph, or None when config.cost_model is off.
++            # Kept OUTSIDE self.passes on purpose: it only reads the IR, so hashing it
++            # into the Inductor cache key (see _uuid) would invalidate caches for a
++            # report that cannot change the compiled result.
++            with _tr.stage("presched_cost_model"):
++                cost_model_pass(graph)
++            with _tr.stage("presched_cost_dump"):
++                dump_cost_model(graph.operations)
++            # Keep rich symbol-keyed ownership through every pre-Scheduler reader;
++            # legacy coefficient transport exists only for Scheduler/codegen.
++            with _tr.stage("presched_finalize_work_division"):
++                finalize_work_division_for_scheduler(graph)
  
-         if logger.isEnabledFor(logging.INFO):
-             logger.info("AFTER PRE-SCHEDULING\n%s", format_operations(graph.operations))
+-        if logger.isEnabledFor(logging.INFO):
+-            logger.info("AFTER PRE-SCHEDULING\n%s", format_operations(graph.operations))
+-        # Predicted runtime for this graph, or None when config.cost_model is off.
+-        # Kept OUTSIDE self.passes on purpose: it only reads the IR, so hashing it
+-        # into the Inductor cache key (see _uuid) would invalidate caches for a
+-        # report that cannot change the compiled result. The pass stores the report
+-        # per-thread, readable as `last_cost_report`, so another pass or an external
+-        # tool can compare two plans by total_us without compiling or running either.
+-        #
+-        # BEFORE the per-op dump on purpose: the report is the answer -- one number and
+-        # a per-kernel breakdown -- while the dump is the evidence behind it, hundreds
+-        # of lines on a real graph. Printing the evidence first buries the answer.
+-        cost_model_pass(graph)
+-        dump_cost_model(graph.operations)
+-        # Keep rich symbol-keyed ownership through every pre-Scheduler reader;
+-        # legacy coefficient transport exists only for Scheduler/codegen.
+-        finalize_work_division_for_scheduler(graph)
+-
+     def uuid(self) -> Any | None:
+         return _uuid(self.passes)
 
 --- a/torch_spyre/_inductor/__init__.py	2026-08-28 19:14:43
-+++ b/torch_spyre/_inductor/__init__.py	2026-08-28 20:41:54
++++ b/torch_spyre/_inductor/__init__.py	2026-08-28 21:02:25
 @@ -22,6 +22,8 @@
  
  from .propagate_hints import spyre_hint, get_op_hints  # noqa: F401
@@ -175,8 +216,8 @@
 +                "compile_fx_wrapper" if uses_spyre
 +                else "compile_fx_wrapper_non_spyre"
 +            )
-+            # Install extra timers on first Spyre compile per process; no-op
-+            # thereafter and no-op when TORCH_SPYRE_TIMING is off.
++            # Install extra timers on the first Spyre compile per process;
++            # no-op thereafter and no-op when TORCH_SPYRE_TIMING is off.
 +            if uses_spyre:
 +                _extra_timers.install_extra_timers()
  
@@ -238,8 +279,57 @@
                  raise
  
 
---- a/torch_spyre/execution/async_compile.py	2026-08-28 19:14:43
-+++ b/torch_spyre/execution/async_compile.py	2026-08-28 20:42:21
+--- a/torch_spyre/_inductor/patches.py	2026-08-28 19:14:43
++++ b/torch_spyre/_inductor/patches.py	2026-08-28 21:03:26
+@@ -22,7 +22,9 @@
+ from torch._inductor.utils import InputType
+ from torch._inductor.virtualized import V
+ 
++from . import timing_recorder as _tr
+ 
++
+ @contextmanager
+ def spyre_data_types():
+     saved = torch._prims_common._computation_dtype_map
+@@ -113,19 +115,22 @@
+     def _spyre_update_scheduler(self: GraphLowering) -> None:
+         # Nested compiler contexts may wrap this hook more than once. The
+         # graph-mutating pre-scheduling pipeline runs once per GraphLowering.
+-        if not getattr(self, "_spyre_pre_scheduling_complete", False):
+-            # recover_spyre_hints runs here (after all post-grad FX passes including
+-            # decompose_auto_functionalized) rather than in CustomPostPasses.
+-            # decompose_auto_functionalized replaces auto_functionalized_v2 nodes
+-            # via make_fx retracing, which creates new FX nodes whose meta["custom"]
+-            # only contains hints from the innermost scope. Running recovery here
+-            # ensures the final FX graph (post-decomposition) gets the full hint set.
+-            gm = self.graph.owning_module
+-            if gm is not None and "__spyre_dim_hints" in gm.meta:
+-                recover_spyre_hints(self.graph)
+-            _pre_scheduling_pass(self)
+-            setattr(self, "_spyre_pre_scheduling_complete", True)
+-        old_update_scheduler(self)
++        with _tr.stage("spyre_update_scheduler"):
++            if not getattr(self, "_spyre_pre_scheduling_complete", False):
++                # recover_spyre_hints runs here (after all post-grad FX passes including
++                # decompose_auto_functionalized) rather than in CustomPostPasses.
++                # decompose_auto_functionalized replaces auto_functionalized_v2 nodes
++                # via make_fx retracing, which creates new FX nodes whose meta["custom"]
++                # only contains hints from the innermost scope. Running recovery here
++                # ensures the final FX graph (post-decomposition) gets the full hint set.
++                gm = self.graph.owning_module
++                if gm is not None and "__spyre_dim_hints" in gm.meta:
++                    with _tr.stage("recover_spyre_hints"):
++                        recover_spyre_hints(self.graph)
++                _pre_scheduling_pass(self)
++                setattr(self, "_spyre_pre_scheduling_complete", True)
++            with _tr.stage("upstream_update_scheduler"):
++                old_update_scheduler(self)
+ 
+     GraphLowering._update_scheduler = _spyre_update_scheduler  # type: ignore[method-assign]
+ 
+
+--- a/torch_spyre/execution/async_compile.py	2026-08-28 20:57:21
++++ b/torch_spyre/execution/async_compile.py	2026-08-28 21:02:55
 @@ -36,6 +36,7 @@
  )
  from torch_spyre._inductor.codegen.bundle import generate_bundle
@@ -248,7 +338,7 @@
  from .kernel_runner import SpyreSDSCKernelRunner, SpyreUnimplementedRunner
  
  logger = get_inductor_logger("sdsc_compile")
-@@ -115,63 +116,74 @@
+@@ -111,63 +112,77 @@
          specs: Sequence[OpSpec | LoopSpec | UnimplementedOp],
          pool_size: int = 0,
      ):
@@ -277,7 +367,9 @@
 -            # failure count at the generated wrapper's wait() boundary.
 -            self._provenance_failure_count += 1
 -            if self._provenance_failure_count == 1:
-+        with _tr.stage("sdsc_total", kernel=kernel_name):
++        with _tr.stage(
++            "sdsc_total", kernel=kernel_name, n_specs=len(specs)
++        ):
 +            unimp = find_unimplemented(list(specs))
 +            if unimp is not None:
                  logger.warning(
@@ -313,6 +405,7 @@
 +                "sdsc_bundle_gen",
 +                kernel=kernel_name,
 +                n_specs=len(specs),
++                output_dir=output_dir,
 +            ):
 +                generate_bundle(kernel_name, output_dir, specs, pool_size=pool_size)
  
@@ -375,7 +468,7 @@
      def ktir(
          self, kernel_name: str, specs: Sequence[OpSpec | LoopSpec | UnimplementedOp]
      ):
-@@ -306,7 +318,8 @@
+@@ -302,7 +317,8 @@
          return SpyreSDSCKernelRunner(kernel_name, output_dir)
  
      def wait(self, scope: dict[str, Any]) -> None:

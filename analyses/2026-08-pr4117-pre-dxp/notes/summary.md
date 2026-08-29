@@ -3,6 +3,12 @@
 **Epic:** torch-spyre #4117 — investigate remaining pre-DXP compile
 time outside `CustomPreSchedulingPasses`.
 
+**Frozen torch-spyre baseline:**
+`3358f39e91e2a34e855d488b1b9fce3c2f0d4c2f`
+(upstream/main at study start; verified to contain PR #4113 merge
+`c073d69cceaac91d34b01dea6545048d0d645c2c` as an ancestor via
+`git merge-base --is-ancestor`).
+
 **Scope:** cold `torch.compile()` path through generation of backend
 input, stopping immediately before `subprocess.run(["dxp_standalone",
 ...])` in `torch_spyre/execution/async_compile.py:155`. DXP itself is
@@ -15,67 +21,102 @@ out of scope.
 > size, and which remaining bucket is the next material optimization
 > target?
 
-## What we built
+## Framework corrections applied (pre-data)
+
+The framework was corrected before any data was collected. The
+correction commit landed as a separate signed commit; nothing about
+the pilot or full sweep has yet been executed on a pod.
+
+- **Source basis frozen.** The instrumentation applier refuses to
+  operate on any tree that is not exactly the frozen SHA and clean.
+  `git apply --check` is required before any file is written.
+- **CustomPreSchedulingPasses is 23 passes**, not 20 or 22 as the
+  earlier draft claimed. The `__call__` also runs
+  `cost_model_pass`, `dump_cost_model`, and
+  `finalize_work_division_for_scheduler` after the loop; the whole
+  method is now bracketed and the four sub-regions are timed
+  separately.
+- **SDSC is NOT nested inside `compile_fx_wrapper` or
+  `compile_to_fn`.** It fires during first invocation of the compiled
+  wrapper. The analyzer never subtracts `sdsc_total` from those
+  parents.
+- **Primary `pre_dxp_total`** is `pre_dxp_boundary_marker.t_start −
+  first_call_wall.t_start`. The sentinel unwind is reported
+  separately.
+- **Neutral bucket names.** `pre_compile_fx`,
+  `compile_to_fn_other`, `spyre_update_scheduler_other`, etc. No
+  "dynamo_aot_prelude" and no directly-named Scheduler bucket unless
+  it is directly bracketed.
+- **Direct timers.** `Scheduler.__init__`, `Scheduler.codegen`,
+  `PythonWrapperCodegen.generate`, `GraphLowering.codegen`, plus
+  `recover_spyre_hints` and the pre-scheduling sub-regions — all
+  measured, not derived.
+- **Hard reconciliation validation.** Every run is asserted to have
+  reached the boundary with the correct captured cmd, all required
+  events present, children ≤ parent inclusive. Derived buckets that
+  come out negative fail the run rather than being silently clamped.
+  Runs with |residual| > 1% of `pre_dxp_total` are marked invalid
+  and excluded from aggregates.
+- **Fidelity check** compares PRE-DXP catalogs from paired
+  `--mode=observe` and `--mode=stop` runs, catalogued at the exact
+  DXP call site before subprocess.run. Kernels paired by output_dir
+  basename, not sorted index.
+- **Layer-scaled MLP.** Fixed moderate width (`N_hidden=2048`),
+  sweep layers ∈ {2, 4, 8, 16, 32, 64}. Independent variable is
+  graph-node growth, not tensor dimension.
+- **Opportunity ranking is judgment**, not an AND-gate. Absolute
+  ms, share, per-natural-unit drift, future work-unit growth,
+  attribution confidence, lever availability, and correctness risk
+  all weigh. Slope > 1 is a warning, not a gate.
+
+## What we built (on laptop, ready for pod)
 
 - **Stage map** (`notes/pre-dxp-stage-map.md`) — every source-level
   stage between `torch.compile()` and `dxp_standalone`, with
-  file:line citations against upstream `3855d11`.
-- **Frontend-only harness** (`harness/pre_dxp_stop.py`) — cold
-  compile driver that patches `subprocess.run` inside
-  `SpyreAsyncCompile.sdsc` with a sentinel raise, stopping the compile
-  after `generate_bundle` and `build_kernel_provenance_descriptor`
-  but before `dxp_standalone`. Flash-attention and MLP workloads.
-- **Bundle fidelity check** (`harness/check_bundle_fidelity.py`) — at
-  one baseline point, runs the workload twice (normal + stop) and
-  proves the bundle files are byte-identical up to DXP output.
+  file:line at the frozen SHA. Explicitly enumerates 23 passes and
+  the three post-loop calls.
+- **Frontend-only harness** (`harness/pre_dxp_stop.py`) — modes
+  `stop`, `observe`, `passthrough`. Catalogs the bundle at the DXP
+  call site; raises `_PreDxpBoundary` sentinel in stop mode.
+- **Bundle fidelity check** (`harness/check_bundle_fidelity.py`) —
+  paired observe+stop, byte-for-byte diff of pre-DXP catalogs.
 - **Hierarchical instrumentation** (`patches/instrumentation.patch`,
-  `patches/timing_recorder.py`, `patches/extra_timers.py`) — brackets
-  `compile_fx_wrapper`, `graphlowering_run`,
-  `graphlowering_compile_to_fn`, `pipeline:CustomPre*Passes` (all
-  six), every pass inside `CustomPreSchedulingPasses`,
-  `spyre_kernel_codegen`, `sdsc_total`, `sdsc_bundle_gen`,
-  `kernel_provenance`, `dxp_standalone`, `async_compile_wait`. Writes
-  a hierarchical JSON per sample.
-- **Sweep driver** (`harness/sweep_driver.sh`) — nine flash-attn
-  points and five MLP points, three cold samples each, serial (Spyre
-  is exclusive per process).
-- **Analyzer** (`harness/analyze_sweep.py`) — reads the sweep,
-  produces `notes/pre-dxp-attribution.md` (bucket shares at every
-  shape) and `notes/tables/{scaling.md,pass-detail.md}` (log-log
-  slopes vs `fx_nodes_at_entry` and top-K passes per shape).
+  `patches/timing_recorder.py`, `patches/extra_timers.py`) —
+  bracketed directly at 25+ points including the three
+  post-loop pre-scheduling stages and the upstream Scheduler
+  boundaries.
+- **Applier** (`patches/apply_instrumentation.sh`) — refuses on
+  wrong SHA, dirty tree, or fuzzy patch application.
+- **Pilot driver** (`harness/pilot_driver.sh`) — 5 shapes × 1 sample.
+- **Sweep driver** (`harness/sweep_driver.sh`) — 9 flash points + 6
+  layer-scaled MLP points × 3 samples, serial.
+- **Analyzer** (`harness/analyze_sweep.py`) — hierarchical event-tree
+  based accounting, reconciliation validation, natural-unit
+  scaling.
 
-## What runs where
+## Preflight status
 
-Everything above is authored on the laptop under
-`/Users/tdeshane/toddllm/compiler-timing/analyses/2026-08-pr4117-pre-dxp/`.
-Nothing has to be upstreamed into torch-spyre for this analysis; the
-instrumentation patch and vendored recorder/extra_timers install into
-an editable torch-spyre checkout on a pod for the duration of the
-sweep, then get reverted.
+- Applier: dry-run pass, dirty-tree/wrong-SHA rejection tested.
+- Analyzer: synthetic-run smoke-test with realistic hierarchy —
+  reconciliation 0.00% residual, all 23 passes visible in top-K,
+  bucket accounting closed by construction.
+- Instrumentation patch: `git apply --check` passes at the frozen
+  SHA; every instrumented file py_compiles.
+- Fidelity check: rewritten to compare PRE-DXP catalogs, not
+  POST-DXP directory listings.
 
-Fidelity check + sweep + analyzer are the three things that need pod
-execution. All three are ready to run — see the instructions at the
-bottom of `notes/pre-dxp-attribution.md`.
+**Not yet executed:** the pilot or full sweep on a pod.
+
+## Runbook (see `README.md`)
+
+1. Freeze torch-spyre at the SHA above.
+2. `bash patches/apply_instrumentation.sh`.
+3. Fidelity check at `flash 512x1024`.
+4. Pilot: 5 shapes × 1 sample. Inspect event tree, confirm nesting.
+5. Full sweep: 9 flash + 6 MLP × 3 samples.
+6. Analyzer regenerates all deliverables.
 
 ## Findings
 
-*(To be filled in from real data — the analyzer produces the tables
-this section should cite.)*
-
-Read the ranked list at the bottom of `notes/next-opportunities.md`
-for the "which bucket next?" call, and `notes/pre-dxp-attribution.md`
-for the underlying share/scaling numbers.
-
-## Comparability to PR #3806
-
-- Same flash-attention workload closure (parameters
-  `B=1, H=8, D=128, b_block=1, h_block=4, q_block=256, kv_block=512`).
-- Same cold-compile protocol: fresh `TORCHINDUCTOR_CACHE_DIR` per
-  sample, three cold samples, median.
-- Same `timing_recorder` — schema version 1, `perf_counter_ns` clock.
-- Same nine flash-attention (Lq, Lk) points as the prior sweep, plus
-  five MLP points added for a non-flash structural comparison.
-
-A pre-#4113 baseline for `dedup_and_promote_constants` is not
-re-created here; the analyzer's `tables/pass-detail.md` will confirm
-whether it dropped out of the top-K as the fix intended.
+*(To be filled in from real data after §10 pilot + §11 sweep pass on
+the pod. The current commit contains framework corrections only.)*

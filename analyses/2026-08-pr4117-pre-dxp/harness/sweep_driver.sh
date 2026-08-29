@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 # Cold-compile sweep driver for the pre-DXP frontend investigation.
 #
-# Executes each (workload, shape) point N times serially with a fresh
-# TORCHINDUCTOR_CACHE_DIR per sample. Never runs samples in parallel: the
-# Spyre device is exclusive per process. Writes one JSON per sample to
-# $DATA_DIR and a per-point log next to it.
+# Runs each (workload, shape) point N times serially, fresh
+# TORCHINDUCTOR_CACHE_DIR per sample. The Spyre device is exclusive
+# per process, so samples MUST NOT run in parallel.
+#
+# Writes one JSON per sample to $DATA_DIR and a per-point log.
 #
 # Requires the instrumentation patch to be applied (see
-# patches/apply_instrumentation.sh).
-#
-# Environment overrides:
-#   TORCH_SPYRE_REPO         path to editable torch-spyre with instrumentation
-#   HARNESS                  path to pre_dxp_stop.py
-#   DATA_DIR                 output dir (default: sibling data/sweep/)
-#   SWEEP_SAMPLES            samples per point (default: 3)
-#   INCLUDE_MLP              set to 1 to also run the non-flash sweep
+# patches/apply_instrumentation.sh) against the frozen SHA.
 
 set +e
 source /etc/bashrc 2>/dev/null || true
@@ -26,6 +20,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${DATA_DIR:=${HERE}/../data/sweep}"
 : "${SWEEP_SAMPLES:=3}"
 : "${INCLUDE_MLP:=1}"
+: "${MODE:=stop}"
 
 cd "$TORCH_SPYRE_REPO"
 if [[ -f .venv/bin/activate ]]; then
@@ -37,6 +32,7 @@ export TORCH_SPYRE_TIMING=1
 mkdir -p "$DATA_DIR"
 
 # Flash-attention (Lq, Lk) points, in order of increasing inner-body count.
+# Same as the PR #3806 study so results are directly comparable.
 FLASH_POINTS=(
   "256 1024"    # 4   inner bodies
   "512 512"     # 4
@@ -49,15 +45,12 @@ FLASH_POINTS=(
   "1024 8192"   # 128 largest
 )
 
-# MLP (N_in, N_hidden, layers) points, sized so the largest is comparable
-# to the largest flash graph.
-MLP_POINTS=(
-  "1024 2048 2"
-  "1024 4096 4"
-  "2048 4096 4"
-  "2048 8192 8"
-  "4096 8192 8"
-)
+# Layer-scaled MLP: hold width moderate, sweep layer count.
+# Width chosen so the biggest layer count still fits on-device.
+# N_IN, N_HIDDEN are fixed; layers is the independent axis.
+MLP_N_IN=1024
+MLP_N_HIDDEN=2048
+MLP_LAYERS=(2 4 8 16 32 64)
 
 run_one() {
     local tag="$1"; shift
@@ -70,7 +63,7 @@ run_one() {
     echo "=== [$(date -Is)] $tag ==="
     start=$(date +%s)
     set +e
-    python3 "$HARNESS" --out "$out" "$@" >> "$LOG" 2>&1
+    python3 "$HARNESS" --mode "$MODE" --out "$out" "$@" >> "$LOG" 2>&1
     rc=$?
     set -e
     end=$(date +%s)
@@ -89,7 +82,8 @@ echo "    HARNESS=$HARNESS"
 echo "    DATA_DIR=$DATA_DIR"
 echo "    SWEEP_SAMPLES=$SWEEP_SAMPLES"
 echo "    INCLUDE_MLP=$INCLUDE_MLP"
-echo "    flash points: ${#FLASH_POINTS[@]}   mlp points: ${#MLP_POINTS[@]}"
+echo "    MODE=$MODE"
+echo "    flash points: ${#FLASH_POINTS[@]}   mlp layer points: ${#MLP_LAYERS[@]}"
 
 for point in "${FLASH_POINTS[@]}"; do
     read -r Lq Lk <<< "$point"
@@ -105,17 +99,17 @@ for point in "${FLASH_POINTS[@]}"; do
 done
 
 if [[ "$INCLUDE_MLP" == "1" ]]; then
-    for point in "${MLP_POINTS[@]}"; do
-        read -r Nin Nh L <<< "$point"
-        LOG="$DATA_DIR/mlp-${Nin}x${Nh}-L${L}.log"; : > "$LOG"
+    for L in "${MLP_LAYERS[@]}"; do
+        LOG="$DATA_DIR/mlp-L${L}-w${MLP_N_HIDDEN}.log"; : > "$LOG"
         for i in $(seq 1 "$SWEEP_SAMPLES"); do
-            OUT="$DATA_DIR/mlp-${Nin}x${Nh}-L${L}-run${i}.json"
-            CACHE="/tmp/tsc-sweep-mlp-${Nin}x${Nh}-L${L}-r${i}"
-            run_one "mlp Nin=$Nin Nh=$Nh L=$L sample=$i/$SWEEP_SAMPLES" \
+            OUT="$DATA_DIR/mlp-L${L}-w${MLP_N_HIDDEN}-run${i}.json"
+            CACHE="/tmp/tsc-sweep-mlp-L${L}-w${MLP_N_HIDDEN}-r${i}"
+            run_one "mlp L=$L width=$MLP_N_HIDDEN sample=$i/$SWEEP_SAMPLES" \
                 "$OUT" "$CACHE" \
-                --workload mlp --N-in "$Nin" --N-hidden "$Nh" --layers "$L"
+                --workload mlp --N-in "$MLP_N_IN" \
+                --N-hidden "$MLP_N_HIDDEN" --layers "$L"
         done
-        echo "=== [$(date -Is)] mlp Nin=$Nin Nh=$Nh L=$L done"
+        echo "=== [$(date -Is)] mlp L=$L done"
     done
 fi
 
