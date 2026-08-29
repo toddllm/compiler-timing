@@ -1,5 +1,5 @@
---- a/torch_spyre/_inductor/passes.py	2026-08-28 20:57:21
-+++ b/torch_spyre/_inductor/passes.py	2026-08-28 21:00:27
+--- a/torch_spyre/_inductor/passes.py	2026-08-28 21:04:50
++++ b/torch_spyre/_inductor/passes.py	2026-08-29 01:20:20
 @@ -37,6 +37,7 @@
  
  from .logging_utils import get_inductor_logger
@@ -163,7 +163,7 @@
          return _uuid(self.passes)
 
 --- a/torch_spyre/_inductor/__init__.py	2026-08-28 19:14:43
-+++ b/torch_spyre/_inductor/__init__.py	2026-08-28 21:02:25
++++ b/torch_spyre/_inductor/__init__.py	2026-08-29 01:20:20
 @@ -22,6 +22,8 @@
  
  from .propagate_hints import spyre_hint, get_op_hints  # noqa: F401
@@ -173,7 +173,24 @@
  
  _autoload_lock = threading.Lock()
  
-@@ -151,44 +153,72 @@
+@@ -70,7 +72,15 @@
+     from torch_spyre._inductor.decompositions import get_spyre_decomp_table
+ 
+     kwargs["get_decomp_fn"] = get_spyre_decomp_table
+-    return compile_fx_inner(*args, **kwargs)
++    fx_nodes = -1
++    try:
++        gm = args[0] if args else kwargs.get("gm")
++        if gm is not None and hasattr(gm, "graph"):
++            fx_nodes = len(list(gm.graph.nodes))
++    except Exception:
++        pass
++    with _tr.stage("spyre_inner_compile", fx_nodes_at_entry=fx_nodes):
++        return compile_fx_inner(*args, **kwargs)
+ 
+ 
+ def enable_spyre_compile_fx_wrapper():
+@@ -151,44 +161,72 @@
          def _wrapper(gm, example_inputs, *args, **kwargs):
              uses_spyre = _uses_spyre(gm, example_inputs)
  
@@ -280,7 +297,7 @@
  
 
 --- a/torch_spyre/_inductor/patches.py	2026-08-28 19:14:43
-+++ b/torch_spyre/_inductor/patches.py	2026-08-28 21:03:26
++++ b/torch_spyre/_inductor/patches.py	2026-08-29 01:20:20
 @@ -22,7 +22,9 @@
  from torch._inductor.utils import InputType
  from torch._inductor.virtualized import V
@@ -328,8 +345,8 @@
      GraphLowering._update_scheduler = _spyre_update_scheduler  # type: ignore[method-assign]
  
 
---- a/torch_spyre/execution/async_compile.py	2026-08-28 20:57:21
-+++ b/torch_spyre/execution/async_compile.py	2026-08-28 21:02:55
+--- a/torch_spyre/execution/async_compile.py	2026-08-28 21:04:50
++++ b/torch_spyre/execution/async_compile.py	2026-08-29 01:20:20
 @@ -36,6 +36,7 @@
  )
  from torch_spyre._inductor.codegen.bundle import generate_bundle

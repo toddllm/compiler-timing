@@ -42,6 +42,17 @@ Axes considered per bucket:
   `insert_restickify` is riskier than a change that touches a
   peripheral pass. Weight against that.
 
+## Incidental finding — bundle-generation nondeterminism
+
+`generate_bundle` output is not byte-deterministic across independent
+cold compiles on the frozen tree. Two identical unmodified normal
+compile runs of flash 512×1024 differ in `bundle.mlir` bytes, several
+`sdsc_*.json` bytes, and file count. Because the same divergence
+occurs between two unmodified observe runs, byte equality cannot
+distinguish harness perturbation from normal production variation.
+The mechanism is unattributed — this study explicitly did NOT
+investigate it. Possible follow-up as a separate torch-spyre issue.
+
 ## Explicit exclusions
 
 - **Anything past `dxp_standalone`.** DXP itself is separate work.

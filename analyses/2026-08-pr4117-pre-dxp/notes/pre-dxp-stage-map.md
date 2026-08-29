@@ -134,6 +134,25 @@ The pass pipeline already emits per-pass `elapsed_ms` at INFO level (see `passes
 
 That module is the natural reuse target for Phase 3 instrumentation — extend rather than rewrite.
 
+## Direct `_spyre_inner_compile` bracket
+
+Torch-Spyre's ``_spyre_inner_compile`` is the picklable-wrapper that
+Inductor calls as ``inner_compile`` — it delegates to the upstream
+``torch._inductor.compile_fx.compile_fx_inner``. Everything inside
+Inductor's inner compile fires within this call.
+
+On flash 512×1024 the outer ``compile_fx_wrapper`` interval is
+~20 s; only ~13.6 s of that is inside ``_spyre_inner_compile``. The
+outer ~6.5 s runs AOTAutograd's joint-graph preparation before the
+inner compile fires. Timing ``_spyre_inner_compile`` directly gives:
+
+* ``compile_fx_outer_other`` — the pre-inner path (AOTAutograd
+  prep, pre/post-grad passes, dynamo-side bookkeeping).
+* ``spyre_inner_compile`` — the inner compile itself.
+
+Both are timestamp-partitioned from ``compile_fx_wrapper.inclusive``
+with zero subtraction of un-verified children.
+
 ## Discovered timeline (pilot smoke, flash 512×1024)
 
 The pre-pilot draft of this document assumed that

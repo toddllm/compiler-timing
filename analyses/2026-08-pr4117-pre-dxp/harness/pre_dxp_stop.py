@@ -105,40 +105,126 @@ class _PreDxpBoundary(Exception):
 
 
 class _Interception:
-    """Encapsulates the boundary-catalog logic shared by stop and observe.
+    """Records identity signals for each SDSC call, then either raises
+    the sentinel (``stop``) or delegates to the real subprocess
+    (``observe``). ``passthrough`` installs nothing.
 
-    ``mode`` selects whether the wrapper raises after catalog capture
-    or delegates to the original ``subprocess.run``.
+    Both modes take EXACTLY the same code path up to the final
+    delegate-vs-raise decision. The recorded identity signals per
+    kernel are:
+
+      * kernel_name — from the ``sdsc()`` positional argument
+      * n_specs — from the specs argument
+      * spec_type_signature — ordered ``(type_name, count)`` tuples,
+        so two runs producing the same tree structure agree even
+        when python object identities differ
+      * provenance_key — ``KernelProvenanceDescriptor.key`` computed
+        from the finalized specs. Deterministic and canonical (per
+        ``torch_spyre._inductor.kernel_provenance``).
+      * debug_handle_ids — same descriptor's ordered handle-id
+        tuple
+      * output_dir — from the DXP subprocess command line
+      * catalog — SHA-256 catalog of the bundle directory at the DXP
+        call site (informational; not used for the fidelity verdict)
     """
 
     def __init__(self, mode: str, catalog_path: str | None) -> None:
         assert mode in ("stop", "observe", "passthrough")
         self.mode = mode
         self.catalog_path = catalog_path
-        # kernel_name → {"catalog": {...}, "output_dir": ..., "cmd": [...]}
+        # kernel_name → identity + catalog dict
         self.captured: dict[str, dict] = {}
+        self._pending_by_thread: dict[int, dict] = {}
         self.orig_run = None
+        self.orig_sdsc = None
 
     def install(self) -> None:
         if self.mode == "passthrough":
             return
         from torch_spyre.execution import async_compile as _ac
+        from torch_spyre.execution.async_compile import SpyreAsyncCompile
 
         if getattr(_ac, "_pre_dxp_intercept_installed", False):
             return
+
+        # ---- Wrap SpyreAsyncCompile.sdsc to record identity signals
+        # from the (kernel_name, specs) arguments BEFORE subprocess.run
+        # is called. The identity survives even when the intercept later
+        # raises the sentinel.
+        self.orig_sdsc = SpyreAsyncCompile.sdsc
+
+        def _identity_from_specs(kernel_name: str, specs) -> dict:
+            import threading
+            info: dict = {
+                "kernel_name": kernel_name,
+                "n_specs": len(specs),
+            }
+            try:
+                sig = []
+                for s in specs:
+                    sig.append(type(s).__name__)
+                # ordered counts (preserves order)
+                counts: list[tuple[str, int]] = []
+                for name in sig:
+                    if counts and counts[-1][0] == name:
+                        counts[-1] = (name, counts[-1][1] + 1)
+                    else:
+                        counts.append((name, 1))
+                info["spec_type_run_length_signature"] = counts
+                info["spec_type_total_signature"] = sorted(
+                    {n: sig.count(n) for n in set(sig)}.items()
+                )
+            except Exception as e:
+                info["spec_signature_error"] = repr(e)[:200]
+            try:
+                from torch_spyre._inductor.kernel_provenance import (
+                    build_kernel_provenance_descriptor,
+                )
+                descriptor = build_kernel_provenance_descriptor(specs)
+                info["provenance_key"] = descriptor.key
+                info["debug_handle_ids"] = list(descriptor.debug_handle_ids)
+                info["aten_ops"] = sorted(descriptor.aten_ops)
+            except Exception as e:
+                info["provenance_error"] = repr(e)[:200]
+            info["thread_id"] = threading.get_ident()
+            return info
+
+        outer_self = self
+
+        def _wrapped_sdsc(self, kernel_name, specs, *args, **kwargs):
+            import threading
+            tid = threading.get_ident()
+            outer_self._pending_by_thread[tid] = _identity_from_specs(
+                kernel_name, specs
+            )
+            try:
+                return outer_self.orig_sdsc(self, kernel_name, specs, *args, **kwargs)
+            finally:
+                # observe mode: the sdsc call completed; move the
+                # pending record into the captured map keyed by kernel.
+                # stop mode: subprocess.run raised _PreDxpBoundary,
+                # which propagates through here, so the finally block
+                # still fires and we still record the identity.
+                pending = outer_self._pending_by_thread.pop(tid, None)
+                if pending is not None:
+                    kn = pending["kernel_name"]
+                    # If subprocess.run's wrapper already stashed the
+                    # output_dir + catalog under this kernel, merge in.
+                    existing = outer_self.captured.get(kn, {})
+                    existing.update(pending)
+                    outer_self.captured[kn] = existing
+
+        SpyreAsyncCompile.sdsc = _wrapped_sdsc
+
+        # ---- Wrap subprocess.run for the actual boundary behavior.
         self.orig_run = _ac.subprocess.run
 
         def _wrapped_run(*args, **kwargs):
+            import threading
             cmd = args[0] if args else kwargs.get("args") or []
             if not (isinstance(cmd, (list, tuple)) and cmd and cmd[0] == "dxp_standalone"):
-                # Anything not addressed to dxp_standalone passes through
-                # untouched (there are none from this module today, but
-                # be defensive).
-                return self.orig_run(*args, **kwargs)
+                return outer_self.orig_run(*args, **kwargs)
 
-            # Extract the output_dir DXP was told to consume so we can
-            # hash exactly what DXP is about to see. The convention is
-            # ``["dxp_standalone", "-d", <output_dir>]``.
             output_dir = None
             for i in range(len(cmd) - 1):
                 if cmd[i] == "-d":
@@ -146,17 +232,21 @@ class _Interception:
                     break
             catalog = _catalog_dir(output_dir) if output_dir else {}
 
-            # Key by output_dir basename; per-kernel dirs use a unique
-            # digest prefix already (see async_compile.get_output_dir).
-            key = os.path.basename(output_dir) if output_dir else f"cmd{len(self.captured)}"
-            self.captured[key] = {
+            # Find the pending identity record for this thread.
+            tid = threading.get_ident()
+            pending = outer_self._pending_by_thread.get(tid)
+            kn = (pending or {}).get("kernel_name") \
+                or (os.path.basename(output_dir) if output_dir else f"cmd{len(outer_self.captured)}")
+            record = outer_self.captured.setdefault(kn, {})
+            record.update({
                 "cmd": list(cmd),
                 "output_dir": output_dir,
                 "catalog": catalog,
-            }
+                "n_bundle_files": len(catalog),
+            })
+            if pending is not None:
+                record.update({k: v for k, v in pending.items() if k not in record})
 
-            # Emit a boundary marker into the timing record so the
-            # analyzer has a queryable ordinal.
             try:
                 _tr = sys.modules.get("torch_spyre._inductor.timing_recorder") \
                     or sys.modules.get("timing_recorder")
@@ -171,10 +261,10 @@ class _Interception:
             except Exception:
                 pass
 
-            if self.mode == "stop":
+            if outer_self.mode == "stop":
                 raise _PreDxpBoundary(args, kwargs)
-            # observe mode: catalog captured, now delegate.
-            return self.orig_run(*args, **kwargs)
+            # observe mode: identity + catalog recorded, DXP runs.
+            return outer_self.orig_run(*args, **kwargs)
 
         _ac.subprocess.run = _wrapped_run  # type: ignore[attr-defined]
         _ac._pre_dxp_intercept_installed = True  # type: ignore[attr-defined]

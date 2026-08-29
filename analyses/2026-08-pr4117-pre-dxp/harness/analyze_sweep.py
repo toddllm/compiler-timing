@@ -317,6 +317,7 @@ def _bucket_ns(run: dict) -> dict[str, int]:
     ns["spyre_kernel_codegen_total"] = _sum_inclusive(run, "spyre_kernel_codegen")
     ns["wrapper_codegen"] = _sum_inclusive(run, "wrapper_codegen")
     ns["wrapper_module_exec"] = _sum_inclusive(run, "wrapper_module_exec")
+    ns["spyre_inner_compile"] = _sum_inclusive(run, "spyre_inner_compile")
     ns["async_compile_wait"] = _sum_inclusive(run, "async_compile_wait")
     ns["sdsc_total"] = _sum_inclusive(run, "sdsc_total")
     ns["sdsc_bundle_gen_total"] = _sum_inclusive(run, "sdsc_bundle_gen")
@@ -343,6 +344,8 @@ def _bucket_ns(run: dict) -> dict[str, int]:
 
     # ---- Fetch parents for containment proofs ----
     ev_cfw = cfw
+    ev_sic_all = _events_by_name(run, "spyre_inner_compile")
+    ev_sic = ev_sic_all[0] if ev_sic_all else None
     ev_ctm = _first_event(run, "graphlowering_compile_to_module")
     ev_cg = _first_event(run, "graphlowering_codegen")
     ev_sus = _first_event(run, "spyre_update_scheduler")
@@ -356,17 +359,51 @@ def _bucket_ns(run: dict) -> dict[str, int]:
     ev_presched = _first_event(run, "pipeline:CustomPreSchedulingPasses")
     ev_wcg = _first_event(run, "wrapper_codegen")
 
-    # compile_fx_wrapper "other" — subtract direct children we time.
-    # sdsc_total is included here ONLY when timestamps prove it is
-    # inside compile_fx_wrapper (this is the case on 3358f39 where
-    # sdsc fires during wrapper-module import inside compile_to_module).
+    # If multiple spyre_inner_compile calls occurred, require timestamp
+    # containment for each and use their union interval implicitly via
+    # sum. For now the pilot workloads produce a single inner compile.
+    if len(ev_sic_all) > 1:
+        for i, inner in enumerate(ev_sic_all):
+            if not _time_contained(inner, ev_cfw):
+                raise ValidationError(
+                    f"spyre_inner_compile call {i} not contained in "
+                    f"compile_fx_wrapper (t_start={inner['t_start_ns']}, "
+                    f"parent [{ev_cfw['t_start_ns']}, {ev_cfw['t_end_ns']}])"
+                )
+
+    # compile_fx_wrapper OUTER "other" — the compile-fx path OUTSIDE
+    # spyre_inner_compile (AOTAutograd joint-graph decomposition, output
+    # bookkeeping, whatever). Named neutrally: "outer_other", not
+    # "AOTAutograd" — we only proved it's not in the inner compile.
     _derived_bucket(
-        ns, "compile_fx_wrapper_other", ev_cfw["inclusive_ns"],
+        ns, "compile_fx_outer_other", ev_cfw["inclusive_ns"],
         [
-            ("graphlowering_run", ev_cfw, ev_run),
-            ("graphlowering_compile_to_module", ev_cfw, ev_ctm),
+            ("spyre_inner_compile", ev_cfw, ev_sic),
         ],
     )
+
+    # spyre_inner_compile INTERIOR "other" — inside inner_compile but
+    # NOT inside directly-timed sub-events. Verified by timestamp
+    # containment of the two children inside the inner compile event.
+    if ev_sic is not None:
+        _derived_bucket(
+            ns, "inner_compile_other", ev_sic["inclusive_ns"],
+            [
+                ("graphlowering_run", ev_sic, ev_run),
+                ("graphlowering_compile_to_module", ev_sic, ev_ctm),
+            ],
+        )
+    else:
+        # No inner-compile timer present (older build or no Spyre
+        # compile). Fall back to a wrapper-level partition and label
+        # accordingly so downstream tables surface the missing timer.
+        _derived_bucket(
+            ns, "inner_compile_other", ev_cfw["inclusive_ns"],
+            [
+                ("graphlowering_run", ev_cfw, ev_run),
+                ("graphlowering_compile_to_module", ev_cfw, ev_ctm),
+            ],
+        )
 
     # compile_to_module "other" — subtract siblings within compile_to_module.
     # sdsc_total gets attributed here if it fires during wrapper-module
@@ -560,7 +597,9 @@ _BUCKETS_MS = [
     "pre_compile_fx",
     "compile_fx_wrapper",
     "compile_fx_wrapper_pre_dxp",
-    "compile_fx_wrapper_other",
+    "compile_fx_outer_other",
+    "spyre_inner_compile",
+    "inner_compile_other",
     "graphlowering_run",
     "graphlowering_compile_to_module",
     "compile_to_module_other",
@@ -762,12 +801,15 @@ def _write_scaling(
         lines.append("|---|---|---|---|---|---|---|")
         buckets_to_scale = [
             "pre_dxp_total", "pre_compile_fx", "compile_fx_wrapper",
+            "compile_fx_outer_other",
+            "spyre_inner_compile", "inner_compile_other",
             "graphlowering_run", "graphlowering_compile_to_module",
             "custompresched_total", "presched_pass_loop",
             "presched_cost_model", "presched_finalize_work_division",
             "upstream_update_scheduler", "scheduler_init", "scheduler_codegen",
             "spyre_kernel_codegen_total", "wrapper_codegen",
-            "async_compile_wait_other", "sdsc_bundle_gen_total",
+            "wrapper_module_exec",
+            "sdsc_total", "sdsc_bundle_gen_total",
             "kernel_provenance_total",
         ]
         for name in buckets_to_scale:
