@@ -110,12 +110,17 @@ changing the default solver would touch a lot of graphs, so a
 threshold-and-fallback approach is likely safer than removing
 CP-SAT.
 
-**Recommended first concrete follow-up under #4117**:
-prototype a **size-threshold fallback** that runs the greedy
-solver first, and only escalates to CP-SAT when the graph's
-planner-buffer count is below a caller-tunable ceiling AND some
-cheap quality heuristic says CP-SAT is likely to help. Measure the
-compile-time delta on the same 9-flash + 6-MLP sweep.
+**First concrete follow-up under #4117** — completed. See
+`notes/adaptive-solver-followup.md` for the full write-up. Result:
+apples-to-apples solver A/B with `SPYRE_LX_PLANNER_RELAYOUT=0`
+shows CP-SAT and greedy produce byte-identical placement on the
+measured shapes; CP-SAT's cost is 99% in `Solve()` with empirical
+exponent ~2.45 in `planner_buffers`. A `n_operations > 800`
+threshold with a `lx_planner_relayout=False` greedy fallback saves
+29.8% of pre-DXP total on this 15-shape sweep (293.9 s of 987.1 s)
+while keeping the emitted spec set identical to CP-SAT. No
+torch-spyre source change yet — the prototype is an out-of-tree
+monkey patch (`patches/adaptive_solver_prototype.py`).
 
 ### 2. `optimize_restickify_locations` (Will's track)
 

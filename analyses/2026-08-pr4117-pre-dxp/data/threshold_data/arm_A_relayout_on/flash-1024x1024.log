@@ -1,0 +1,17 @@
+[unspecified] [31m ERRR 29.08.2026 15:30:39.495273 [                  ras_base.hpp:  74] {"action":"information","category":"software","code":"0x8c0d","description":"No RuntimeContext has been created.","message":"RuntimeContext not created","name":"RAS::RUNTIMECONTEXT::ContextNotCreated","severity":"ERROR","step":"Open ticket","type":"runtime_error"}[0m
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf17; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf41; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf65; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf89; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf113; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf137; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf161; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf185; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf209; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf233; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf257; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf281; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf305; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf329; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf353; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf377; using iteration-order last-axis-wins: output:d3=absent

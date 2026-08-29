@@ -463,6 +463,21 @@ def main() -> int:
     from torch_spyre._inductor import timing_recorder as _tr
     from torch_spyre._inductor import config as _spyre_config
 
+    # Adaptive-solver prototype (§3 of the #4117 first follow-up).
+    # Installs only when ADAPTIVE_SOLVER_ENABLE=1 in the environment.
+    try:
+        # Find the patches dir relative to this harness file.
+        _study_patches = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "patches",
+        )
+        sys.path.insert(0, os.path.normpath(_study_patches))
+        from adaptive_solver_prototype import install_adaptive_solver_prototype
+        install_adaptive_solver_prototype()
+    except Exception as _e:  # noqa: BLE001
+        # Best-effort — prototype absence is not a hard error.
+        pass
+
     # Resolved runtime values from torch_spyre._inductor.config (NOT env
     # strings). Any env override has already fired by the time we import
     # this module; the values below are what the compiler actually saw.

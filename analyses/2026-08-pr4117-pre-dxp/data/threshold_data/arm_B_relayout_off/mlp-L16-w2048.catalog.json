@@ -1,0 +1,262 @@
+{
+  "captured": {
+    "sdsc_fused_add_gelu_mm_0": {
+      "aten_ops": [
+        "aten.add.Tensor",
+        "aten.gelu.default",
+        "aten.mm.default"
+      ],
+      "catalog": {
+        "bundle.mlir": {
+          "mode": 420,
+          "sha256": "dfd9eaf1c0b10c301e18992d3fd2eb1b8d655adf44e910578e20cfe3c1e1f662",
+          "size": 187441
+        },
+        "sdsc_0.json": {
+          "mode": 420,
+          "sha256": "2fee110f7d6c5898fcef27d86a159939078f219ca44ed00ebcb7644b73e80cf2",
+          "size": 26577
+        },
+        "sdsc_1.json": {
+          "mode": 420,
+          "sha256": "89233c4aaa6d8a98ef2751ce6b362fabd7d82d3ee062c2a13a32e2d09202e33d",
+          "size": 23447
+        },
+        "sdsc_10.json": {
+          "mode": 420,
+          "sha256": "88eac5b14df0d55085ae985d3cde4da86a70e593ea6b9de2508851252f0538de",
+          "size": 23483
+        },
+        "sdsc_11.json": {
+          "mode": 420,
+          "sha256": "794a8f4a4e6a25735b97c1937e3d6f268852098f1bad9ed79d080739133388af",
+          "size": 26685
+        },
+        "sdsc_12.json": {
+          "mode": 420,
+          "sha256": "238ecb5091c975e02bda9003b531a65232753e630fb8ffe4554b608c0ca2afdb",
+          "size": 23483
+        },
+        "sdsc_13.json": {
+          "mode": 420,
+          "sha256": "9ea5caaa34d720b259d23f93ba00fdb07a044211dc949f61f625613f7da2f6b6",
+          "size": 26684
+        },
+        "sdsc_14.json": {
+          "mode": 420,
+          "sha256": "ac2738e44d08e764fe79a553f8b9c76c1f30305ab5409a480c57681738905a35",
+          "size": 23483
+        },
+        "sdsc_15.json": {
+          "mode": 420,
+          "sha256": "1210d3a0c1473ea5d81ac6952cf7855501db50c60eca84828796e050f888f122",
+          "size": 26684
+        },
+        "sdsc_16.json": {
+          "mode": 420,
+          "sha256": "e595495571e34af2e5cd7d0fe27ef7cfb6059a2946e975ebcc81cbfa2ead1bfe",
+          "size": 23483
+        },
+        "sdsc_17.json": {
+          "mode": 420,
+          "sha256": "9d251ab061364c99b4d4562c763331222a243b9cd5ef75d8e442934f6cbf2028",
+          "size": 26685
+        },
+        "sdsc_18.json": {
+          "mode": 420,
+          "sha256": "4373c1aaec68aad582e100414b01db49b1e6b7917f7e58b473c951d26f535b59",
+          "size": 23483
+        },
+        "sdsc_19.json": {
+          "mode": 420,
+          "sha256": "80a49e26f9ae64981f10bd6ea65c476f9853cc6ee20781f1e025461b0a3bf4d0",
+          "size": 26685
+        },
+        "sdsc_2.json": {
+          "mode": 420,
+          "sha256": "9a59226b9dde6ffc5cb7ae4f08b179e858352add3ad7f4cbcc7c4453b1ed5006",
+          "size": 18490
+        },
+        "sdsc_20.json": {
+          "mode": 420,
+          "sha256": "d30db19e6ddc162c49b1b6bef5e2e58dbb1210b9afea8254ee75aaae407b066b",
+          "size": 23483
+        },
+        "sdsc_21.json": {
+          "mode": 420,
+          "sha256": "028480c37171526e7c92dbceb54311ccf9a2026ee7d41dc06b652646d298c23e",
+          "size": 26690
+        },
+        "sdsc_22.json": {
+          "mode": 420,
+          "sha256": "19fbaf6d89f6b7755eed6de04b8a8d1e5e08a5b42ac9e2cf88c0a85fcdf48ae2",
+          "size": 23516
+        },
+        "sdsc_23.json": {
+          "mode": 420,
+          "sha256": "d8a9099e6f3d7e8f831653728e435b62f5cdfe0284f2fc9a893b75ccc05b968c",
+          "size": 26750
+        },
+        "sdsc_24.json": {
+          "mode": 420,
+          "sha256": "fa38c1926003cb329b0124780350c480a6c14362d527f8a18ee677d8c726b599",
+          "size": 23516
+        },
+        "sdsc_25.json": {
+          "mode": 420,
+          "sha256": "9834ee2beeb2c4d994b3dd2d406563717dd803a9980ced200e631163ff040c3e",
+          "size": 26750
+        },
+        "sdsc_26.json": {
+          "mode": 420,
+          "sha256": "38e9215a8a0c04802e86ec11ed16a41970625879b7db069e0c6e023a42bdf7bf",
+          "size": 23516
+        },
+        "sdsc_27.json": {
+          "mode": 420,
+          "sha256": "acc5ad8d8cec83113daa0cbd3d08041c13dd4260f97339b797775961fade09ee",
+          "size": 26750
+        },
+        "sdsc_28.json": {
+          "mode": 420,
+          "sha256": "5602b8748fddc4c1af6cbf11db10a1d2b84959009af76e5e4c96b30683ec3221",
+          "size": 23516
+        },
+        "sdsc_29.json": {
+          "mode": 420,
+          "sha256": "7c9e2da4dcf8b2a605e5fa53a0e9074ef36f61cc0935a684289297557db3efb5",
+          "size": 26749
+        },
+        "sdsc_3.json": {
+          "mode": 420,
+          "sha256": "f4c36669b6b818a763756d87b2359e9642c4771340ad7899f5940dabf6971897",
+          "size": 26650
+        },
+        "sdsc_30.json": {
+          "mode": 420,
+          "sha256": "24fc8c12b154c4805616edaf131a991016f743a6d9576fc5128a2b60b835e324",
+          "size": 23514
+        },
+        "sdsc_31.json": {
+          "mode": 420,
+          "sha256": "e7bf19596166268f7f2c380f166e5fd5389d3003717ca1531c0ccc6b3102b480",
+          "size": 26987
+        },
+        "sdsc_32.json": {
+          "mode": 420,
+          "sha256": "4895265b1ea3d1c7d8a4cae8e0e9975d78296a04156107ee0a8216cc76c0855f",
+          "size": 19188
+        },
+        "sdsc_33.json": {
+          "mode": 420,
+          "sha256": "3b263f74d9171aa059c455a004ef8fb542f3c0ff8a4a926706f13ead09f666d6",
+          "size": 14639
+        },
+        "sdsc_4.json": {
+          "mode": 420,
+          "sha256": "ce9bea78680effbe6fa6bd38f6ff9025143ea44ebee10e78deb3a94a0b87a8cf",
+          "size": 23481
+        },
+        "sdsc_5.json": {
+          "mode": 420,
+          "sha256": "b751317d0fb2eaa77ad87a7c8d1f09c0b188a9e3958be155f5f52a514c2967fb",
+          "size": 26683
+        },
+        "sdsc_6.json": {
+          "mode": 420,
+          "sha256": "7109a814beefc5197ff139c8968429e9a3a4c51b3182ab9821e99d8c52b77c1b",
+          "size": 23481
+        },
+        "sdsc_7.json": {
+          "mode": 420,
+          "sha256": "198662662aa57f447b64cc3df33a083e2370813bbf6a73615f22004c5202b716",
+          "size": 26683
+        },
+        "sdsc_8.json": {
+          "mode": 420,
+          "sha256": "78100efa7d5cbb6f98e9fb1c8a582c6bc1ca60fd627ffae04aa10790a4bc530b",
+          "size": 23482
+        },
+        "sdsc_9.json": {
+          "mode": 420,
+          "sha256": "dd9c40082d1981239c4de3682eee99f03a0b80cf470b268daaa1e90a615f4506",
+          "size": 26684
+        }
+      },
+      "cmd": [
+        "dxp_standalone",
+        "-d",
+        "/tmp/tsc-thr-mlp-L16-w2048-0/inductor-spyre/57497b7e_sdsc_fused_add_gelu_mm_0_mju743zx"
+      ],
+      "debug_handle_ids": [
+        "3096651038865805506",
+        "5969744174946216111",
+        "8574541796981178622",
+        "8747013621570810697",
+        "3868755894839560402",
+        "3946045632194577103",
+        "4259395322244804755",
+        "5439253058133942876",
+        "8541521158483877759",
+        "1124307546268543146",
+        "5711627682639713625",
+        "4512657873993469032",
+        "8400204141287195397",
+        "7013019635023880140",
+        "7097990931630175779",
+        "7740078087384225016",
+        "5605633338597766990",
+        "7465409956786720232",
+        "665768334550282598",
+        "4272647313763881509",
+        "672646965902233847",
+        "179142317610556257",
+        "6452928693569906996",
+        "225414225225877398",
+        "1400370844776165009",
+        "3131838583550444956",
+        "2380924340600984707",
+        "6939778594774372284",
+        "3558454501553796332",
+        "3991611747541491212",
+        "6226603105273996814",
+        "2220121002803552587",
+        "2700001884544618656",
+        "2597778132199102606",
+        "4767253931409842850",
+        "3711227814001521266",
+        "3696970483452438678",
+        "6010777046033260184",
+        "3234341577591809546",
+        "8999160403243340607",
+        "3621330478213438846",
+        "2993993776965447393",
+        "509113145122699433",
+        "99329675399304467",
+        "8381496104488386761",
+        "859023782110514107",
+        "2821788356415592179",
+        "2335295273497385658"
+      ],
+      "kernel_name": "sdsc_fused_add_gelu_mm_0",
+      "n_bundle_files": 35,
+      "n_specs": 48,
+      "output_dir": "/tmp/tsc-thr-mlp-L16-w2048-0/inductor-spyre/57497b7e_sdsc_fused_add_gelu_mm_0_mju743zx",
+      "provenance_key": "gqgtft66s34tt43g",
+      "spec_type_run_length_signature": [
+        [
+          "OpSpec",
+          48
+        ]
+      ],
+      "spec_type_total_signature": [
+        [
+          "OpSpec",
+          48
+        ]
+      ],
+      "thread_id": 140145111790336
+    }
+  },
+  "mode": "stop"
+}

@@ -1,0 +1,106 @@
+{
+  "captured": {
+    "sdsc_fused_add_gelu_mm_0": {
+      "aten_ops": [
+        "aten.add.Tensor",
+        "aten.gelu.default",
+        "aten.mm.default"
+      ],
+      "catalog": {
+        "bundle.mlir": {
+          "mode": 420,
+          "sha256": "8ec74728b153c5ee6aab1a91c1a8bd5bc42aa6433c0ab33e9ef8adba02dc74cc",
+          "size": 50059
+        },
+        "sdsc_0.json": {
+          "mode": 420,
+          "sha256": "2fee110f7d6c5898fcef27d86a159939078f219ca44ed00ebcb7644b73e80cf2",
+          "size": 26577
+        },
+        "sdsc_1.json": {
+          "mode": 420,
+          "sha256": "89233c4aaa6d8a98ef2751ce6b362fabd7d82d3ee062c2a13a32e2d09202e33d",
+          "size": 23447
+        },
+        "sdsc_2.json": {
+          "mode": 420,
+          "sha256": "9a59226b9dde6ffc5cb7ae4f08b179e858352add3ad7f4cbcc7c4453b1ed5006",
+          "size": 18490
+        },
+        "sdsc_3.json": {
+          "mode": 420,
+          "sha256": "f4c36669b6b818a763756d87b2359e9642c4771340ad7899f5940dabf6971897",
+          "size": 26650
+        },
+        "sdsc_4.json": {
+          "mode": 420,
+          "sha256": "ce9bea78680effbe6fa6bd38f6ff9025143ea44ebee10e78deb3a94a0b87a8cf",
+          "size": 23481
+        },
+        "sdsc_5.json": {
+          "mode": 420,
+          "sha256": "b751317d0fb2eaa77ad87a7c8d1f09c0b188a9e3958be155f5f52a514c2967fb",
+          "size": 26683
+        },
+        "sdsc_6.json": {
+          "mode": 420,
+          "sha256": "7109a814beefc5197ff139c8968429e9a3a4c51b3182ab9821e99d8c52b77c1b",
+          "size": 23481
+        },
+        "sdsc_7.json": {
+          "mode": 420,
+          "sha256": "0eced260171f5fc4249bd275dc3bc067f2880653348b5071671e725166226648",
+          "size": 26889
+        },
+        "sdsc_8.json": {
+          "mode": 420,
+          "sha256": "d9fc85280db0ece44ca7ae260c6283890b840b3acb53cbf4a7d1ce94627c9e6f",
+          "size": 19154
+        },
+        "sdsc_9.json": {
+          "mode": 420,
+          "sha256": "879fc54926e0d70eb17a427629c75835a325d30d989c75dcc6b4e6e1e160d55e",
+          "size": 14621
+        }
+      },
+      "cmd": [
+        "dxp_standalone",
+        "-d",
+        "/tmp/tsc-thr-mlp-L4-w2048-1/inductor-spyre/ea5d4e17_sdsc_fused_add_gelu_mm_0_v8lxuinh"
+      ],
+      "debug_handle_ids": [
+        "3096651038865805506",
+        "5969744174946216111",
+        "8574541796981178622",
+        "8747013621570810697",
+        "3868755894839560402",
+        "3946045632194577103",
+        "4259395322244804755",
+        "5439253058133942876",
+        "8541521158483877759",
+        "1124307546268543146",
+        "5711627682639713625",
+        "4512657873993469032"
+      ],
+      "kernel_name": "sdsc_fused_add_gelu_mm_0",
+      "n_bundle_files": 11,
+      "n_specs": 12,
+      "output_dir": "/tmp/tsc-thr-mlp-L4-w2048-1/inductor-spyre/ea5d4e17_sdsc_fused_add_gelu_mm_0_v8lxuinh",
+      "provenance_key": "rfiloslos4ts245n",
+      "spec_type_run_length_signature": [
+        [
+          "OpSpec",
+          12
+        ]
+      ],
+      "spec_type_total_signature": [
+        [
+          "OpSpec",
+          12
+        ]
+      ],
+      "thread_id": 140024737547008
+    }
+  },
+  "mode": "stop"
+}

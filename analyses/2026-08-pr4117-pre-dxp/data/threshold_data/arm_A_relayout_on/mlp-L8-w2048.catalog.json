@@ -1,0 +1,158 @@
+{
+  "captured": {
+    "sdsc_fused_add_gelu_mm_0": {
+      "aten_ops": [
+        "aten.add.Tensor",
+        "aten.gelu.default",
+        "aten.mm.default"
+      ],
+      "catalog": {
+        "bundle.mlir": {
+          "mode": 420,
+          "sha256": "11a4746aa18c36c844efa0415f6f04e933c54eb34c165f2e52c1fe87296e37af",
+          "size": 95615
+        },
+        "sdsc_0.json": {
+          "mode": 420,
+          "sha256": "2fee110f7d6c5898fcef27d86a159939078f219ca44ed00ebcb7644b73e80cf2",
+          "size": 26577
+        },
+        "sdsc_1.json": {
+          "mode": 420,
+          "sha256": "89233c4aaa6d8a98ef2751ce6b362fabd7d82d3ee062c2a13a32e2d09202e33d",
+          "size": 23447
+        },
+        "sdsc_10.json": {
+          "mode": 420,
+          "sha256": "88eac5b14df0d55085ae985d3cde4da86a70e593ea6b9de2508851252f0538de",
+          "size": 23483
+        },
+        "sdsc_11.json": {
+          "mode": 420,
+          "sha256": "794a8f4a4e6a25735b97c1937e3d6f268852098f1bad9ed79d080739133388af",
+          "size": 26685
+        },
+        "sdsc_12.json": {
+          "mode": 420,
+          "sha256": "238ecb5091c975e02bda9003b531a65232753e630fb8ffe4554b608c0ca2afdb",
+          "size": 23483
+        },
+        "sdsc_13.json": {
+          "mode": 420,
+          "sha256": "9ea5caaa34d720b259d23f93ba00fdb07a044211dc949f61f625613f7da2f6b6",
+          "size": 26684
+        },
+        "sdsc_14.json": {
+          "mode": 420,
+          "sha256": "ac2738e44d08e764fe79a553f8b9c76c1f30305ab5409a480c57681738905a35",
+          "size": 23483
+        },
+        "sdsc_15.json": {
+          "mode": 420,
+          "sha256": "dc13326241b9c28218d64ba622d3c7f15b35bbd194e44425275e7563e2374975",
+          "size": 26890
+        },
+        "sdsc_16.json": {
+          "mode": 420,
+          "sha256": "e6bbe5b93d1174aa06600820b98ab48a4c5372c2dc07abf1062af68054f70767",
+          "size": 19155
+        },
+        "sdsc_17.json": {
+          "mode": 420,
+          "sha256": "e8204e49348b59582806e44a6e901af8b2bc10cac4ccfb5eb4a45892ebecba03",
+          "size": 14621
+        },
+        "sdsc_2.json": {
+          "mode": 420,
+          "sha256": "9a59226b9dde6ffc5cb7ae4f08b179e858352add3ad7f4cbcc7c4453b1ed5006",
+          "size": 18490
+        },
+        "sdsc_3.json": {
+          "mode": 420,
+          "sha256": "f4c36669b6b818a763756d87b2359e9642c4771340ad7899f5940dabf6971897",
+          "size": 26650
+        },
+        "sdsc_4.json": {
+          "mode": 420,
+          "sha256": "ce9bea78680effbe6fa6bd38f6ff9025143ea44ebee10e78deb3a94a0b87a8cf",
+          "size": 23481
+        },
+        "sdsc_5.json": {
+          "mode": 420,
+          "sha256": "b751317d0fb2eaa77ad87a7c8d1f09c0b188a9e3958be155f5f52a514c2967fb",
+          "size": 26683
+        },
+        "sdsc_6.json": {
+          "mode": 420,
+          "sha256": "7109a814beefc5197ff139c8968429e9a3a4c51b3182ab9821e99d8c52b77c1b",
+          "size": 23481
+        },
+        "sdsc_7.json": {
+          "mode": 420,
+          "sha256": "198662662aa57f447b64cc3df33a083e2370813bbf6a73615f22004c5202b716",
+          "size": 26683
+        },
+        "sdsc_8.json": {
+          "mode": 420,
+          "sha256": "78100efa7d5cbb6f98e9fb1c8a582c6bc1ca60fd627ffae04aa10790a4bc530b",
+          "size": 23482
+        },
+        "sdsc_9.json": {
+          "mode": 420,
+          "sha256": "dd9c40082d1981239c4de3682eee99f03a0b80cf470b268daaa1e90a615f4506",
+          "size": 26684
+        }
+      },
+      "cmd": [
+        "dxp_standalone",
+        "-d",
+        "/tmp/tsc-thr-mlp-L8-w2048-1/inductor-spyre/93e45d43_sdsc_fused_add_gelu_mm_0_sn91t1tb"
+      ],
+      "debug_handle_ids": [
+        "3096651038865805506",
+        "5969744174946216111",
+        "8574541796981178622",
+        "8747013621570810697",
+        "3868755894839560402",
+        "3946045632194577103",
+        "4259395322244804755",
+        "5439253058133942876",
+        "8541521158483877759",
+        "1124307546268543146",
+        "5711627682639713625",
+        "4512657873993469032",
+        "8400204141287195397",
+        "7013019635023880140",
+        "7097990931630175779",
+        "7740078087384225016",
+        "5605633338597766990",
+        "7465409956786720232",
+        "665768334550282598",
+        "4272647313763881509",
+        "672646965902233847",
+        "179142317610556257",
+        "6452928693569906996",
+        "225414225225877398"
+      ],
+      "kernel_name": "sdsc_fused_add_gelu_mm_0",
+      "n_bundle_files": 19,
+      "n_specs": 24,
+      "output_dir": "/tmp/tsc-thr-mlp-L8-w2048-1/inductor-spyre/93e45d43_sdsc_fused_add_gelu_mm_0_sn91t1tb",
+      "provenance_key": "xab5k5er4vgaoplf",
+      "spec_type_run_length_signature": [
+        [
+          "OpSpec",
+          24
+        ]
+      ],
+      "spec_type_total_signature": [
+        [
+          "OpSpec",
+          24
+        ]
+      ],
+      "thread_id": 140371252212480
+    }
+  },
+  "mode": "stop"
+}

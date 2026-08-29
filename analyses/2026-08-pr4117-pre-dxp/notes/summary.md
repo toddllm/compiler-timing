@@ -170,15 +170,18 @@ Not reopened.
 * Fresh `TORCHINDUCTOR_CACHE_DIR` per sample. Fresh process per
   sample.
 
-## Recommended first concrete follow-up under #4117
+## First concrete follow-up under #4117
 
-Prototype a **size-threshold + greedy-fallback rule** in
-`torch_spyre/_inductor/scratchpad/allocator.select_allocator`:
-run greedy first, escalate to CP-SAT only when the graph's
-`planner_buffer` count is below a caller-tunable ceiling and a
-cheap quality heuristic suggests CP-SAT will help. Measure the
-compile-time delta on the same 9-flash + 6-MLP sweep. Solver
-quality changes are explicitly out of scope for #4117; solver
-compile cost is in scope.
+Prototype an adaptive `layout_solver` policy: keep CP-SAT for
+small graphs; fall back to greedy (with `lx_planner_relayout=False`
+for that fallback plan) when `len(graph.operations)` at the entry
+to `scratchpad_planning` exceeds a caller-tunable threshold.
+
+Data, analysis, and recommendation are in
+`notes/adaptive-solver-followup.md`. Summary: on this 15-shape
+sweep, threshold=800 with the `lx_planner_relayout=False` fallback
+flavor saves 29.8% of pre-DXP total (293.9 s of 987.1 s) while
+keeping the emitted spec set byte-identical to CP-SAT on every
+measured shape. Not wired into production yet.
 
 See `notes/next-opportunities.md` for the full ranked list.
