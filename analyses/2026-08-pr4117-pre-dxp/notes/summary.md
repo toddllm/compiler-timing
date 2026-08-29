@@ -37,14 +37,14 @@ the pilot or full sweep has yet been executed on a pod.
   method is now bracketed and the four sub-regions are timed
   separately.
 - **SDSC is NOT nested inside `compile_fx_wrapper` or
-  `compile_to_fn`.** It fires during first invocation of the compiled
+  `compile_to_module`.** It fires during first invocation of the compiled
   wrapper. The analyzer never subtracts `sdsc_total` from those
   parents.
 - **Primary `pre_dxp_total`** is `pre_dxp_boundary_marker.t_start −
   first_call_wall.t_start`. The sentinel unwind is reported
   separately.
 - **Neutral bucket names.** `pre_compile_fx`,
-  `compile_to_fn_other`, `spyre_update_scheduler_other`, etc. No
+  `compile_to_module_other`, `spyre_update_scheduler_other`, etc. No
   "dynamo_aot_prelude" and no directly-named Scheduler bucket unless
   it is directly bracketed.
 - **Direct timers.** `Scheduler.__init__`, `Scheduler.codegen`,

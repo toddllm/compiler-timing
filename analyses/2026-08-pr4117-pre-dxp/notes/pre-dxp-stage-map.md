@@ -134,12 +134,45 @@ The pass pipeline already emits per-pass `elapsed_ms` at INFO level (see `passes
 
 That module is the natural reuse target for Phase 3 instrumentation — extend rather than rewrite.
 
+## Discovered timeline (pilot smoke, flash 512×1024)
+
+The pre-pilot draft of this document assumed that
+``SpyreAsyncCompile.sdsc()`` would fire during a separate
+first-invocation phase, i.e. under ``async_compile.wait(globals())``
+called from the generated wrapper on first call. Empirical smoke on
+the frozen build showed a different topology:
+
+* ``torch.compile(fn)`` returns immediately; Dynamo does not trace
+  the function until ``fn`` is actually called.
+* On first call, Dynamo traces + AOTAutograd runs (~318 ms), then
+  invokes the backend (``compile_fx_wrapper``).
+* Inside ``compile_fx_wrapper``, Inductor runs
+  ``GraphLowering.run`` and then ``GraphLowering.compile_to_module``.
+* ``compile_to_module → _compile_to_module_lines`` loads the
+  generated Python wrapper module via ``PyCodeCache.load_by_key_path``.
+* Loading a Python module **executes its top-level statements**.
+  The generated wrapper's module body contains one
+  ``async_compile.sdsc('<kernel_name>', ...)`` call per kernel,
+  followed by ``async_compile.wait(globals())``.
+* ``SpyreAsyncCompile.sdsc()`` runs the SDSC bundle generator +
+  ``dxp_standalone`` **synchronously**, then returns a fully-loaded
+  runner. So ``async_compile.wait(globals())`` becomes a no-op — but
+  the sentinel never reaches it in ``--mode=stop`` because
+  ``sdsc()`` raises ``_PreDxpBoundary`` first.
+
+Consequence: ``sdsc_total``, ``sdsc_bundle_gen``,
+``kernel_provenance``, and ``dxp_standalone`` are all nested inside
+``compile_fx_wrapper`` on this build — specifically under
+``wrapper_module_exec`` (a directly-timed bracket on
+``GraphLowering._compile_to_module_lines``). The analyzer verifies
+this via timestamp containment on every run rather than assuming it.
+
 ## Non-obvious things the framework accounts for
 
 1. **`_pre_fusion_custom_pass` and `_post_fusion_custom_pass` fire inside `Scheduler.__init__`**, not inside `_pre_scheduling_pass`. Timed as separate `pipeline:CustomPreFusionPasses` and `pipeline:CustomPostFusionPasses` events under `scheduler_init`.
 2. **`recover_spyre_hints`** runs once per compile at `_spyre_update_scheduler` entry, before `_pre_scheduling_pass`. Timed as its own `recover_spyre_hints` stage.
 3. **`cost_model_pass`, `dump_cost_model`, and `finalize_work_division_for_scheduler`** run inside `CustomPreSchedulingPasses.__call__` but **outside** the 23-pass loop. The pipeline event brackets ALL of them; nested stages `presched_pass_loop`, `presched_cost_model`, `presched_cost_dump`, `presched_finalize_work_division` isolate each.
-4. **`compile_fx_wrapper` and `async_compile_wait` are TIME-DISJOINT SIBLINGS** under `first_call_wall`. The compile produces a compiled artifact; `async_compile.wait()` fires when the wrapper module initializes at first invocation, INSIDE `first_call_wall` but AFTER `compile_fx_wrapper` has returned. **Never subtract `sdsc_total` from `compile_fx_wrapper` or `compile_to_fn`.**
+4. **`compile_fx_wrapper` and `async_compile_wait` are TIME-DISJOINT SIBLINGS** under `first_call_wall`. The compile produces a compiled artifact; `async_compile.wait()` fires when the wrapper module initializes at first invocation, INSIDE `first_call_wall` but AFTER `compile_fx_wrapper` has returned. **Never subtract `sdsc_total` from `compile_fx_wrapper` or `compile_to_module`.**
 5. **CustomPreSchedulingPasses is a module-level singleton** (`_pre_scheduling_pass = CustomPreSchedulingPasses()` in `patches.py`). Multiple compiles share the pass instance but each `__call__` operates on a fresh `GraphLowering`.
 6. **PR #4113's dedup fix is upstream** at the frozen SHA — `dedup_and_promote_constants` should not appear as a scaling defect. `tables/pass-detail.md` verifies this.
 7. `CustomPreSchedulingPasses.__call__` early-returns if `_operations_have_spyre_device(graph.operations)` is false. The harness confirms the run is Spyre-active via the boundary marker capture and the `input_operations` metadata on the pipeline event.

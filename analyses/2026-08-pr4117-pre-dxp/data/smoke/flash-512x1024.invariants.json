@@ -1,0 +1,58 @@
+{
+  "binding_status": {
+    "USE_SPYRE_CCL_env": "<unset>",
+    "torch_spyre.distributed_import_error": "ImportError: cannot import name 'distributed' from 'torch_spyre' (/home/tdeshane/pr4117/torch-spyre/torch_spyre/__init__.py)",
+    "torch_spyre.distributed_imported": false,
+    "torch_spyre__C_ccl_symbols": [],
+    "torch_spyre_from": "/home/tdeshane/pr4117/torch-spyre/torch_spyre/__init__.py"
+  },
+  "inductor_config": {
+    "allow_buffer_reuse": true,
+    "benchmark_harness": true,
+    "permute_fusion": false,
+    "split_reductions": true,
+    "unroll_reductions_threshold": 8
+  },
+  "run_stats": {
+    "fx_nodes_at_entry": 236,
+    "meta_from_run": {
+      "B": 1,
+      "D": 128,
+      "H": 8,
+      "Lk": 1024,
+      "Lq": 512,
+      "N_hidden": 4096,
+      "N_in": 1024,
+      "SENCORES": "<unset>",
+      "TORCHINDUCTOR_CACHE_DIR": "/tmp/tsc-smoke-flash-512x1024",
+      "b_block_size": 1,
+      "boundary_info": {
+        "dxp_cmd_captured": [
+          "dxp_standalone",
+          "-d",
+          "/tmp/tsc-smoke-flash-512x1024/inductor-spyre/136661d3_sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0_x6bgcnrv"
+        ]
+      },
+      "clock": "time.perf_counter_ns",
+      "h_block_size": 4,
+      "kv_block_size": 512,
+      "layers": 4,
+      "mode": "stop",
+      "n_captured_kernels": 1,
+      "pod": "tdeshane-compiler-timing-dev-v2",
+      "pre_dxp_boundary_reached": true,
+      "pre_dxp_catalog_path": "/tmp/smoke-flash-512x1024.catalog.json",
+      "python_pid": 727141,
+      "python_version": "3.12.13",
+      "q_block_size": 256,
+      "recorder_version": 1,
+      "torch_version": "2.13.0+cpu",
+      "workload": "flash"
+    },
+    "n_kernels_emitted": 1,
+    "n_specs_to_sdsc": 257,
+    "presched_input_operations": 260,
+    "presched_passes_in_pipeline": 23,
+    "scheduler_init_input_nodes": 260
+  }
+}

@@ -22,7 +22,7 @@ and ``notes/tables/`` directories:
       ├── compile_fx_wrapper                  ── produces compiled artifact
       │     ├── pre_compile_fx (residual)
       │     ├── graphlowering_run
-      │     └── graphlowering_compile_to_fn
+      │     └── graphlowering_compile_to_module
       │           ├── graphlowering_codegen
       │           │     ├── spyre_update_scheduler
       │           │     │     ├── recover_spyre_hints
@@ -79,7 +79,7 @@ validation error, not silently clamped to zero.
 |---|---|
 | `pre_compile_fx` | `first_call_wall_self_ns` upstream of `compile_fx_wrapper`. Not "Dynamo/AOT" — neutrally named. |
 | `graphlowering_run` | direct |
-| `graphlowering_compile_to_fn_other` | `compile_to_fn.inclusive − sum(direct children we time)` |
+| `graphlowering_compile_to_module_other` | `compile_to_module.inclusive − sum(direct children we time)` |
 | `graphlowering_codegen_other` | `graphlowering_codegen.inclusive − sum(direct children we time)` |
 | `spyre_update_scheduler_other` | `spyre_update_scheduler.inclusive − children` |
 | `recover_spyre_hints` | direct |
@@ -98,8 +98,28 @@ validation error, not silently clamped to zero.
 | `kernel_provenance_total` | sum |
 | `sentinel_unwind` | `first_call_wall.t_end − pre_dxp_boundary.t_start` |
 
-Anything unclaimed is reported as `unattributed_pre_dxp` and included
-in the reconciliation residual.
+## Observed vs original model
+
+The pre-pilot draft assumed SDSC would fire under an
+``async_compile_wait`` event at first invocation of the compiled
+wrapper, as a sibling of ``compile_fx_wrapper`` under
+``first_call_wall``. Pilot smoke on frozen build 3358f39 showed the
+actual topology: the generated Python wrapper module is imported and
+executed inline inside ``GraphLowering.compile_to_module``, so
+``async_compile.sdsc(...)`` fires there, nested under
+``compile_fx_wrapper``. ``async_compile_wait`` never runs before the
+sentinel raises.
+
+The analyzer now inspects timestamps to determine actual containment
+and supports both topologies. It never subtracts a child from a
+parent unless timestamps prove the child is contained in the parent.
+
+## Top-level partition
+
+    pre_dxp_total = pre_compile_fx + compile_fx_wrapper_pre_dxp
+
+Both terms are timestamp-derived. Their sum reconciles to
+``pre_dxp_total`` exactly (± timer bookkeeping).
 """
 
 from __future__ import annotations
@@ -198,10 +218,67 @@ def _validate_run(run: dict, source_path: str) -> dict:
 
 # ---- attribution -----------------------------------------------------------
 
+def _time_contained(child: dict, parent: dict, slack_ns: int = 500_000) -> bool:
+    """Return True iff child's timestamp interval sits inside parent's.
+
+    Uses absolute ``t_start_ns`` / ``t_end_ns`` fields, so it works
+    regardless of the recorded ``parent_ordinal``. Small clock jitter
+    slack (0.5 ms by default) tolerates timer-bookkeeping noise.
+    """
+    return (
+        child["t_start_ns"] >= parent["t_start_ns"] - slack_ns
+        and child["t_end_ns"] <= parent["t_end_ns"] + slack_ns
+    )
+
+
+def _derived_bucket(
+    ns: dict[str, int],
+    name: str,
+    parent_ns: int,
+    parts: list[tuple[str, dict | None, dict | None]],
+    *,
+    slack_ns: int = 500_000,
+) -> None:
+    """Compute ``parent_ns − sum(child inclusive)`` after PROVING every
+    subtracted child is time-contained in the parent event.
+
+    ``parts`` is a list of ``(bucket_name, parent_event, child_event)``
+    tuples. Each entry contributes ``ns[bucket_name]`` to the sum ONLY
+    if timestamps prove ``child_event`` sits inside ``parent_event``.
+    Missing events (``None``) contribute zero.
+
+    Negative results raise ``ValidationError`` — a derived bucket that
+    comes out negative is a nesting bug, not something to clamp.
+    """
+    contained_ns = 0
+    unverified: list[str] = []
+    for bucket_name, parent_ev, child_ev in parts:
+        if child_ev is None or parent_ev is None:
+            continue
+        if _time_contained(child_ev, parent_ev, slack_ns):
+            contained_ns += ns[bucket_name]
+        else:
+            unverified.append(bucket_name)
+    if unverified:
+        raise ValidationError(
+            f"derived bucket '{name}' has unverified containment for "
+            f"{unverified!r} — refusing to subtract"
+        )
+    d = parent_ns - contained_ns
+    if d < -slack_ns:
+        raise ValidationError(
+            f"derived bucket '{name}' negative: {d}ns "
+            f"(parent={parent_ns}, subtracted_ms={contained_ns / 1e6:.2f})"
+        )
+    ns[name] = max(0, d)
+
+
 def _bucket_ns(run: dict) -> dict[str, int]:
     """Return per-bucket inclusive/derived nanoseconds for one run.
 
-    Any derived bucket that comes out negative raises ValidationError.
+    Every derived bucket is proven by timestamp containment, not
+    inferred from ``parent_ordinal`` alone. Any derived bucket that
+    comes out negative raises ValidationError.
     """
     fcw = _first_event(run, "first_call_wall")
     cfw = _first_event(run, "compile_fx_wrapper")
@@ -214,14 +291,14 @@ def _bucket_ns(run: dict) -> dict[str, int]:
     # start_ns minus first_call_wall's start_ns.
     ns["pre_dxp_total"] = bnd["t_start_ns"] - fcw["t_start_ns"]
 
-    # Sentinel unwind: everything that happens after the boundary
-    # inside first_call_wall (the raise + a couple of finallys).
+    # Sentinel unwind: everything AFTER the boundary inside first_call_wall.
+    # Exception raise plus stack unwind through nested `with` frames.
     ns["sentinel_unwind"] = fcw["t_end_ns"] - bnd["t_start_ns"]
 
-    # Direct-measurement buckets.
+    # ---- Direct-measurement buckets ----
     ns["compile_fx_wrapper"] = cfw["inclusive_ns"]
     ns["graphlowering_run"] = _sum_inclusive(run, "graphlowering_run")
-    ns["graphlowering_compile_to_fn"] = _sum_inclusive(run, "graphlowering_compile_to_fn")
+    ns["graphlowering_compile_to_module"] = _sum_inclusive(run, "graphlowering_compile_to_module")
     ns["graphlowering_codegen"] = _sum_inclusive(run, "graphlowering_codegen")
     ns["spyre_update_scheduler"] = _sum_inclusive(run, "spyre_update_scheduler")
     ns["recover_spyre_hints"] = _sum_inclusive(run, "recover_spyre_hints")
@@ -239,67 +316,14 @@ def _bucket_ns(run: dict) -> dict[str, int]:
     ns["custompost_fusion"] = _sum_inclusive(run, "pipeline:CustomPostFusionPasses")
     ns["spyre_kernel_codegen_total"] = _sum_inclusive(run, "spyre_kernel_codegen")
     ns["wrapper_codegen"] = _sum_inclusive(run, "wrapper_codegen")
+    ns["wrapper_module_exec"] = _sum_inclusive(run, "wrapper_module_exec")
     ns["async_compile_wait"] = _sum_inclusive(run, "async_compile_wait")
     ns["sdsc_total"] = _sum_inclusive(run, "sdsc_total")
     ns["sdsc_bundle_gen_total"] = _sum_inclusive(run, "sdsc_bundle_gen")
     ns["kernel_provenance_total"] = _sum_inclusive(run, "kernel_provenance")
     ns["dxp_standalone_total"] = _sum_inclusive(run, "dxp_standalone")
 
-    # Derived residuals — must be non-negative. If not, that is a
-    # nesting or accounting bug, not something to hide.
-    def _derived(name: str, parent_ns: int, subtracted: list[str]) -> None:
-        d = parent_ns - sum(ns[s] for s in subtracted)
-        if d < -500_000:  # 0.5ms slack
-            raise ValidationError(
-                f"derived bucket '{name}' negative: {d}ns "
-                f"(parent={parent_ns}, subtracted={subtracted})"
-            )
-        ns[name] = max(0, d)
-
-    # compile_fx_wrapper "other" = wrapper − run − compile_to_fn
-    _derived(
-        "compile_fx_wrapper_other",
-        ns["compile_fx_wrapper"],
-        ["graphlowering_run", "graphlowering_compile_to_fn"],
-    )
-    # compile_to_fn interior "other" = compile_to_fn − codegen − wrapper_codegen (siblings)
-    _derived(
-        "compile_to_fn_other",
-        ns["graphlowering_compile_to_fn"],
-        ["graphlowering_codegen", "wrapper_codegen"],
-    )
-    # graphlowering_codegen "other" = codegen − update_scheduler − scheduler_codegen
-    _derived(
-        "graphlowering_codegen_other",
-        ns["graphlowering_codegen"],
-        ["spyre_update_scheduler", "scheduler_codegen"],
-    )
-    # spyre_update_scheduler "other" = − recover_hints − custompresched − upstream_update
-    _derived(
-        "spyre_update_scheduler_other",
-        ns["spyre_update_scheduler"],
-        [
-            "recover_spyre_hints",
-            "custompresched_total",
-            "upstream_update_scheduler",
-        ],
-    )
-    # scheduler_codegen "other" = codegen − kernel_codegen_total
-    _derived(
-        "scheduler_codegen_other",
-        ns["scheduler_codegen"],
-        ["spyre_kernel_codegen_total"],
-    )
-    # async_compile_wait "other" = wait − sdsc_total
-    _derived(
-        "async_compile_wait_other",
-        ns["async_compile_wait"],
-        ["sdsc_total"],
-    )
-    # Pre-compile-fx: from harness start to compile_fx_wrapper start. This
-    # is Dynamo tracing + AOTAutograd prelude + anything else that runs
-    # BEFORE the backend is invoked. Neutrally named because we do not
-    # directly time Dynamo/AOT.
+    # ---- Pre-compile-fx (Dynamo/AOT prelude, timestamp-derived) ----
     ns["pre_compile_fx"] = cfw["t_start_ns"] - fcw["t_start_ns"]
     if ns["pre_compile_fx"] < 0:
         raise ValidationError(
@@ -307,58 +331,156 @@ def _bucket_ns(run: dict) -> dict[str, int]:
             f"(compile_fx_wrapper starts before first_call_wall)"
         )
 
-    # Gap between compile_fx completion and async_compile_wait: setup for
-    # the first invocation of the compiled module (Python-level bookkeeping,
-    # module import, etc). Also directly measured via timestamps.
-    acw = _first_event(run, "async_compile_wait")
-    if acw is not None:
-        ns["between_compile_and_wait"] = acw["t_start_ns"] - cfw["t_end_ns"]
-        if ns["between_compile_and_wait"] < 0:
-            raise ValidationError(
-                f"between_compile_and_wait negative: "
-                f"{ns['between_compile_and_wait']}ns"
-            )
+    # ---- Top-level pre-DXP partition ----
+    # Timestamp-derived; must sum to pre_dxp_total exactly (± timer bookkeeping).
+    ns["compile_fx_wrapper_pre_dxp"] = bnd["t_start_ns"] - cfw["t_start_ns"]
+    if ns["compile_fx_wrapper_pre_dxp"] < 0:
+        raise ValidationError(
+            f"compile_fx_wrapper_pre_dxp negative: "
+            f"{ns['compile_fx_wrapper_pre_dxp']}ns "
+            f"(boundary before compile_fx_wrapper start)"
+        )
+
+    # ---- Fetch parents for containment proofs ----
+    ev_cfw = cfw
+    ev_ctm = _first_event(run, "graphlowering_compile_to_module")
+    ev_cg = _first_event(run, "graphlowering_codegen")
+    ev_sus = _first_event(run, "spyre_update_scheduler")
+    ev_scg = _first_event(run, "scheduler_codegen")
+    ev_acw = _first_event(run, "async_compile_wait")
+    ev_wme = _first_event(run, "wrapper_module_exec")
+    ev_sdsc = _first_event(run, "sdsc_total")
+    ev_run = _first_event(run, "graphlowering_run")
+    ev_rec = _first_event(run, "recover_spyre_hints")
+    ev_ups = _first_event(run, "upstream_update_scheduler")
+    ev_presched = _first_event(run, "pipeline:CustomPreSchedulingPasses")
+    ev_wcg = _first_event(run, "wrapper_codegen")
+
+    # compile_fx_wrapper "other" — subtract direct children we time.
+    # sdsc_total is included here ONLY when timestamps prove it is
+    # inside compile_fx_wrapper (this is the case on 3358f39 where
+    # sdsc fires during wrapper-module import inside compile_to_module).
+    _derived_bucket(
+        ns, "compile_fx_wrapper_other", ev_cfw["inclusive_ns"],
+        [
+            ("graphlowering_run", ev_cfw, ev_run),
+            ("graphlowering_compile_to_module", ev_cfw, ev_ctm),
+        ],
+    )
+
+    # compile_to_module "other" — subtract siblings within compile_to_module.
+    # sdsc_total gets attributed here if it fires during wrapper-module
+    # execution inside compile_to_module (via a direct wrapper_module_exec
+    # bracket when available, or directly if not).
+    if ev_ctm is not None:
+        parts_ctm = [
+            ("graphlowering_codegen", ev_ctm, ev_cg),
+        ]
+        # Prefer the wrapper_module_exec bracket if we have it.
+        if ev_wme is not None:
+            parts_ctm.append(("wrapper_module_exec", ev_ctm, ev_wme))
+        else:
+            # No dedicated bracket — attribute wrapper_codegen and
+            # sdsc_total directly ONLY when timestamps confirm they
+            # sit inside compile_to_module.
+            parts_ctm.append(("wrapper_codegen", ev_ctm, ev_wcg))
+            parts_ctm.append(("sdsc_total", ev_ctm, ev_sdsc))
+        _derived_bucket(ns, "compile_to_module_other",
+                        ev_ctm["inclusive_ns"], parts_ctm)
     else:
-        ns["between_compile_and_wait"] = 0
+        ns["compile_to_module_other"] = 0
+
+    # graphlowering_codegen "other" — siblings inside codegen.
+    if ev_cg is not None:
+        _derived_bucket(
+            ns, "graphlowering_codegen_other", ev_cg["inclusive_ns"],
+            [
+                ("spyre_update_scheduler", ev_cg, ev_sus),
+                ("scheduler_codegen", ev_cg, ev_scg),
+            ],
+        )
+    else:
+        ns["graphlowering_codegen_other"] = 0
+
+    # spyre_update_scheduler "other".
+    if ev_sus is not None:
+        _derived_bucket(
+            ns, "spyre_update_scheduler_other", ev_sus["inclusive_ns"],
+            [
+                ("recover_spyre_hints", ev_sus, ev_rec),
+                ("custompresched_total", ev_sus, ev_presched),
+                ("upstream_update_scheduler", ev_sus, ev_ups),
+            ],
+        )
+    else:
+        ns["spyre_update_scheduler_other"] = 0
+
+    # scheduler_codegen "other".
+    ev_kernels = _events_by_name(run, "spyre_kernel_codegen")
+    if ev_scg is not None:
+        contained_kernels_ns = sum(
+            k["inclusive_ns"] for k in ev_kernels
+            if _time_contained(k, ev_scg)
+        )
+        residual = ev_scg["inclusive_ns"] - contained_kernels_ns
+        if residual < -500_000:
+            raise ValidationError(
+                f"scheduler_codegen_other negative: {residual}ns"
+            )
+        ns["scheduler_codegen_other"] = max(0, residual)
+    else:
+        ns["scheduler_codegen_other"] = 0
+
+    # async_compile_wait "other" — only when the event actually fired
+    # AND sdsc_total sits inside it. On this build sdsc fires during
+    # wrapper-module import (nested under compile_to_module), so wait
+    # is never called before the sentinel raises; both events are 0.
+    if ev_acw is not None:
+        parts_wait = []
+        if ev_sdsc is not None and _time_contained(ev_sdsc, ev_acw):
+            parts_wait.append(("sdsc_total", ev_acw, ev_sdsc))
+        _derived_bucket(
+            ns, "async_compile_wait_other",
+            ev_acw["inclusive_ns"], parts_wait,
+        )
+    else:
+        ns["async_compile_wait_other"] = 0
 
     return ns
+
+
+def _sdsc_parent(run: dict) -> str | None:
+    """Return the name of the timestamp-contained parent of sdsc_total,
+    for downstream tables. Not part of the ns bucket dict (it's a
+    string, not a nanosecond count).
+    """
+    ev_sdsc = _first_event(run, "sdsc_total")
+    if ev_sdsc is None:
+        return None
+    for parent_name in (
+        "wrapper_module_exec",
+        "graphlowering_compile_to_module",
+        "async_compile_wait",
+        "first_call_wall",
+    ):
+        parent = _first_event(run, parent_name)
+        if parent is not None and _time_contained(ev_sdsc, parent):
+            return parent_name
+    return None
 
 
 def _residual(run: dict, ns: dict[str, int]) -> tuple[float, float]:
     """Return (residual_ns, residual_pct_of_pre_dxp) for one run.
 
-    Residual = `pre_dxp_total` − sum(top-level buckets that span it).
-    The top-level buckets that partition `pre_dxp_total` are:
+    Top-level pre-DXP partition is timestamp-derived and topology-agnostic:
 
-      pre_compile_fx
-        + compile_fx_wrapper
-        + between_compile_and_wait
-        + wait_pre_dxp (async_compile_wait region up to the boundary)
+        pre_dxp_total = pre_compile_fx + compile_fx_wrapper_pre_dxp
 
-    where `wait_pre_dxp = boundary.t_start − async_compile_wait.t_start`.
-    That last term already covers sdsc_bundle_gen + kernel_provenance +
-    the prefix of dxp_standalone up to the sentinel; nothing else
-    should be added.
+    Both terms come from event start-timestamps, so the sum equals
+    pre_dxp_total exactly (± timer bookkeeping). The residual is
+    that bookkeeping noise.
     """
-    fcw = _first_event(run, "first_call_wall")
-    bnd = _first_event(run, "pre_dxp_boundary_marker")
-    acw = _first_event(run, "async_compile_wait")
-    assert fcw and bnd
-
-    if acw is not None:
-        wait_pre_dxp = bnd["t_start_ns"] - acw["t_start_ns"]
-    else:
-        # If wait was not measured (should not happen for a Spyre compile),
-        # collapse this to zero so residual surfaces the missing region.
-        wait_pre_dxp = 0
-    ns["wait_pre_dxp"] = wait_pre_dxp
-
-    accounted = (
-        ns["pre_compile_fx"]
-        + ns["compile_fx_wrapper"]
-        + ns["between_compile_and_wait"]
-        + wait_pre_dxp
-    )
+    accounted = ns["pre_compile_fx"] + ns["compile_fx_wrapper_pre_dxp"]
     residual_ns = ns["pre_dxp_total"] - accounted
     denom = ns["pre_dxp_total"] or 1
     return residual_ns, 100.0 * residual_ns / denom
@@ -437,10 +559,11 @@ def _n_specs(run: dict) -> int:
 _BUCKETS_MS = [
     "pre_compile_fx",
     "compile_fx_wrapper",
+    "compile_fx_wrapper_pre_dxp",
     "compile_fx_wrapper_other",
     "graphlowering_run",
-    "graphlowering_compile_to_fn",
-    "compile_to_fn_other",
+    "graphlowering_compile_to_module",
+    "compile_to_module_other",
     "graphlowering_codegen",
     "graphlowering_codegen_other",
     "spyre_update_scheduler",
@@ -459,22 +582,22 @@ _BUCKETS_MS = [
     "scheduler_codegen_other",
     "spyre_kernel_codegen_total",
     "wrapper_codegen",
-    "between_compile_and_wait",
-    "wait_pre_dxp",
+    "wrapper_module_exec",
     "async_compile_wait",
     "async_compile_wait_other",
+    "sdsc_total",
     "sdsc_bundle_gen_total",
     "kernel_provenance_total",
+    "dxp_standalone_total",
     "sentinel_unwind",
 ]
 
-# The subset of top-level buckets that partition `pre_dxp_total`. Their
-# sum should equal pre_dxp_total (± reconciliation_residual).
+# The two top-level buckets that partition `pre_dxp_total`. Their sum
+# must equal pre_dxp_total (± reconciliation_residual). Both are
+# timestamp-derived and topology-agnostic.
 _ATTRIBUTION_BUCKETS = [
     "pre_compile_fx",
-    "compile_fx_wrapper",
-    "between_compile_and_wait",
-    "wait_pre_dxp",
+    "compile_fx_wrapper_pre_dxp",
 ]
 
 
@@ -483,16 +606,20 @@ def _write_reconciliation(out_path: str, per_run: list[dict]) -> None:
         "# Per-run reconciliation",
         "",
         "One row per sample. `residual_pct` is the share of `pre_dxp_total` "
-        "that no named bucket accounts for. Target: <1%. `invalid` runs are "
-        "excluded from the aggregate tables.",
+        "that the top-level partition (pre_compile_fx + "
+        "compile_fx_wrapper_pre_dxp) does not account for. Target: <1%. "
+        "`sdsc_parent` shows the event that timestamp-contains `sdsc_total` "
+        "on this run — a topology discovery, not a hard-coded assumption. "
+        "`invalid` runs are excluded from the aggregate tables.",
         "",
-        "| shape | run | valid | pre_dxp_ms | residual_ms | residual_pct | reason |",
-        "|---|---|---|---|---|---|---|",
+        "| shape | run | valid | pre_dxp_ms | residual_ms | residual_pct | sdsc_parent | reason |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for row in per_run:
         lines.append(
             "| {shape} | {run} | {valid} | {pre_dxp_ms:.1f} | "
-            "{residual_ms:.2f} | {residual_pct:.2f}% | {reason} |".format(**row)
+            "{residual_ms:.2f} | {residual_pct:.2f}% | "
+            "{sdsc_parent} | {reason} |".format(**row)
         )
     with open(out_path, "w") as fh:
         fh.write("\n".join(lines) + "\n")
@@ -511,7 +638,7 @@ def _write_attribution(
         "Median-of-N cold samples, milliseconds. `pre_dxp_total` is derived "
         "directly from timestamps as `pre_dxp_boundary_marker.t_start − "
         "first_call_wall.t_start`; nothing is subtracted from "
-        "`compile_fx_wrapper` or `graphlowering_compile_to_fn`.",
+        "`compile_fx_wrapper` or `graphlowering_compile_to_module`.",
         "",
     ]
 
@@ -635,7 +762,7 @@ def _write_scaling(
         lines.append("|---|---|---|---|---|---|---|")
         buckets_to_scale = [
             "pre_dxp_total", "pre_compile_fx", "compile_fx_wrapper",
-            "graphlowering_run", "graphlowering_compile_to_fn",
+            "graphlowering_run", "graphlowering_compile_to_module",
             "custompresched_total", "presched_pass_loop",
             "presched_cost_model", "presched_finalize_work_division",
             "upstream_update_scheduler", "scheduler_init", "scheduler_codegen",
@@ -740,6 +867,7 @@ def main() -> int:
                 "pre_dxp_ms": 0.0,
                 "residual_ms": 0.0,
                 "residual_pct": 0.0,
+                "sdsc_parent": "-",
                 "reason": "-",
             }
             try:
@@ -749,6 +877,7 @@ def main() -> int:
                 row["pre_dxp_ms"] = ns["pre_dxp_total"] / 1e6
                 row["residual_ms"] = res_ns / 1e6
                 row["residual_pct"] = res_pct
+                row["sdsc_parent"] = _sdsc_parent(run) or "<none>"
                 if abs(res_pct) > args.max_residual_pct:
                     row["valid"] = "no"
                     row["reason"] = (

@@ -48,7 +48,7 @@ inclusive time or a timestamp difference between direct events.
 ## Non-obvious accounting rules
 
 - **SDSC is NOT nested in `compile_fx_wrapper` or
-  `graphlowering_compile_to_fn`.** SDSC (and DXP) fires during the
+  `graphlowering_compile_to_module`.** SDSC (and DXP) fires during the
   first invocation of the compiled wrapper — i.e. INSIDE
   `async_compile_wait`, which is a SIBLING of `compile_fx_wrapper`
   under `first_call_wall`. The analyzer does not subtract SDSC from

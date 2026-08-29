@@ -16,9 +16,19 @@ unset):
 
 - ``torch._inductor.graph.GraphLowering.run`` — upstream Inductor
   FX → IR lowering. Records the input FX node count.
-- ``torch._inductor.graph.GraphLowering.compile_to_fn`` — upstream
-  Inductor codegen driver (wrapper generation, kernel codegen
-  dispatch). Records the number of operations in the lowered graph.
+- ``torch._inductor.graph.GraphLowering.compile_to_module`` —
+  upstream Inductor codegen driver (calls ``codegen`` then produces
+  the Python wrapper module). Records the number of operations in
+  the lowered graph. Renamed from ``compile_to_fn`` in torch 2.13.
+- ``torch._inductor.graph.GraphLowering._compile_to_module_lines`` —
+  imports and executes the generated Python wrapper module (via
+  ``PyCodeCache.load_by_key_path``). On this frozen torch-spyre
+  build the wrapper's module body calls
+  ``async_compile.sdsc(...)`` synchronously, so ``sdsc_total``,
+  ``sdsc_bundle_gen``, ``kernel_provenance`` and ``dxp_standalone``
+  all fire inside this bracket. Recorded as ``wrapper_module_exec``
+  so the analyzer can attribute SDSC by timestamp containment
+  rather than by hard-coded parentage.
 - ``torch._inductor.graph.GraphLowering.codegen`` — the upstream
   method that calls ``_update_scheduler`` (Spyre pre-scheduling
   fires inside there) and then ``scheduler.codegen()``.
@@ -34,9 +44,9 @@ unset):
   ``Scheduler.codegen``.
 - ``torch_spyre._inductor.wrapper.SpyrePythonWrapperCodegen.generate``
   — the Python wrapper module emission called from
-  ``compile_to_fn``.
+  ``compile_to_module``.
 
-Together these boundaries cover the "compile_to_fn interior" that
+Together these boundaries cover the "compile_to_module interior" that
 the previous framework had to derive by subtraction.
 """
 
@@ -81,20 +91,36 @@ def install_extra_timers() -> None:
 
     GraphLowering.run = _timed_run
 
-    # ---- GraphLowering.compile_to_fn -------------------------------------
-    _orig_compile_to_fn = GraphLowering.compile_to_fn
+    # ---- GraphLowering.compile_to_module -------------------------------------
+    _orig_compile_to_module = GraphLowering.compile_to_module
 
-    @functools.wraps(_orig_compile_to_fn)
-    def _timed_compile_to_fn(self, *args, **kwargs):
+    @functools.wraps(_orig_compile_to_module)
+    def _timed_compile_to_module(self, *args, **kwargs):
         n_ops = 0
         try:
             n_ops = len(self.operations)
         except Exception:
             pass
-        with _tr.stage("graphlowering_compile_to_fn", n_operations=n_ops):
-            return _orig_compile_to_fn(self, *args, **kwargs)
+        with _tr.stage("graphlowering_compile_to_module", n_operations=n_ops):
+            return _orig_compile_to_module(self, *args, **kwargs)
 
-    GraphLowering.compile_to_fn = _timed_compile_to_fn
+    GraphLowering.compile_to_module = _timed_compile_to_module
+
+    # ---- GraphLowering._compile_to_module_lines --------------------------
+    # This is the point where PyCodeCache.load_by_key_path imports and
+    # executes the generated Python wrapper module. That module's body
+    # calls SpyreAsyncCompile.sdsc(...) at import time, so
+    # sdsc_total / sdsc_bundle_gen / kernel_provenance / dxp_standalone
+    # all fire inside this bracket.
+    if hasattr(GraphLowering, "_compile_to_module_lines"):
+        _orig_ctml = GraphLowering._compile_to_module_lines
+
+        @functools.wraps(_orig_ctml)
+        def _timed_ctml(self, *args, **kwargs):
+            with _tr.stage("wrapper_module_exec"):
+                return _orig_ctml(self, *args, **kwargs)
+
+        GraphLowering._compile_to_module_lines = _timed_ctml
 
     # ---- GraphLowering.codegen -------------------------------------------
     _orig_gl_codegen = GraphLowering.codegen
