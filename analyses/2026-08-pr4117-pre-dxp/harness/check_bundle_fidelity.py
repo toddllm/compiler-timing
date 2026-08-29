@@ -88,6 +88,21 @@ def _run_harness(
 def _identity_signals(captured_kernel: dict) -> dict:
     """Extract identity-only fields from a captured record (exclude
     the potentially-nondeterministic bundle catalog).
+
+    Fields intentionally excluded from the identity comparison:
+
+    * ``cmd`` — contains the DXP ``-d <output_dir>`` and the output
+      dir has a random tempfile suffix that varies across runs.
+    * ``provenance_key`` — empirically NOT deterministic across
+      independent cold compiles on this build (verified with 5+
+      identical observe runs, several produced distinct keys).
+      Investigating why is outside epic #4117 scope; treated as
+      part of the same unattributed bundle-generation
+      nondeterminism.
+
+    The kept fields form a stable identity across independent
+    normal compiles: kernel_name, n_specs, spec-type signatures,
+    debug_handle_ids (from finalized specs), and aten_ops.
     """
     return {
         k: captured_kernel.get(k)
@@ -96,10 +111,8 @@ def _identity_signals(captured_kernel: dict) -> dict:
             "n_specs",
             "spec_type_run_length_signature",
             "spec_type_total_signature",
-            "provenance_key",
             "debug_handle_ids",
             "aten_ops",
-            "cmd",
         )
         if captured_kernel.get(k) is not None
     }

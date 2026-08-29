@@ -1,0 +1,62 @@
+{
+  "Lk": 1024,
+  "Lq": 512,
+  "N_hidden": 2048,
+  "N_in": 1024,
+  "layers": 4,
+  "observeA_vs_observeB": {
+    "name_a": "observeA",
+    "name_b": "observeB",
+    "only_a_kernels": [],
+    "only_b_kernels": [],
+    "pairs": [
+      {
+        "content_diverges_sample": [],
+        "identity_diverges": [],
+        "kernel": "sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0",
+        "n_content_diverges": 0,
+        "n_files_a": 80,
+        "n_files_b": 80,
+        "only_files_a": [],
+        "only_files_b": []
+      }
+    ]
+  },
+  "observeA_vs_stop": {
+    "name_a": "observeA",
+    "name_b": "stop",
+    "only_a_kernels": [],
+    "only_b_kernels": [],
+    "pairs": [
+      {
+        "content_diverges_sample": [],
+        "identity_diverges": [],
+        "kernel": "sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0",
+        "n_content_diverges": 0,
+        "n_files_a": 80,
+        "n_files_b": 80,
+        "only_files_a": [],
+        "only_files_b": []
+      }
+    ]
+  },
+  "observeB_vs_stop": {
+    "name_a": "observeB",
+    "name_b": "stop",
+    "only_a_kernels": [],
+    "only_b_kernels": [],
+    "pairs": [
+      {
+        "content_diverges_sample": [],
+        "identity_diverges": [],
+        "kernel": "sdsc_fused_add_amax_clone_copy_div_exp_full_maximum_mul_slice_sub_sum_transpose_unsqueeze_zeros_zeros_like_0",
+        "n_content_diverges": 0,
+        "n_files_a": 80,
+        "n_files_b": 80,
+        "only_files_a": [],
+        "only_files_b": []
+      }
+    ]
+  },
+  "workload": "flash"
+}
