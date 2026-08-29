@@ -1,0 +1,1246 @@
+[unspecified] [31m ERRR 29.08.2026 07:03:10.908009 [                  ras_base.hpp:  74] {"action":"information","category":"software","code":"0x8c0d","description":"No RuntimeContext has been created.","message":"RuntimeContext not created","name":"RAS::RUNTIMECONTEXT::ContextNotCreated","severity":"ERROR","step":"Open ticket","type":"runtime_error"}[0m
+==============================================================================
+==== Cost model: predicted runtime (after pre-scheduling)
+==============================================================================
+predicted total:     1259.8 us over 1 kernel(s), 273 op(s)
+
+      kernel   predicted us  ops
+           0         1259.8  273
+                       22.7    batched_matmul_default_14 HBM    3.4 MB
+                       22.7    batched_matmul_default_12 HBM    3.4 MB
+                       22.7    batched_matmul_default_10 HBM    3.4 MB
+                       22.7    batched_matmul_default_8  HBM    3.4 MB
+                       22.7    batched_matmul_default_6  HBM    3.4 MB
+                       22.7    batched_matmul_default_4  HBM    3.4 MB
+                       22.7    batched_matmul_default_2  HBM    3.4 MB
+                       22.7    batched_matmul_default    HBM    3.4 MB
+                       17.4    div                       HBM    2.6 MB
+                       14.0    clone                     HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_1   HBM    2.1 MB
+                       14.0    clone_1                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_5   HBM    2.1 MB
+                       14.0    clone_2                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_9   HBM    2.1 MB
+                       14.0    clone_3                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_13  HBM    2.1 MB
+                       14.0    clone_4                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_17  HBM    2.1 MB
+                       14.0    clone_5                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_21  HBM    2.1 MB
+                       14.0    clone_6                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_25  HBM    2.1 MB
+                       14.0    clone_7                   HBM    2.1 MB   LX  524.3 KB
+                       14.0    slice_scatter_default_29  HBM    2.1 MB
+                       10.5    slice_scatter_default     HBM    1.6 MB
+                       10.5    slice_scatter_default_4   HBM    1.6 MB
+                       10.5    slice_scatter_default_8   HBM    1.6 MB
+                       10.5    slice_scatter_default_12  HBM    1.6 MB
+                       10.5    slice_scatter_default_16  HBM    1.6 MB
+                       10.5    slice_scatter_default_20  HBM    1.6 MB
+                       10.5    slice_scatter_default_24  HBM    1.6 MB
+                       10.5    slice_scatter_default_28  HBM    1.6 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        8.7    Pointwise                 HBM    1.3 MB
+                        7.0    full                      HBM    1.0 MB
+                        7.0    add                       HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_3                     HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_2                  HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_3   HBM    1.0 MB
+                        7.0    add_3                     HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_7                     HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_6                  HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_7   HBM    1.0 MB
+                        7.0    add_6                     HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_11                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_10                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_11  HBM    1.0 MB
+                        7.0    add_9                     HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_15                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_14                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_15  HBM    1.0 MB
+                        7.0    add_12                    HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_19                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_18                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_19  HBM    1.0 MB
+                        7.0    add_15                    HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_23                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_22                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_23  HBM    1.0 MB
+                        7.0    add_18                    HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_27                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_26                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    slice_scatter_default_27  HBM    1.0 MB
+                        7.0    add_21                    HBM    1.0 MB   LX    2.1 MB
+                        7.0    mul_31                    HBM    1.0 MB   LX  393.2 KB
+                        7.0    expand_30                 HBM    1.0 MB   LX    1.0 MB
+                        7.0    Pointwise                 HBM    1.0 MB
+                        7.0    sum_1                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_31  HBM    1.0 MB
+                        7.0    sum_2                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_33  HBM    1.0 MB
+                        7.0    sum_3                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_35  HBM    1.0 MB
+                        7.0    sum_4                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_37  HBM    1.0 MB
+                        7.0    sum_5                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_39  HBM    1.0 MB
+                        7.0    sum_6                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_41  HBM    1.0 MB
+                        7.0    sum_7                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_43  HBM    1.0 MB
+                        7.0    sum_8                     HBM    1.0 MB   LX  131.1 KB
+                        7.0    slice_scatter_default_45  HBM    1.0 MB
+                        5.2    batched_matmul_default_15 HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_2   HBM  786.4 KB
+                        5.2    batched_matmul_default_13 HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_6   HBM  786.4 KB
+                        5.2    batched_matmul_default_11 HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_10  HBM  786.4 KB
+                        5.2    batched_matmul_default_9  HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_14  HBM  786.4 KB
+                        5.2    batched_matmul_default_7  HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_18  HBM  786.4 KB
+                        5.2    batched_matmul_default_5  HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_22  HBM  786.4 KB
+                        5.2    batched_matmul_default_3  HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_26  HBM  786.4 KB
+                        5.2    batched_matmul_default_1  HBM  786.4 KB   LX    1.0 MB
+                        5.2    slice_scatter_default_30  HBM  786.4 KB
+                        5.2    slice_scatter_default_32  HBM  786.4 KB
+                        5.2    slice_scatter_default_34  HBM  786.4 KB
+                        5.2    slice_scatter_default_36  HBM  786.4 KB
+                        5.2    slice_scatter_default_38  HBM  786.4 KB
+                        5.2    slice_scatter_default_40  HBM  786.4 KB
+                        5.2    slice_scatter_default_42  HBM  786.4 KB
+                        5.2    slice_scatter_default_44  HBM  786.4 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    Pointwise                 HBM  524.4 KB   LX  524.3 KB
+                        3.5    amax                      HBM  524.3 KB   LX  524.3 KB
+                        3.5    maximum                   HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_1                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_1                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_3                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_2                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_5                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_3                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_7                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_4                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_9                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_5                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_11                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_6                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_13                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    maximum_7                 HBM  524.3 KB   LX  262.1 KB
+                        3.5    sub_15                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    amax_1                    HBM  524.3 KB   LX  524.3 KB
+                        3.5    mul_2                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_6                     HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_10                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_14                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_18                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_22                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_26                    HBM  524.3 KB   LX  262.1 KB
+                        3.5    mul_30                    HBM  524.3 KB   LX  262.1 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.8    Pointwise                 HBM  266.2 KB
+                        1.7    add_2                     HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_5                     HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_8                     HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_11                    HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_14                    HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_17                    HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_20                    HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        1.7    add_23                    HBM  262.1 KB   LX  524.3 KB
+                        1.7    Pointwise                 HBM  262.1 KB   LX  262.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    Pointwise                 HBM    2.0 KB   LX  131.1 KB
+                        0.0    full_default              HBM     128 B   LX  524.3 KB
+                        0.0    full_default_1            HBM     128 B   LX  524.3 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_2                    HBM         -   LX    1.2 MB
+                        0.0    exp_1                     HBM         -   LX  262.1 KB
+                        0.0    sub                       HBM         -   LX    2.2 MB
+                        0.0    copy_1                    HBM         -   LX  524.3 KB
+                        0.0    copy_2                    HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_3                    HBM         -   LX    1.2 MB
+                        0.0    exp_3                     HBM         -   LX  262.1 KB
+                        0.0    sub_2                     HBM         -   LX    2.2 MB
+                        0.0    copy_4                    HBM         -   LX  524.3 KB
+                        0.0    copy_5                    HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_4                    HBM         -   LX    1.2 MB
+                        0.0    exp_5                     HBM         -   LX  262.1 KB
+                        0.0    sub_4                     HBM         -   LX    2.2 MB
+                        0.0    copy_7                    HBM         -   LX  524.3 KB
+                        0.0    copy_8                    HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_5                    HBM         -   LX    1.2 MB
+                        0.0    exp_7                     HBM         -   LX  262.1 KB
+                        0.0    sub_6                     HBM         -   LX    2.2 MB
+                        0.0    copy_10                   HBM         -   LX  524.3 KB
+                        0.0    copy_11                   HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_6                    HBM         -   LX    1.2 MB
+                        0.0    exp_9                     HBM         -   LX  262.1 KB
+                        0.0    sub_8                     HBM         -   LX    2.2 MB
+                        0.0    copy_13                   HBM         -   LX  524.3 KB
+                        0.0    copy_14                   HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_7                    HBM         -   LX    1.2 MB
+                        0.0    exp_11                    HBM         -   LX  262.1 KB
+                        0.0    sub_10                    HBM         -   LX    2.2 MB
+                        0.0    copy_16                   HBM         -   LX  524.3 KB
+                        0.0    copy_17                   HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_8                    HBM         -   LX    1.2 MB
+                        0.0    exp_13                    HBM         -   LX  262.1 KB
+                        0.0    sub_12                    HBM         -   LX    2.2 MB
+                        0.0    copy_19                   HBM         -   LX  524.3 KB
+                        0.0    copy_20                   HBM         -   LX  262.1 KB
+                        0.0    Pointwise                 HBM         -   LX    1.0 MB
+                        0.0    Pointwise                 HBM         -   LX    2.1 MB
+                        0.0    amax_9                    HBM         -   LX    1.2 MB
+                        0.0    exp_15                    HBM         -   LX  262.1 KB
+                        0.0    sub_14                    HBM         -   LX    2.2 MB
+                        0.0    copy_22                   HBM         -   LX  524.3 KB
+                        0.0    add_1                     HBM         -   LX  393.2 KB
+                        0.0    copy                      HBM         -   LX  262.1 KB
+                        0.0    add_4                     HBM         -   LX  393.2 KB
+                        0.0    copy_3                    HBM         -   LX  262.1 KB
+                        0.0    add_7                     HBM         -   LX  393.2 KB
+                        0.0    copy_6                    HBM         -   LX  262.1 KB
+                        0.0    add_10                    HBM         -   LX  393.2 KB
+                        0.0    copy_9                    HBM         -   LX  262.1 KB
+                        0.0    add_13                    HBM         -   LX  393.2 KB
+                        0.0    copy_12                   HBM         -   LX  262.1 KB
+                        0.0    add_16                    HBM         -   LX  393.2 KB
+                        0.0    copy_15                   HBM         -   LX  262.1 KB
+                        0.0    add_19                    HBM         -   LX  393.2 KB
+                        0.0    copy_18                   HBM         -   LX  262.1 KB
+                        0.0    add_22                    HBM         -   LX  393.2 KB
+                        0.0    copy_21                   HBM         -   LX  262.1 KB
+
+  Operations are grouped by the loop they run in; the count on each group
+  header is that loop's iterations.  HBM = main-memory traffic for the whole
+  loop, and '= T x B' breaks it into T iterations of B bytes.  LX = on-chip
+  scratchpad traffic, already ONE iteration (an LX buffer is allocated per
+  tile).  re-fetch = the part of HBM that is the same bytes read again on a
+  later iteration.
+
+  Each kernel is priced ONCE, as a bundle. The per-op column splits that
+  total by each op's share of the HBM bytes: an attribution, not a set of
+  independent predictions. It carries no compute term, so it misattributes a
+  compute-bound kernel, and because the weights are per-op while the total
+  de-duplicates shared inputs, a share can be off by up to a third of itself.
+  An op with no HBM traffic shows 0.0 -- its output stays in LX, so it adds
+  no main-memory traffic of its own.
+
+==============================================================================
+==== Cost model features + prediction (after pre-scheduling)
+==============================================================================
+  full         read=128B write=1048576B lx=0B [stick_scatter]
+      output op1                    torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf0                   device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  full_default read=128B write=0B lx=524288B [stick_scatter]
+      output op3                    torch [1, 8, 512, 64] -> device [8, 512, 1, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf2                   device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  amax         read=0B write=524288B lx=524288B
+      output op4                    torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf3                   torch [1, 8, 512, 64] -> device [8, 512, 1, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op5                    torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone        read=2097152B write=0B lx=524288B [restickify]
+      output op6                    torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op260                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf6                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op7                    torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf276                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_15 read=786432B write=0B lx=1048576B
+      output op8                    torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf5                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf7                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op261                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf8                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add          read=1048576B write=0B lx=2097152B
+      output op9                    torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf277                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_2       read=0B write=0B lx=1179648B
+      output op10                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf9                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum      read=524288B write=0B lx=262144B
+      output op11                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf4                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf10                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_1        read=524288B write=0B lx=262144B
+      output op12                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf4                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf11                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_1        read=0B write=0B lx=262144B
+      output op13                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf12                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_3        read=1048576B write=0B lx=393216B
+      output op14                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf1                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf13                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub          read=0B write=0B lx=2228224B
+      output op15                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf9                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf11                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_2     read=0B write=1048576B lx=1048576B
+      output op16                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf15                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_14 read=3145728B write=262144B lx=0B
+      output op17                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf16                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_2        read=262144B write=0B lx=524288B
+      output op18                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf14                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf17                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_1       read=0B write=0B lx=524288B
+      output op19                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf18                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default read=1048576B write=524288B lx=0B
+      output op20                   torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf1                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op21                   torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf19                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_1 read=1048576B write=1048576B lx=0B
+      output op22                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf1                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op23                   torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf20                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_2       read=0B write=0B lx=262144B
+      output op24                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf11                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_2 read=524288B write=262144B lx=0B
+      output op25                   torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf4                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op26                   torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf24                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_3 read=524288B write=524288B lx=0B
+      output op27                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf4                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op28                   torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf25                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op29                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_1      read=2097152B write=0B lx=524288B [restickify]
+      output op30                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op262                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf30                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op31                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf278                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_13 read=786432B write=0B lx=1048576B
+      output op32                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf29                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf31                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op263                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf32                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_3        read=1048576B write=0B lx=2097152B
+      output op33                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf279                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_3       read=0B write=0B lx=1179648B
+      output op34                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf33                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_1    read=524288B write=0B lx=262144B
+      output op35                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf27                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf34                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_3        read=524288B write=0B lx=262144B
+      output op36                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf27                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf35                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_3        read=0B write=0B lx=262144B
+      output op37                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf36                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_7        read=1048576B write=0B lx=393216B
+      output op38                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf22                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf37                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_2        read=0B write=0B lx=2228224B
+      output op39                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf33                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf35                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_6     read=0B write=1048576B lx=1048576B
+      output op40                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf39                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_12 read=3145728B write=262144B lx=0B
+      output op41                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf40                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_5        read=262144B write=0B lx=524288B
+      output op42                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf38                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf41                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_4       read=0B write=0B lx=524288B
+      output op43                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf42                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_4 read=1048576B write=524288B lx=0B
+      output op44                   torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf22                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op45                   torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf43                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_5 read=1048576B write=1048576B lx=0B
+      output op46                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf22                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op47                   torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf44                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_5       read=0B write=0B lx=262144B
+      output op48                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf35                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_6 read=524288B write=262144B lx=0B
+      output op49                   torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf27                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op50                   torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf48                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_7 read=524288B write=524288B lx=0B
+      output op51                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf27                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op52                   torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf49                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op53                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_2      read=2097152B write=0B lx=524288B [restickify]
+      output op54                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op264                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf54                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op55                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf280                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_11 read=786432B write=0B lx=1048576B
+      output op56                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf53                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf55                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op265                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf56                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_6        read=1048576B write=0B lx=2097152B
+      output op57                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf281                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_4       read=0B write=0B lx=1179648B
+      output op58                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf57                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_2    read=524288B write=0B lx=262144B
+      output op59                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf51                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf58                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_5        read=524288B write=0B lx=262144B
+      output op60                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf51                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf59                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_5        read=0B write=0B lx=262144B
+      output op61                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf60                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_11       read=1048576B write=0B lx=393216B
+      output op62                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf46                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf61                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_4        read=0B write=0B lx=2228224B
+      output op63                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf57                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf59                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_10    read=0B write=1048576B lx=1048576B
+      output op64                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf63                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_10 read=3145728B write=262144B lx=0B
+      output op65                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf64                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_8        read=262144B write=0B lx=524288B
+      output op66                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf62                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf65                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_7       read=0B write=0B lx=524288B
+      output op67                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf66                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_8 read=1048576B write=524288B lx=0B
+      output op68                   torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf46                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op69                   torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf67                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_9 read=1048576B write=1048576B lx=0B
+      output op70                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf46                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op71                   torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf68                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_8       read=0B write=0B lx=262144B
+      output op72                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf59                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_10 read=524288B write=262144B lx=0B
+      output op73                   torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf51                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op74                   torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf72                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_11 read=524288B write=524288B lx=0B
+      output op75                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf51                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op76                   torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf73                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op77                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_3      read=2097152B write=0B lx=524288B [restickify]
+      output op78                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op266                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf78                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op79                   torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf282                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_9 read=786432B write=0B lx=1048576B
+      output op80                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf77                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf79                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op267                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf80                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_9        read=1048576B write=0B lx=2097152B
+      output op81                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf283                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_5       read=0B write=0B lx=1179648B
+      output op82                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf81                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_3    read=524288B write=0B lx=262144B
+      output op83                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf75                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf82                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_7        read=524288B write=0B lx=262144B
+      output op84                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf75                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf83                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_7        read=0B write=0B lx=262144B
+      output op85                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf84                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_15       read=1048576B write=0B lx=393216B
+      output op86                   torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf70                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf85                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_6        read=0B write=0B lx=2228224B
+      output op87                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf81                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf83                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_14    read=0B write=1048576B lx=1048576B
+      output op88                   torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf87                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_8 read=3145728B write=262144B lx=0B
+      output op89                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf88                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_11       read=262144B write=0B lx=524288B
+      output op90                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf86                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf89                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_10      read=0B write=0B lx=524288B
+      output op91                   torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf90                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_12 read=1048576B write=524288B lx=0B
+      output op92                   torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf70                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op93                   torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf91                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_13 read=1048576B write=1048576B lx=0B
+      output op94                   torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf70                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op95                   torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf92                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_11      read=0B write=0B lx=262144B
+      output op96                   torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf83                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_14 read=524288B write=262144B lx=0B
+      output op97                   torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf75                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op98                   torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf96                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_15 read=524288B write=524288B lx=0B
+      output op99                   torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf75                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op100                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf97                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op101                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_4      read=2097152B write=0B lx=524288B [restickify]
+      output op102                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op268                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf102                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op103                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf284                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_7 read=786432B write=0B lx=1048576B
+      output op104                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf101                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf103                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op269                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf104                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_12       read=1048576B write=0B lx=2097152B
+      output op105                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf285                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_6       read=0B write=0B lx=1179648B
+      output op106                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf105                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_4    read=524288B write=0B lx=262144B
+      output op107                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf99                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf106                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_9        read=524288B write=0B lx=262144B
+      output op108                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf99                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf107                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_9        read=0B write=0B lx=262144B
+      output op109                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf108                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_19       read=1048576B write=0B lx=393216B
+      output op110                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf94                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf109                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_8        read=0B write=0B lx=2228224B
+      output op111                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf105                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf107                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_18    read=0B write=1048576B lx=1048576B
+      output op112                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf111                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_6 read=3145728B write=262144B lx=0B
+      output op113                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf112                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_14       read=262144B write=0B lx=524288B
+      output op114                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf110                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf113                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_13      read=0B write=0B lx=524288B
+      output op115                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf114                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_16 read=1048576B write=524288B lx=0B
+      output op116                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf94                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op117                  torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf115                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_17 read=1048576B write=1048576B lx=0B
+      output op118                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf94                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op119                  torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf116                 torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_14      read=0B write=0B lx=262144B
+      output op120                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf107                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_18 read=524288B write=262144B lx=0B
+      output op121                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf99                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op122                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf120                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_19 read=524288B write=524288B lx=0B
+      output op123                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf99                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op124                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf121                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op125                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_5      read=2097152B write=0B lx=524288B [restickify]
+      output op126                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op270                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf126                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op127                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf286                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_5 read=786432B write=0B lx=1048576B
+      output op128                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf125                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf127                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op271                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf128                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_15       read=1048576B write=0B lx=2097152B
+      output op129                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf287                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_7       read=0B write=0B lx=1179648B
+      output op130                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf129                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_5    read=524288B write=0B lx=262144B
+      output op131                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf123                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf130                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_11       read=524288B write=0B lx=262144B
+      output op132                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf123                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf131                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_11       read=0B write=0B lx=262144B
+      output op133                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf132                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_23       read=1048576B write=0B lx=393216B
+      output op134                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf118                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf133                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_10       read=0B write=0B lx=2228224B
+      output op135                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf129                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf131                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_22    read=0B write=1048576B lx=1048576B
+      output op136                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf135                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_4 read=3145728B write=262144B lx=0B
+      output op137                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf136                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_17       read=262144B write=0B lx=524288B
+      output op138                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf134                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf137                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_16      read=0B write=0B lx=524288B
+      output op139                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf138                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_20 read=1048576B write=524288B lx=0B
+      output op140                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf118                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op141                  torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf139                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_21 read=1048576B write=1048576B lx=0B
+      output op142                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf118                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op143                  torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf140                 torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_17      read=0B write=0B lx=262144B
+      output op144                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf131                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_22 read=524288B write=262144B lx=0B
+      output op145                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf123                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op146                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf144                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_23 read=524288B write=524288B lx=0B
+      output op147                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf123                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op148                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf145                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op149                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_6      read=2097152B write=0B lx=524288B [restickify]
+      output op150                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op272                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf150                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op151                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf288                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_3 read=786432B write=0B lx=1048576B
+      output op152                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf149                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf151                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op273                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf152                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_18       read=1048576B write=0B lx=2097152B
+      output op153                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf289                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_8       read=0B write=0B lx=1179648B
+      output op154                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf153                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_6    read=524288B write=0B lx=262144B
+      output op155                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf147                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf154                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_13       read=524288B write=0B lx=262144B
+      output op156                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf147                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf155                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_13       read=0B write=0B lx=262144B
+      output op157                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf156                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_27       read=1048576B write=0B lx=393216B
+      output op158                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf142                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf157                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_12       read=0B write=0B lx=2228224B
+      output op159                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf153                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf155                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_26    read=0B write=1048576B lx=1048576B
+      output op160                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf159                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default_2 read=3145728B write=262144B lx=0B
+      output op161                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf160                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_20       read=262144B write=0B lx=524288B
+      output op162                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf158                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf161                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_19      read=0B write=0B lx=524288B
+      output op163                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf162                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_24 read=1048576B write=524288B lx=0B
+      output op164                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf142                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op165                  torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf163                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_25 read=1048576B write=1048576B lx=0B
+      output op166                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf142                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op167                  torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf164                 torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  copy_20      read=0B write=0B lx=262144B
+      output op168                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf155                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_26 read=524288B write=262144B lx=0B
+      output op169                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf147                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op170                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf168                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_27 read=524288B write=524288B lx=0B
+      output op171                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf147                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op172                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf169                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  Pointwise    read=1048704B write=262144B lx=0B
+      output op173                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  arg0_1                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  clone_7      read=2097152B write=0B lx=524288B [restickify]
+      output op174                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  arg2_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=1048576B
+      output op274                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf174                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+  Pointwise    read=128B write=524288B lx=524288B
+      output op175                  torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf290                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf260                 device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  batched_matmul_default_1 read=786432B write=0B lx=1048576B
+      output op176                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf173                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+      input  buf175                 torch [1, 4, 128, 512] -> device [4, 128, 8, 1, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=0B lx=2097152B
+      output op275                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf176                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  add_21       read=1048576B write=0B lx=2097152B
+      output op177                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf291                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  arg1_1                 torch [1, 1, 512, 1024] -> device [1, 512, 16, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  amax_9       read=0B write=0B lx=1179648B
+      output op178                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf177                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+  maximum_7    read=524288B write=0B lx=262144B
+      output op179                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf171                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf178                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_15       read=524288B write=0B lx=262144B
+      output op180                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf171                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf179                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  exp_15       read=0B write=0B lx=262144B
+      output op181                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf180                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  mul_31       read=1048576B write=0B lx=393216B
+      output op182                  torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf166                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf181                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sub_14       read=0B write=0B lx=2228224B
+      output op183                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B)
+      input  buf177                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf179                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  expand_30    read=0B write=1048576B lx=1048576B
+      output op184                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf183                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in LX  | 524288 elems x 2B = 1048576 B (hbm counted: 0 B) broadcast (loaded once)
+  batched_matmul_default read=3145728B write=262144B lx=0B
+      output op185                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf184                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  arg3_1                 torch [1, 8, 1024, 128] -> device [8, 1024, 2, 1, 64] in HBM  | 1048576 elems x 2B = 2097152 B (hbm counted: 2097152 B) broadcast (loaded once)
+  add_23       read=262144B write=0B lx=524288B
+      output op186                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf182                 torch [1, 4, 256, 128] -> device [256, 1, 2, 4, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf185                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  copy_22      read=0B write=0B lx=524288B
+      output op187                  torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B)
+      input  buf186                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_28 read=1048576B write=524288B lx=0B
+      output op188                  torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf166                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=0B write=262144B lx=262144B
+      output op189                  torch [1, 4, 256, 128] -> device [1, 4, 256, 128] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf187                 torch [1, 4, 256, 128] -> device [4, 256, 2, 1, 64] in LX  | 131072 elems x 2B = 262144 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_29 read=1048576B write=1048576B lx=0B
+      output op190                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf166                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+  Pointwise    read=524288B write=524288B lx=0B
+      output op191                  torch [1, 4, 512, 128] -> device [1, 4, 512, 128] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf188                 torch [1, 4, 512, 128] -> device [512, 1, 2, 4, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  full_default_1 read=128B write=0B lx=524288B [stick_scatter]
+      output op193                  torch [1, 8, 512, 64] -> device [8, 512, 1, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+      input  buf0                   device [1, 64] in HBM  | 64 elems x 2B = 128 B (hbm counted: 128 B) broadcast (loaded once)
+  amax_1       read=0B write=524288B lx=524288B
+      output op194                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf193                 torch [1, 8, 512, 64] -> device [8, 512, 1, 1, 64] in LX  | 262144 elems x 2B = 524288 B (hbm counted: 0 B)
+  mul_2        read=524288B write=0B lx=262144B
+      output op195                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf194                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf13                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_1        read=1048576B write=0B lx=131072B
+      output op196                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf16                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_1        read=0B write=0B lx=393216B
+      output op197                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf195                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf196                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy         read=0B write=0B lx=262144B
+      output op198                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf197                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_30 read=524288B write=262144B lx=0B
+      output op199                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf194                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op200                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf198                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_31 read=524288B write=524288B lx=0B
+      output op201                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf194                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op202                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf199                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_6        read=524288B write=0B lx=262144B
+      output op203                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf201                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf37                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_2        read=1048576B write=0B lx=131072B
+      output op204                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf40                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_4        read=0B write=0B lx=393216B
+      output op205                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf203                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf204                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_3       read=0B write=0B lx=262144B
+      output op206                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf205                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_32 read=524288B write=262144B lx=0B
+      output op207                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf201                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op208                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf206                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_33 read=524288B write=524288B lx=0B
+      output op209                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf201                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op210                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf207                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_10       read=524288B write=0B lx=262144B
+      output op211                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf209                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf61                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_3        read=1048576B write=0B lx=131072B
+      output op212                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf64                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_7        read=0B write=0B lx=393216B
+      output op213                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf211                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf212                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_6       read=0B write=0B lx=262144B
+      output op214                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf213                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_34 read=524288B write=262144B lx=0B
+      output op215                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf209                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op216                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf214                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_35 read=524288B write=524288B lx=0B
+      output op217                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf209                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op218                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf215                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_14       read=524288B write=0B lx=262144B
+      output op219                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf217                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf85                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_4        read=1048576B write=0B lx=131072B
+      output op220                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf88                  torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_10       read=0B write=0B lx=393216B
+      output op221                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf219                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf220                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_9       read=0B write=0B lx=262144B
+      output op222                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf221                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_36 read=524288B write=262144B lx=0B
+      output op223                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf217                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op224                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf222                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_37 read=524288B write=524288B lx=0B
+      output op225                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf217                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op226                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf223                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_18       read=524288B write=0B lx=262144B
+      output op227                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf225                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf109                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_5        read=1048576B write=0B lx=131072B
+      output op228                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf112                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_13       read=0B write=0B lx=393216B
+      output op229                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf227                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf228                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_12      read=0B write=0B lx=262144B
+      output op230                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf229                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_38 read=524288B write=262144B lx=0B
+      output op231                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf225                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op232                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf230                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_39 read=524288B write=524288B lx=0B
+      output op233                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf225                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op234                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf231                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_22       read=524288B write=0B lx=262144B
+      output op235                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf233                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf133                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_6        read=1048576B write=0B lx=131072B
+      output op236                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf136                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_16       read=0B write=0B lx=393216B
+      output op237                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf235                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf236                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_15      read=0B write=0B lx=262144B
+      output op238                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf237                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_40 read=524288B write=262144B lx=0B
+      output op239                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf233                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op240                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf238                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_41 read=524288B write=524288B lx=0B
+      output op241                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf233                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op242                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf239                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_26       read=524288B write=0B lx=262144B
+      output op243                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf241                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf157                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_7        read=1048576B write=0B lx=131072B
+      output op244                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf160                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_19       read=0B write=0B lx=393216B
+      output op245                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf243                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf244                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_18      read=0B write=0B lx=262144B
+      output op246                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf245                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_42 read=524288B write=262144B lx=0B
+      output op247                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf241                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op248                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf246                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_43 read=524288B write=524288B lx=0B
+      output op249                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf241                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op250                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf247                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  mul_30       read=524288B write=0B lx=262144B
+      output op251                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf249                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+      input  buf181                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  sum_8        read=1048576B write=0B lx=131072B
+      output op252                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf184                 torch [1, 4, 256, 512] -> device [4, 256, 8, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+  add_22       read=0B write=0B lx=393216B
+      output op253                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf251                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+      input  buf252                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  copy_21      read=0B write=0B lx=262144B
+      output op254                  torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B)
+      input  buf253                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_44 read=524288B write=262144B lx=0B
+      output op255                  torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B)
+      input  buf249                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=0B write=2048B lx=131072B
+      output op256                  torch [1, 4, 256] -> device [1, 4, 256] in HBM  | 1024 elems x 2B = 2048 B (hbm counted: 2048 B)
+      input  buf254                 torch [1, 4, 256] -> device [256, 1, 1, 4, 64] in LX  | 65536 elems x 2B = 131072 B (hbm counted: 0 B) broadcast (loaded once)
+  slice_scatter_default_45 read=524288B write=524288B lx=0B
+      output op257                  torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B)
+      input  buf249                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  Pointwise    read=262144B write=4096B lx=0B
+      output op258                  torch [1, 4, 512] -> device [1, 4, 512] in HBM  | 2048 elems x 2B = 4096 B (hbm counted: 4096 B)
+      input  buf255                 torch [1, 4, 512] -> device [512, 1, 1, 4, 64] in HBM  | 131072 elems x 2B = 262144 B (hbm counted: 262144 B) broadcast (loaded once)
+  div          read=1572864B write=1048576B lx=0B
+      output op259                  torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B)
+      input  buf190                 torch [1, 8, 512, 128] -> device [8, 512, 2, 1, 64] in HBM  | 524288 elems x 2B = 1048576 B (hbm counted: 1048576 B) broadcast (loaded once)
+      input  buf257                 torch [1, 8, 512] -> device [512, 1, 1, 8, 64] in HBM  | 262144 elems x 2B = 524288 B (hbm counted: 524288 B) broadcast (loaded once)
+  -- prediction (turnaround): T = compute + (R+W)/BW_PEAK + a*min(R,W) --
+     R=94636416B (read)   W=50685952B (write)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.785) = 2.34 us  (M/m=32, pt_eff=0.785)
+     compute = MACs/cores/(mac_peak*pt_eff) = 67108864/32/(1140*0.616) = 2.99 us  (M/m=16, pt_eff=0.616)
+     base = R/150 + W/150 = 968.82 us
+     turn = a*min(R,W) = 0.00574*50685952 = 290.94 us
+     => T_model = 1259.75 us
+
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf17; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf41; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf65; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf89; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf113; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf137; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf161; using iteration-order last-axis-wins: output:d3=absent
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf185; using iteration-order last-axis-wins: output:d3=absent

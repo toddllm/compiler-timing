@@ -566,10 +566,28 @@ def main() -> int:
             _tr.dump_and_finalize(args.out)
             raise
 
+    # If the cost model pass ran (SPYRE_DUMP_COST truthy), grab the
+    # predicted runtime from cost_model_pass.LAST_REPORT. Read-only;
+    # cheap; not part of the primary study but useful for
+    # scratchpad-solver plan-quality context.
+    cost_report_meta: dict[str, Any] = {}
+    try:
+        from torch_spyre._inductor import cost_model_pass as _cmp
+        report = _cmp.LAST_REPORT
+        if report is not None:
+            cost_report_meta["total_us"] = report.total_us
+            try:
+                cost_report_meta["n_groups"] = len(report.groups)
+            except Exception:
+                pass
+    except Exception as e:  # noqa: BLE001
+        cost_report_meta["cost_report_error"] = repr(e)[:200]
+
     _tr.set_run_meta(
         pre_dxp_boundary_reached=hit_boundary,
         boundary_info=boundary_info,
         n_captured_kernels=len(intercept.captured),
+        cost_report=cost_report_meta or None,
     )
     _tr.dump_and_finalize(args.out)
     intercept.dump_catalog()

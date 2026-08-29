@@ -209,7 +209,8 @@ def install_extra_timers() -> None:
     #   * per-phase inside plan_allocation: prepare_buffers, solve,
     #     post_solve. These are directly observable via the template method
     #     hooks in ScratchpadAllocator.plan_allocation.
-    #   * chosen solver class + number of buffers.
+    #   * chosen solver class + planner_buffers + eligible/barred counts
+    #   * placed vs spilled counts and bytes, from the solver's own state
     try:
         from torch_spyre._inductor.scratchpad.allocator import (
             ScratchpadAllocator,
@@ -238,13 +239,13 @@ def install_extra_timers() -> None:
                 orig_build = self._build_solver
                 orig_solve = self._solve
                 orig_post = self._post_solve
-                captured = {"n_buffers": None, "solver_cls": None}
+                captured: dict = {}
 
                 def _timed_prepare(g):
                     with _tr.stage("scratchpad_prepare_buffers"):
                         bufs = orig_prepare(g)
                     try:
-                        captured["n_buffers"] = len(bufs)
+                        captured["planner_buffers"] = len(bufs)
                     except Exception:
                         pass
                     return bufs
@@ -253,6 +254,23 @@ def install_extra_timers() -> None:
                     with _tr.stage("scratchpad_build_solver"):
                         solver = orig_build(bufs)
                     captured["solver_cls"] = type(solver).__name__
+                    captured["lx_capacity_bytes"] = getattr(solver, "limit", None)
+                    captured["alignment"] = getattr(solver, "alignment", None)
+                    # Ask the solver to compute its own eligibility partition
+                    # (this is the same partition() the greedy path uses; for
+                    # CP-SAT the solve loop calls record_exclusions() itself,
+                    # so a preview here is cheap and non-mutating).
+                    try:
+                        excluded = solver.record_exclusions()
+                        captured["eligible_buffers"] = (
+                            len(solver.buffers) - len(excluded)
+                        )
+                        captured["barred_buffers"] = len(excluded)
+                        # Reset spill_reasons so we don't double-record; the
+                        # solve loop rebuilds it.
+                        solver.spill_reasons = {}
+                    except Exception as e:
+                        captured["eligibility_probe_error"] = repr(e)[:200]
                     return solver
 
                 def _timed_solve(solver):
@@ -260,7 +278,58 @@ def install_extra_timers() -> None:
                         "scratchpad_solve",
                         solver_cls=type(solver).__name__,
                     ):
-                        return orig_solve(solver)
+                        allocation = orig_solve(solver)
+                    # Placed / spilled counts and bytes come from the
+                    # allocation and the solver's spill_reasons map.
+                    try:
+                        n_placed = sum(
+                            1 for b in allocation if b.address is not None
+                        )
+                        n_spilled = sum(
+                            1 for b in allocation if b.address is None
+                        )
+                        bytes_placed = sum(
+                            b.size for b in allocation
+                            if b.address is not None
+                        )
+                        bytes_spilled = sum(
+                            b.size for b in allocation
+                            if b.address is None
+                        )
+                        captured["placed_in_lx"] = n_placed
+                        captured["spilled_from_lx"] = n_spilled
+                        captured["bytes_placed_in_lx"] = bytes_placed
+                        captured["bytes_spilled_from_lx"] = bytes_spilled
+                        # Group spill reasons: the sentinel used by
+                        # CP-SAT is "solver chose to spill this buffer";
+                        # everything else is a pre-solve barred reason.
+                        from collections import Counter
+                        reason_counts = Counter(
+                            (solver.spill_reasons or {}).values()
+                        )
+                        captured["spill_reason_histogram"] = dict(reason_counts)
+                        # Placed / spilled name signature: two solvers can
+                        # differ on WHICH buffers get in even if counts
+                        # match. Record both as sorted (name, size) tuples
+                        # so the diff between arms is inspectable.
+                        placed = sorted(
+                            (b.name, b.size) for b in allocation
+                            if b.address is not None
+                        )
+                        spilled = sorted(
+                            (b.name, b.size) for b in allocation
+                            if b.address is None
+                        )
+                        captured["placed_signature"] = placed
+                        captured["spilled_signature"] = spilled
+                    except Exception as e:
+                        captured["placement_probe_error"] = repr(e)[:200]
+                    # For CP-SAT: pick up solver stats stashed by our
+                    # _run wrapper below (if the solver class was patched).
+                    stats = getattr(solver, "_ab_last_solver_stats", None)
+                    if stats is not None:
+                        captured["ortools_stats"] = stats
+                    return allocation
 
                 def _timed_post(g, allocation):
                     with _tr.stage("scratchpad_post_solve"):
@@ -278,12 +347,73 @@ def install_extra_timers() -> None:
                     self._solve = orig_solve
                     self._post_solve = orig_post
                 if ev is not None:
-                    ev.meta["n_buffers"] = captured["n_buffers"]
-                    ev.meta["solver_cls"] = captured["solver_cls"]
+                    for k, v in captured.items():
+                        ev.meta[k] = v
                 return result
 
         ScratchpadAllocator.plan_allocation = _timed_plan_allocation
     except (ImportError, AttributeError):
+        pass
+
+    # ---- CpSatLayoutSolver._run — stash OR-Tools status/walltime -----------
+    try:
+        from torch_spyre._inductor.scratchpad.ilp_solver_ortools import (
+            CpSatLayoutSolver,
+        )
+        _orig_cpsat_run = CpSatLayoutSolver._run
+
+        @functools.wraps(_orig_cpsat_run)
+        def _timed_cpsat_run(self, model, tensors, forced_reasons):
+            from ortools.sat.python import cp_model  # already available
+            # We need to peek at the internal solver instance used by _run,
+            # but the real _run creates it as a local. Wrap CpSolver.Solve
+            # to snapshot at the end.
+            last = {}
+
+            _orig_solve_cls = cp_model.CpSolver.Solve
+
+            def _tracked_solve(cp_solver, mdl):
+                status = _orig_solve_cls(cp_solver, mdl)
+                try:
+                    last["status"] = cp_solver.StatusName(status)
+                    last["walltime_s"] = cp_solver.WallTime()
+                    last["usertime_s"] = cp_solver.UserTime()
+                    last["objective_value"] = cp_solver.ObjectiveValue()
+                    try:
+                        last["best_objective_bound"] = (
+                            cp_solver.BestObjectiveBound()
+                        )
+                    except Exception:
+                        pass
+                    try:
+                        last["num_branches"] = cp_solver.NumBranches()
+                    except Exception:
+                        pass
+                    try:
+                        last["num_conflicts"] = cp_solver.NumConflicts()
+                    except Exception:
+                        pass
+                    last["num_workers"] = (
+                        cp_solver.parameters.num_search_workers
+                    )
+                    last["max_time_in_seconds"] = (
+                        cp_solver.parameters.max_time_in_seconds
+                    )
+                except Exception as e:
+                    last["stats_error"] = repr(e)[:200]
+                return status
+
+            cp_model.CpSolver.Solve = _tracked_solve
+            try:
+                return _orig_cpsat_run(self, model, tensors, forced_reasons)
+            finally:
+                cp_model.CpSolver.Solve = _orig_solve_cls
+                # Save the LAST solve's stats (final lex step) plus meta.
+                self._ab_last_solver_stats = last
+
+        CpSatLayoutSolver._run = _timed_cpsat_run
+    except (ImportError, AttributeError):
+        # ortools unavailable or class moved — leave CP-SAT stats unrecorded.
         pass
 
     _INSTALLED = True

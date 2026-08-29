@@ -1,0 +1,9 @@
+=== [2026-08-29T07:02:14+00:00] shape=flash-512x1024 solver=cpsat Lq=512 Lk=1024 ===
+OK   flash-512x1024/cpsat rc=0 elapsed=43s
+=== [2026-08-29T07:02:57+00:00] shape=flash-512x1024 solver=greedy Lq=512 Lk=1024 ===
+OK   flash-512x1024/greedy rc=0 elapsed=34s
+=== [2026-08-29T07:03:31+00:00] shape=flash-512x8192 solver=cpsat Lq=512 Lk=8192 ===
+OK   flash-512x8192/cpsat rc=0 elapsed=193s
+=== [2026-08-29T07:06:44+00:00] shape=flash-512x8192 solver=greedy Lq=512 Lk=8192 ===
+OK   flash-512x8192/greedy rc=0 elapsed=161s
+=== [2026-08-29T07:09:25+00:00] solver A/B v2 complete
