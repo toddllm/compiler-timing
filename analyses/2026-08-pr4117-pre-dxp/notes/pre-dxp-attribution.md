@@ -1,84 +1,63 @@
-# Pre-DXP time attribution — methodology + how to produce
+# Pre-DXP time attribution
 
-**Status: awaiting pod data.** This file will be overwritten with a
-median-of-N table by `harness/analyze_sweep.py` once `data/sweep/` is
-populated. The methodology below stays as a docstring in the
-analyzer's output header so readers of the produced table always see
-the framing.
+Median-of-N cold samples, milliseconds. `pre_dxp_total` is derived directly from timestamps as `pre_dxp_boundary_marker.t_start − first_call_wall.t_start`; nothing is subtracted from `compile_fx_wrapper` or `graphlowering_compile_to_module`.
 
-## Primary pre-DXP total
+| shape | N | fx_nodes | presched_ops | n_kernels | n_specs | pre_dxp_total | pre_compile_fx | compile_fx_wrapper_pre_dxp |
+|---|---|---|---|---|---|---|---|---|
+| flash-1024x1024 | 3 | 460 | 516 | 1 | 513 | 31544.2 | 1672.0 | 30237.6 |
+| flash-1024x8192 | 3 | 3372 | 4100 | 1 | 4097 | 515021.3 | 3976.9 | 510742.2 |
+| flash-2048x1024 | 3 | 908 | 1028 | 1 | 1025 | 71107.1 | 2905.8 | 67812.4 |
+| flash-256x1024 | 3 | 124 | 110 | 1 | 107 | 11176.1 | 1021.6 | 10154.5 |
+| flash-512x1024 | 3 | 236 | 260 | 1 | 257 | 17806.8 | 1321.6 | 16595.9 |
+| flash-512x2048 | 3 | 444 | 516 | 1 | 513 | 31189.5 | 1341.5 | 29848.0 |
+| flash-512x4096 | 3 | 860 | 1028 | 1 | 1025 | 65580.9 | 1941.3 | 63639.6 |
+| flash-512x512 | 3 | 132 | 132 | 1 | 129 | 11317.1 | 931.0 | 10087.1 |
+| flash-512x8192 | 3 | 1692 | 2052 | 1 | 2049 | 200334.8 | 3339.0 | 197100.5 |
+| mlp-L16-w2048 | 3 | 82 | 48 | 1 | 48 | 4978.8 | 654.2 | 4251.0 |
+| mlp-L2-w2048 | 3 | 12 | 6 | 1 | 6 | 3754.1 | 636.7 | 3117.4 |
+| mlp-L32-w2048 | 3 | 162 | 96 | 1 | 96 | 6039.6 | 687.4 | 5387.7 |
+| mlp-L4-w2048 | 3 | 22 | 12 | 1 | 12 | 4068.9 | 734.6 | 3325.2 |
+| mlp-L64-w2048 | 3 | 322 | 192 | 1 | 192 | 8482.1 | 722.8 | 7759.3 |
+| mlp-L8-w2048 | 3 | 42 | 24 | 1 | 24 | 4721.1 | 560.8 | 4059.3 |
 
-Derived directly from timestamps:
+## Percent of pre-DXP total
 
-    pre_dxp_total_ns = pre_dxp_boundary_marker.t_start_ns
-                       - first_call_wall.t_start_ns
-
-This is exactly "from first invocation start to the moment
-immediately before the DXP subprocess would have run". The
-`first_call_wall` event's `inclusive_ns` also includes a sentinel
-unwind, which is reported separately as `sentinel_unwind` and
-excluded from the primary total.
-
-## Top-level bucket definitions
-
-Every bucket in the "attribution" section of the produced table is
-directly bracketed or derived from timestamps between direct events —
-none from `parent.inclusive − sum(children)` unless every subtracted
-child is also directly bracketed.
-
-| bucket | source |
-|---|---|
-| `pre_compile_fx` | `compile_fx_wrapper.t_start − first_call_wall.t_start`. Time before Torch-Spyre's compile_fx wrapper fires — Dynamo tracing, AOTAutograd prelude, torch bookkeeping. |
-| `compile_fx_wrapper` | direct inclusive |
-| `between_compile_and_wait` | `async_compile_wait.t_start − compile_fx_wrapper.t_end`. Setup between compile completion and first-invocation start. |
-| `wait_pre_dxp` | `pre_dxp_boundary_marker.t_start − async_compile_wait.t_start`. Everything inside async_compile_wait upstream of the boundary (sdsc, generate_bundle, kernel_provenance, prefix of the dxp subprocess call). |
-
-Their sum equals `pre_dxp_total` when reconciliation residual is 0.
-`tables/reconciliation.md` reports the residual for every sample.
+| shape | pre_compile_fx | compile_fx_wrapper_pre_dxp |
+|---|---|---|
+| flash-1024x1024 | 5.3% | 95.9% |
+| flash-1024x8192 | 0.8% | 99.2% |
+| flash-2048x1024 | 4.1% | 95.4% |
+| flash-256x1024 | 9.1% | 90.9% |
+| flash-512x1024 | 7.4% | 93.2% |
+| flash-512x2048 | 4.3% | 95.7% |
+| flash-512x4096 | 3.0% | 97.0% |
+| flash-512x512 | 8.2% | 89.1% |
+| flash-512x8192 | 1.7% | 98.4% |
+| mlp-L16-w2048 | 13.1% | 85.4% |
+| mlp-L2-w2048 | 17.0% | 83.0% |
+| mlp-L32-w2048 | 11.4% | 89.2% |
+| mlp-L4-w2048 | 18.1% | 81.7% |
+| mlp-L64-w2048 | 8.5% | 91.5% |
+| mlp-L8-w2048 | 11.9% | 86.0% |
 
 ## Full bucket detail
 
-The full attribution table also breaks each top-level bucket into
-directly-measured sub-buckets so a reader can drill from
-"compile_fx_wrapper is 87% of pre-DXP time" all the way down to
-"insert_restickify is 12% of compile_fx_wrapper" without any
-subtractive arithmetic — every number is either a direct event
-inclusive time or a timestamp difference between direct events.
+Every measured bucket, including derived residuals. `sentinel_unwind` should be small (< 20 ms typically) — if it grows, that is stack-unwind overhead contaminating first_call_wall's inclusive time, and the primary `pre_dxp_total` column above already excludes it.
 
-## Non-obvious accounting rules
-
-- **SDSC is NOT nested in `compile_fx_wrapper` or
-  `graphlowering_compile_to_module`.** SDSC (and DXP) fires during the
-  first invocation of the compiled wrapper — i.e. INSIDE
-  `async_compile_wait`, which is a SIBLING of `compile_fx_wrapper`
-  under `first_call_wall`. The analyzer does not subtract SDSC from
-  either of those parents.
-- **`CustomPreSchedulingPasses.__call__`** runs `cost_model_pass`,
-  `dump_cost_model`, and `finalize_work_division_for_scheduler`
-  AFTER the 23-pass loop but BEFORE the pipeline event closes. The
-  pipeline event brackets all of them; nested sub-events isolate the
-  four regions.
-- **`recover_spyre_hints`** runs inside `_spyre_update_scheduler`
-  but OUTSIDE `pipeline:CustomPreSchedulingPasses`. Its own timer
-  captures it.
-- **`_pre_fusion_custom_pass` and `_post_fusion_custom_pass`** fire
-  from inside `Scheduler.__init__`, not `CustomPreSchedulingPasses`.
-  They appear as their own pipeline events.
-
-## How to produce the real table
-
-On an instrumented pod at the frozen SHA:
-
-```bash
-export TORCH_SPYRE_TIMING=1
-bash harness/sweep_driver.sh
-python3 harness/analyze_sweep.py \
-    --sweep-dir data/sweep \
-    --out-notes notes \
-    --out-tables notes/tables \
-    --strict
-```
-
-`--strict` makes the analyzer exit non-zero if any run failed
-validation, so a sweep with a subtle bug does not silently produce a
-table that trusts partial data.
+| shape | pre_compile_fx | compile_fx_wrapper | compile_fx_wrapper_pre_dxp | compile_fx_outer_other | spyre_inner_compile | inner_compile_other | graphlowering_run | graphlowering_compile_to_module | compile_to_module_other | graphlowering_codegen | graphlowering_codegen_other | spyre_update_scheduler | spyre_update_scheduler_other | recover_spyre_hints | custompresched_total | presched_pass_loop | presched_cost_model | presched_cost_dump | presched_finalize_work_division | upstream_update_scheduler | scheduler_init | custompref_fusion | custompost_fusion | scheduler_codegen | scheduler_codegen_other | spyre_kernel_codegen_total | wrapper_codegen | wrapper_module_exec | async_compile_wait | async_compile_wait_other | sdsc_total | sdsc_bundle_gen_total | kernel_provenance_total | dxp_standalone_total | sentinel_unwind | scratchpad_plan_allocation | scratchpad_prepare_buffers | scratchpad_build_solver | scratchpad_solve | scratchpad_post_solve |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| flash-1024x1024 | 1672.0 | 30242.8 | 30237.6 | 6692.4 | 23799.0 | 764.2 | 779.8 | 22244.0 | 0.1 | 14661.0 | 39.9 | 12837.2 | 0.0 | 0.4 | 11515.0 | 11368.2 | 0.0 | 0.0 | 144.5 | 1327.6 | 1327.5 | 127.9 | 165.5 | 1834.8 | 1180.7 | 647.5 | 29.1 | 7548.9 | 0.0 | 0.0 | 5048.3 | 4372.5 | 669.1 | 10.0 | 92.1 | 2815.1 | 1121.2 | 0.0 | 1662.4 | 0.0 |
+| flash-1024x8192 | 3976.9 | 510745.9 | 510742.2 | 13811.9 | 497253.2 | 5845.9 | 5811.2 | 485630.6 | 0.1 | 424471.8 | 243.4 | 409801.9 | 0.1 | 17.4 | 392426.9 | 391368.1 | 0.0 | 0.0 | 1058.7 | 16849.4 | 16849.0 | 1565.2 | 1379.7 | 14366.3 | 10825.5 | 3516.0 | 220.7 | 61158.7 | 0.0 | 0.0 | 41099.9 | 35664.3 | 5324.3 | 74.1 | 272.7 | 215121.3 | 12552.9 | 0.2 | 202476.5 | 0.0 |
+| flash-2048x1024 | 2905.8 | 67815.6 | 67812.4 | 10247.7 | 57392.8 | 1474.9 | 1684.0 | 54245.0 | 0.1 | 39057.5 | 75.4 | 35717.0 | 0.1 | 1.4 | 32370.7 | 32103.1 | 0.0 | 0.0 | 267.5 | 3344.8 | 3344.6 | 253.6 | 332.0 | 3268.4 | 2386.4 | 886.1 | 56.9 | 15258.6 | 0.0 | 0.0 | 10221.8 | 8553.4 | 1632.7 | 32.0 | 194.2 | 11004.0 | 2095.4 | 0.1 | 8886.4 | 0.0 |
+| flash-256x1024 | 1021.6 | 10158.4 | 10154.5 | 5561.7 | 4671.1 | 181.1 | 197.7 | 4260.4 | 0.1 | 2637.5 | 16.4 | 2248.9 | 0.0 | 0.1 | 1949.3 | 1916.9 | 0.0 | 0.0 | 33.0 | 300.9 | 300.8 | 35.1 | 42.7 | 369.3 | 261.7 | 107.6 | 6.5 | 1607.3 | 0.0 | 0.0 | 1028.4 | 877.9 | 140.8 | 5.5 | 64.7 | 389.6 | 210.2 | 0.0 | 178.8 | 0.0 |
+| flash-512x1024 | 1321.6 | 16600.6 | 16595.9 | 5925.9 | 10849.1 | 403.5 | 426.6 | 9993.8 | 0.1 | 6255.4 | 26.3 | 5220.7 | 0.1 | 0.2 | 4571.8 | 4500.1 | 0.0 | 0.0 | 71.7 | 648.6 | 648.5 | 66.4 | 82.5 | 985.3 | 754.7 | 232.2 | 14.6 | 3719.2 | 0.0 | 0.0 | 2423.9 | 2076.9 | 334.6 | 7.7 | 111.3 | 798.4 | 457.0 | 0.0 | 330.4 | 0.0 |
+| flash-512x2048 | 1341.5 | 29850.8 | 29848.0 | 5988.5 | 23793.4 | 743.9 | 748.1 | 22263.2 | 0.1 | 14287.4 | 40.1 | 12642.9 | 0.0 | 0.4 | 11327.2 | 11190.0 | 0.0 | 0.0 | 138.5 | 1315.1 | 1315.0 | 126.7 | 166.9 | 1613.1 | 1160.7 | 451.4 | 28.9 | 7950.0 | 0.0 | 0.0 | 5067.0 | 4148.7 | 908.2 | 10.3 | 96.3 | 2718.8 | 935.0 | 0.1 | 1774.5 | 0.0 |
+| flash-512x4096 | 1941.3 | 63642.8 | 63639.6 | 6557.8 | 57272.2 | 1448.7 | 1630.2 | 54136.7 | 0.1 | 39146.7 | 67.8 | 35798.5 | 0.1 | 1.4 | 32460.9 | 32196.5 | 0.0 | 0.0 | 264.6 | 3328.2 | 3328.0 | 249.6 | 332.7 | 3251.5 | 2371.7 | 882.8 | 57.1 | 15121.2 | 0.0 | 0.0 | 10223.6 | 8567.6 | 1616.7 | 25.8 | 160.9 | 11187.4 | 2063.4 | 0.1 | 9090.0 | 0.0 |
+| flash-512x512 | 931.0 | 10090.1 | 10087.1 | 4845.2 | 5257.8 | 222.5 | 232.2 | 4813.6 | 0.1 | 2923.9 | 15.0 | 2487.4 | 0.0 | 0.1 | 2150.5 | 2112.3 | 0.0 | 0.0 | 37.8 | 337.2 | 337.1 | 35.2 | 43.1 | 423.0 | 302.0 | 120.5 | 7.5 | 1885.7 | 0.0 | 0.0 | 1242.6 | 1069.3 | 166.8 | 6.6 | 60.1 | 391.8 | 230.6 | 0.0 | 159.9 | 0.0 |
+| flash-512x8192 | 3339.0 | 197105.5 | 197100.5 | 12904.2 | 183273.3 | 2971.7 | 3053.3 | 177268.4 | 0.1 | 147442.2 | 135.1 | 140687.1 | 0.1 | 4.5 | 133278.1 | 132749.4 | 0.0 | 0.0 | 523.3 | 7404.5 | 7404.0 | 498.2 | 1031.1 | 6649.0 | 4887.9 | 1761.2 | 110.8 | 29975.9 | 0.0 | 0.0 | 20233.7 | 17545.0 | 2651.1 | 48.3 | 237.5 | 75696.1 | 4952.5 | 0.1 | 70589.5 | 0.0 |
+| mlp-L16-w2048 | 654.2 | 4254.0 | 4251.0 | 2929.0 | 1324.9 | 64.5 | 88.0 | 1165.9 | 0.1 | 736.9 | 12.1 | 583.9 | 0.0 | 0.0 | 470.6 | 469.1 | 0.0 | 0.0 | 1.5 | 113.2 | 113.2 | 19.9 | 14.9 | 139.3 | 80.4 | 58.9 | 3.2 | 429.6 | 0.0 | 0.0 | 269.1 | 229.1 | 35.9 | 4.0 | 40.4 | 82.0 | 50.6 | 0.0 | 30.9 | 0.0 |
+| mlp-L2-w2048 | 636.7 | 3119.4 | 3117.4 | 2802.3 | 317.0 | 44.8 | 48.0 | 227.0 | 0.0 | 149.0 | 8.7 | 102.3 | 0.0 | 0.0 | 78.3 | 77.9 | 0.0 | 0.0 | 0.4 | 24.1 | 24.0 | 2.9 | 3.5 | 36.3 | 17.3 | 19.0 | 0.7 | 78.0 | 0.0 | 0.0 | 39.6 | 32.9 | 4.4 | 2.2 | 37.0 | 19.1 | 6.4 | 0.0 | 12.3 | 0.0 |
+| mlp-L32-w2048 | 687.4 | 5390.1 | 5387.7 | 2930.4 | 2459.7 | 89.0 | 146.6 | 2226.9 | 0.1 | 1391.4 | 18.0 | 1118.2 | 0.0 | 0.0 | 909.3 | 906.7 | 0.0 | 0.0 | 2.6 | 208.7 | 208.7 | 37.9 | 26.9 | 254.0 | 150.5 | 103.3 | 5.6 | 837.3 | 0.0 | 0.0 | 531.6 | 452.4 | 72.7 | 6.2 | 49.8 | 154.1 | 101.0 | 0.0 | 51.4 | 0.0 |
+| mlp-L4-w2048 | 734.6 | 3327.2 | 3325.2 | 2877.4 | 463.7 | 46.4 | 58.1 | 360.0 | 0.0 | 233.1 | 8.9 | 172.8 | 0.0 | 0.0 | 134.0 | 133.4 | 0.0 | 0.0 | 0.6 | 37.6 | 37.5 | 5.3 | 5.2 | 51.4 | 26.5 | 24.8 | 1.0 | 126.7 | 0.0 | 0.0 | 71.4 | 60.1 | 8.6 | 2.4 | 38.9 | 27.4 | 12.6 | 0.0 | 14.4 | 0.0 |
+| mlp-L64-w2048 | 722.8 | 7761.9 | 7759.3 | 2725.3 | 4997.9 | 139.6 | 261.7 | 4598.9 | 0.1 | 2928.1 | 25.4 | 2247.3 | 0.0 | 0.1 | 1832.8 | 1827.0 | 0.0 | 0.0 | 5.7 | 416.5 | 416.4 | 76.1 | 52.6 | 661.7 | 298.8 | 366.1 | 11.2 | 1661.4 | 0.0 | 0.0 | 1055.8 | 900.9 | 143.8 | 9.4 | 46.2 | 318.5 | 207.0 | 0.0 | 108.0 | 0.0 |
+| mlp-L8-w2048 | 560.8 | 4062.3 | 4059.3 | 3291.9 | 757.5 | 50.9 | 64.3 | 637.1 | 0.1 | 400.7 | 9.5 | 309.8 | 0.0 | 0.0 | 246.8 | 245.9 | 0.0 | 0.0 | 0.9 | 62.9 | 62.8 | 10.7 | 8.5 | 80.6 | 44.5 | 36.3 | 1.6 | 237.5 | 0.0 | 0.0 | 136.8 | 116.2 | 17.2 | 3.0 | 44.6 | 45.6 | 25.2 | 0.0 | 19.8 | 0.0 |

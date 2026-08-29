@@ -323,6 +323,11 @@ def _bucket_ns(run: dict) -> dict[str, int]:
     ns["sdsc_bundle_gen_total"] = _sum_inclusive(run, "sdsc_bundle_gen")
     ns["kernel_provenance_total"] = _sum_inclusive(run, "kernel_provenance")
     ns["dxp_standalone_total"] = _sum_inclusive(run, "dxp_standalone")
+    ns["scratchpad_plan_allocation"] = _sum_inclusive(run, "scratchpad_plan_allocation")
+    ns["scratchpad_prepare_buffers"] = _sum_inclusive(run, "scratchpad_prepare_buffers")
+    ns["scratchpad_build_solver"] = _sum_inclusive(run, "scratchpad_build_solver")
+    ns["scratchpad_solve"] = _sum_inclusive(run, "scratchpad_solve")
+    ns["scratchpad_post_solve"] = _sum_inclusive(run, "scratchpad_post_solve")
 
     # ---- Pre-compile-fx (Dynamo/AOT prelude, timestamp-derived) ----
     ns["pre_compile_fx"] = cfw["t_start_ns"] - fcw["t_start_ns"]
@@ -535,6 +540,9 @@ def _load_runs(sweep_dir: str) -> tuple[dict[str, list[dict]], dict[str, list[st
         base = os.path.basename(path)
         if "-run" not in base or not base.endswith(".json"):
             continue
+        # Skip catalog and invariants sidecars that also match "*run*.json".
+        if base.endswith(".catalog.json") or base.endswith(".invariants.json"):
+            continue
         stem = base[: -len(".json")]
         try:
             shape, _ = stem.rsplit("-run", 1)
@@ -629,6 +637,12 @@ _BUCKETS_MS = [
     "kernel_provenance_total",
     "dxp_standalone_total",
     "sentinel_unwind",
+    # Scratchpad sub-buckets from the plan_allocation instrumentation
+    "scratchpad_plan_allocation",
+    "scratchpad_prepare_buffers",
+    "scratchpad_build_solver",
+    "scratchpad_solve",
+    "scratchpad_post_solve",
 ]
 
 # The two top-level buckets that partition `pre_dxp_total`. Their sum
@@ -764,6 +778,11 @@ _NATURAL_UNIT: dict[str, str] = {
     "scheduler_codegen": "sched_nodes",
     "wrapper_codegen": "fx_nodes",
     "async_compile_wait_other": "kernels",
+    # Scratchpad sub-timers scale with buffers the planner sees.
+    "scratchpad_plan_allocation": "planner_buffers",
+    "scratchpad_solve": "planner_buffers",
+    "scratchpad_prepare_buffers": "planner_buffers",
+    "scratchpad_build_solver": "planner_buffers",
     # Defaults for anything else
 }
 
@@ -811,6 +830,11 @@ def _write_scaling(
             "wrapper_module_exec",
             "sdsc_total", "sdsc_bundle_gen_total",
             "kernel_provenance_total",
+            # Scratchpad direct sub-timers (solver-arm-dependent)
+            "scratchpad_plan_allocation",
+            "scratchpad_solve",
+            "scratchpad_prepare_buffers",
+            "scratchpad_build_solver",
         ]
         for name in buckets_to_scale:
             unit = _NATURAL_UNIT.get(name, "fx_nodes")
@@ -943,6 +967,23 @@ def main() -> int:
         # Per-shape meta from any run (all should agree on graph size).
         first_valid = valid_ns_by_shape[shape][:1] and runs_by_shape[shape][0]
         example_run = runs_by_shape[shape][0]
+        # planner_buffers from the scratchpad_plan_allocation stage
+        planner_buffers = -1
+        eligible_buffers = -1
+        barred_buffers = -1
+        placed_in_lx = -1
+        spilled_from_lx = -1
+        spa = _first_event(example_run, "scratchpad_plan_allocation")
+        if spa is not None:
+            spa_meta = spa.get("meta") or {}
+            planner_buffers = spa_meta.get("planner_buffers", -1) or -1
+            eligible_buffers = spa_meta.get("eligible_buffers", -1) or -1
+            barred_buffers = spa_meta.get("barred_buffers", -1) or -1
+            placed_in_lx = spa_meta.get("placed_in_lx", -1) or -1
+            spilled_from_lx = spa_meta.get("spilled_from_lx", -1) or -1
+        # Resolved solver name (record for the arm)
+        rmeta = example_run.get("meta") or {}
+        solver_arm = (rmeta.get("resolved_spyre_config") or {}).get("layout_solver")
         shape_meta[shape] = {
             "_fx_nodes": _fx_nodes(example_run),
             "_presched_ops": _presched_input_ops(example_run),
@@ -950,6 +991,12 @@ def main() -> int:
             "_sched_nodes": _sched_input_nodes(example_run),
             "_kernel_count": _kernel_count(example_run),
             "_n_specs": _n_specs(example_run),
+            "_planner_buffers": planner_buffers,
+            "_eligible_buffers": eligible_buffers,
+            "_barred_buffers": barred_buffers,
+            "_placed_in_lx": placed_in_lx,
+            "_spilled_from_lx": spilled_from_lx,
+            "_layout_solver": solver_arm,
         }
         n_samples[shape] = len(valid_ns_by_shape[shape])
 

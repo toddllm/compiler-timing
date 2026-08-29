@@ -1,114 +1,178 @@
-# Next material pre-DXP optimization targets
+# Pre-DXP frontend — ranked opportunities under #4117
 
-**Status: methodology + rules, pending pod data.** Once
-`data/sweep/` is populated and `harness/analyze_sweep.py` has
-produced `pre-dxp-attribution.md`, `tables/scaling.md`,
-`tables/pass-detail.md`, and `tables/reconciliation.md`, fill in the
-ranked list at the bottom of this document from those tables
-directly.
+Baseline data from the final #4117 sweep (see `data/final_sweep/`,
+`notes/pre-dxp-attribution.md`, `notes/tables/scaling.md`,
+`notes/tables/pass-detail.md`). Frozen torch-spyre
+`3358f39e91e2a34e855d488b1b9fce3c2f0d4c2f` with `USE_SPYRE_CCL=0`
+and `SPYRE_DUMP_COST` unset (cost model OFF for the primary
+baseline).
 
-## Ranking philosophy
+## Ranking philosophy (unchanged from earlier)
 
-We rank buckets by **judgment across several axes**, not by a
-hard AND-gate. A large sub-linear bucket can matter more than a tiny
-super-linear one. A super-linear slope is a warning to investigate,
-not a requirement.
+Judgment across:
 
-Axes considered per bucket:
+* absolute milliseconds at the largest measured shape
+* share of pre-DXP time
+* scaling in natural units (empirical scaling over this measured
+  range; not algorithmic Big-O)
+* future work-unit growth expectations
+* attribution confidence (directly measured vs derived)
+* practical lever availability
+* correctness / review risk
 
-- **Absolute milliseconds** at the largest measured shape. A bucket
-  that costs 20 ms perfectly eliminated cannot beat one that costs
-  400 ms halved.
-- **Share of pre-DXP time** at the largest measured shape. Same idea,
-  normalized so we compare apples to apples across studies.
-- **Scaling in natural units.** For every bucket, `scaling.md` fits
-  the log-log slope against the bucket's natural independent
-  variable (FX nodes, pre-scheduling ops, scheduler nodes, emitted
-  kernel count, OpSpec count, etc.), and reports per-unit drift (ms
-  per natural unit). Slope > 1 is a super-linear alarm — investigate
-  regardless of current absolute cost.
-- **Expected future work-unit growth.** Some units grow faster than
-  others as models scale. If kernels-per-graph is growing quarter over
-  quarter, per-kernel buckets deserve extra weight.
-- **Confidence in attribution.** A directly-measured bucket has high
-  confidence; a derived residual has lower. Derived residuals appear
-  in the report but are ranked accordingly.
-- **Existence of a practical lever.** Buckets bracketed by
-  torch-Spyre-side code have obvious levers. Buckets whose time is
-  entirely in upstream Inductor may still have a Spyre-side hook
-  (e.g. `enable_spyre_context` for pre/post-grad passes), but the
-  investigation may need to establish that first.
-- **Correctness / review risk.** A change that touches
-  `insert_restickify` is riskier than a change that touches a
-  peripheral pass. Weight against that.
+Slope > 1 is a super-linear warning. Not a gate.
 
-## Incidental finding — bundle-generation nondeterminism
+## Top absolute buckets at the three flash reference shapes
 
-`generate_bundle` output is not byte-deterministic across independent
-cold compiles on the frozen tree. Two identical unmodified normal
-compile runs of flash 512×1024 differ in `bundle.mlir` bytes, several
-`sdsc_*.json` bytes, and file count. Because the same divergence
-occurs between two unmodified observe runs, byte equality cannot
-distinguish harness perturbation from normal production variation.
-The mechanism is unattributed — this study explicitly did NOT
-investigate it. Possible follow-up as a separate torch-spyre issue.
+Small (`flash-256x1024`, `pre_dxp_total = 11 176 ms`)
 
-## Explicit exclusions
+* `compile_fx_outer_other` 5 562 ms (AOT / dynamo-side prelude — fixed cost)
+* `spyre_inner_compile - graphlowering_compile_to_module` residual ≈ 411 ms
+* `wrapper_module_exec` 1 607 ms (contains `sdsc_bundle_gen` 878 ms + `kernel_provenance` 141 ms)
+* `custompresched_total` 1 949 ms (biggest passes: `optimize_restickify_locations` 500 ms, `_maybe_scratchpad_planning` 390 ms)
 
-- **Anything past `dxp_standalone`.** DXP itself is separate work.
-- **Anything already addressed by PR #4113.** If
-  `dedup_and_promote_constants` reappears in the top-K
-  (`tables/pass-detail.md`) at large shapes, that is a regression
-  signal, not a new opportunity.
-- **The restickify family.** Will is pursuing that track. We include
-  restickify buckets in the tables as context, not as targets.
+Middle (`flash-512x4096`, `pre_dxp_total = 65 581 ms`)
 
-## Non-optimization deliverables the study produces
+* `custompresched_total` 32 461 ms (49.5% of pre_dxp_total)
+  * `_maybe_scratchpad_planning` **11 187 ms** (34.5% of custompresched, 17.1% of pre_dxp)
+  * `optimize_restickify_locations` **11 691 ms** — Will's track
+  * `span_reduction` 3 153 ms
+* `wrapper_module_exec` 15 121 ms (`sdsc_bundle_gen` 8 568 ms, `kernel_provenance` 1 617 ms)
+* `scheduler_codegen` 3 251 ms
 
-- **Baseline record.** `data/sweep/` is checked in raw at the
-  frozen torch-spyre SHA so a future regression run can diff against
-  a known-good pre-DXP shape.
-- **Attribution reference.** Reviewers can point at
-  `pre-dxp-attribution.md` instead of re-instrumenting.
-- **Scaling markers.** `tables/scaling.md` gives per-bucket log-log
-  slopes with per-unit drift; a bucket that turns from sub-linear to
-  super-linear in a future run is a regression alert.
-- **Reconciliation record.** `tables/reconciliation.md` shows the
-  per-run residual so anyone reading a bucket number knows how much
-  is attributed vs unaccounted-for.
+Largest (`flash-1024x8192`, `pre_dxp_total = 515 021 ms`)
 
-## Investigation template per candidate bucket
+* `custompresched_total` **392 427 ms (76.2% of pre_dxp_total)**
+  * `_maybe_scratchpad_planning` **215 121 ms (41.8% of pre_dxp_total)**
+    * `scratchpad_solve` **202 477 ms** (94.1% of scratchpad_plan_allocation)
+  * `optimize_restickify_locations` 138 354 ms (26.9%) — Will's track
+  * `span_reduction` 12 709 ms
+  * `_distribute_work` 9 193 ms
+* `wrapper_module_exec` 61 159 ms (`sdsc_bundle_gen` 35 664 ms)
+* `scheduler_codegen` 14 366 ms
 
-Before proposing a bucket as a material target, produce:
+## Empirical scaling over the flash range (n=9 shapes, log-log)
 
-- **Time cost:** absolute ms + share at largest flash shape and at
-  smallest flash shape.
-- **Growth:** slope against natural unit, per-unit drift, and which
-  independent variable actually drives it. If slope vs `fx_nodes`
-  looks noisy, re-fit against the bucket's natural input size and
-  see whether the fit tightens.
-- **What the bucket does:** one paragraph summary of the code the
-  bucket brackets. File:line anchors at the frozen SHA.
-- **Where the time actually goes inside it:** for
-  `custompresched_total`, this is answered directly by
-  `tables/pass-detail.md`. For other buckets, add a targeted
-  sub-instrumentation follow-up rather than guessing.
-- **Lever candidates:** 1-3 concrete things that could change what
-  the bucket does. Include the argument for correctness-preservation
-  and for review-tractability.
-- **Expected upside:** rough estimate of how much of the bucket's ms
-  each lever could remove, therefore how much of `pre_dxp_total`.
-- **Cost:** implementation effort, review, risk. Next-quarter or
-  next-week?
-- **Confidence:** high / medium / low, with what would raise it.
+| bucket | slope | growth ratio |
+|---|---:|---:|
+| `pre_dxp_total` | 1.14 | 46× |
+| `custompresched_total` | 1.48 | 201× |
+| `_maybe_scratchpad_planning` (via `scratchpad_plan_allocation`) | 1.84 | 552× |
+| `scratchpad_solve` (CP-SAT solver wall) | **2.11** | **1132×** |
+| `optimize_restickify_locations` (via `custompresched_total` share) | ~1.5 | 277× (500 → 138 354 ms) |
+| `sdsc_bundle_gen_total` | 1.02 | 41× |
+| `scheduler_codegen` | 1.00 | 39× |
+| `compile_fx_outer_other` | 0.31 | 2.5× (~fixed) |
+| `pre_compile_fx` | 0.45 | 3.9× |
+| `graphlowering_run` | 1.02 | 29× |
+| `spyre_kernel_codegen_total` | 1.04 | 33× |
+| `kernel_provenance_total` | 1.01 | 38× |
+
+Read the slope column as an **empirical two-endpoint-plus-fit
+exponent over this measured range**, not as an algorithmic Big-O
+statement.
 
 ## Ranked opportunities
 
-*(To be filled in from real data.)*
+### 1. Current-default CP-SAT scratchpad solver cost
 
-### Rank 1 — TBD
-### Rank 2 — TBD
-### Rank 3 — TBD
+The dominant absolute cost at the largest flash shape:
+`_maybe_scratchpad_planning = 215 121 ms = 41.8% of pre_dxp_total`,
+of which `scratchpad_solve = 202 477 ms` is OR-Tools solver wall.
 
-### Deferred with reason
-### Excluded with reason
+At `flash-512x8192` the CP-SAT solver reached `OPTIMAL` in
+70.51 s wall (192 workers, 600 s time limit); at the largest shape
+it took ~202 s wall. Empirical scaling exponent over the range
+**2.11 on `scratchpad_solve` against planner buffers**. The CP-SAT
+compile-time cost is real, super-linear over the measured range, and
+already the largest single frontend bucket at scale.
+
+**In scope for #4117** (per your correction):
+
+* model-construction cost
+* propagation cost
+* work-count scaling
+* avoiding unnecessary expensive solves
+* size thresholds / small-graph fast paths
+* fallback policies (e.g. switch to greedy when CP-SAT expected
+  cost exceeds a threshold)
+* solver configuration that reduces compile latency
+
+**Separate solver-quality concern** (out of scope for #4117):
+
+* residency objective redesign
+* solution-quality optimization
+
+Confidence: high (direct measurement, 9-shape trend, OR-Tools stats
+already captured). Lever: yes (config-level fallback rule and/or
+threshold-based fast path both look tractable). Risk: moderate;
+changing the default solver would touch a lot of graphs, so a
+threshold-and-fallback approach is likely safer than removing
+CP-SAT.
+
+**Recommended first concrete follow-up under #4117**:
+prototype a **size-threshold fallback** that runs the greedy
+solver first, and only escalates to CP-SAT when the graph's
+planner-buffer count is below a caller-tunable ceiling AND some
+cheap quality heuristic says CP-SAT is likely to help. Measure the
+compile-time delta on the same 9-flash + 6-MLP sweep.
+
+### 2. `optimize_restickify_locations` (Will's track)
+
+Second-largest absolute bucket at every large flash shape. At
+`flash-1024x8192`: 138 354 ms = **26.9% of pre_dxp_total**.
+Included here as context; Will owns.
+
+### 3. `sdsc_bundle_gen`
+
+`sdsc_bundle_gen_total` at `flash-1024x8192`: **35 664 ms (6.9% of
+pre_dxp_total)**. Slope 1.02 vs `n_specs` — near-linear at
+~8.7 ms/spec at the max shape. Not super-linear; not the highest
+priority; but the absolute cost is material and any fixed per-spec
+cost is worth checking (canonicalization / JSON emission /
+copy paths).
+
+Confidence: medium (linear scaling; per-spec cost is directly
+readable). Lever: possibly small (per-spec cost reduction).
+
+### 4. `span_reduction` inside CustomPreSchedulingPasses
+
+At `flash-1024x8192`: 12 709 ms. Slope inferred from
+`custompresched_total` minus scratchpad/restickify — grows near-
+linearly. Non-restickify, non-solver bucket that would deserve
+attention after (1) and (3) are addressed.
+
+### 5. `scheduler_codegen` (upstream Inductor)
+
+At `flash-1024x8192`: 14 366 ms. Slope 1.00 vs `sched_nodes`;
+essentially linear at 3.5 ms per scheduler-node. Upstream
+territory; a Spyre-side hook is not obvious.
+
+### 6. `pre_compile_fx` and `compile_fx_outer_other` (fixed prelude)
+
+Together `pre_compile_fx + compile_fx_outer_other ≈ 5 500 – 18 000 ms`
+across the sweep. Slopes 0.45 and 0.31 — mostly fixed. Their
+relative importance shrinks at scale but at small shapes
+(`flash-256x1024`) `compile_fx_outer_other` is 5 562 ms ≈ 50% of
+pre_dxp_total. Fixed startup cost, low urgency for large workloads.
+
+## Explicit exclusions
+
+* Anything past `dxp_standalone` — DXP itself is separate work.
+* Restickify (`optimize_restickify_locations`,
+  `insert_restickify_padding`, etc.) — Will's track.
+* CP-SAT residency-objective redesign or solution-quality tuning —
+  separate concern from the compile-time work in scope here.
+
+## Incidental finding — bundle-generation nondeterminism
+
+`generate_bundle` output is not byte-deterministic across
+independent cold compiles on the frozen tree. Two identical
+unmodified normal compiles at flash 512×1024 differ in
+`bundle.mlir` bytes and several `sdsc_*.json` bytes; the
+`KernelProvenanceDescriptor.key` also is not stable across runs.
+Because the same divergence occurs between two unmodified observe
+runs, byte equality cannot distinguish harness perturbation from
+normal production variation. The mechanism is unattributed —
+this study explicitly did NOT investigate it. Possible follow-up
+as a separate torch-spyre issue.

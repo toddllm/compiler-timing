@@ -1,0 +1,80 @@
+{
+  "captured": {
+    "sdsc_fused_add_gelu_mm_0": {
+      "aten_ops": [
+        "aten.add.Tensor",
+        "aten.gelu.default",
+        "aten.mm.default"
+      ],
+      "catalog": {
+        "bundle.mlir": {
+          "mode": 420,
+          "sha256": "74f149542216881ca33f70fb96cef424276c60ac40405d21706f6c25956a5663",
+          "size": 27841
+        },
+        "sdsc_0.json": {
+          "mode": 420,
+          "sha256": "2fee110f7d6c5898fcef27d86a159939078f219ca44ed00ebcb7644b73e80cf2",
+          "size": 26577
+        },
+        "sdsc_1.json": {
+          "mode": 420,
+          "sha256": "4653e4a97b1e1671cc38d539513a9ce2339694d1a6fc4ff1ab4a5528b863a0cd",
+          "size": 23511
+        },
+        "sdsc_2.json": {
+          "mode": 420,
+          "sha256": "42de55ba679cd98ba592c8eeab4ed1f65c96d30eb7d4136749e4b5d89048011d",
+          "size": 18554
+        },
+        "sdsc_3.json": {
+          "mode": 420,
+          "sha256": "aef13ad28219a158bd40ec9af299986c0434a55bd38c6bafa3e8f368e0b1ddf6",
+          "size": 26857
+        },
+        "sdsc_4.json": {
+          "mode": 420,
+          "sha256": "5796a2f552d25d6fa5db1435bee4af9f4e3950fa1aaf1b0e605d76761e79a97a",
+          "size": 19153
+        },
+        "sdsc_5.json": {
+          "mode": 420,
+          "sha256": "43d2318baa03d277e52e2f6f1625c7b145b4491545e8c223a3873ad98dc879ac",
+          "size": 14620
+        }
+      },
+      "cmd": [
+        "dxp_standalone",
+        "-d",
+        "/tmp/cache-primary-mlp-mlp-L2-w2048-r2/inductor-spyre/723be001_sdsc_fused_add_gelu_mm_0_8m8hodzt"
+      ],
+      "debug_handle_ids": [
+        "3096651038865805506",
+        "5969744174946216111",
+        "8574541796981178622",
+        "8747013621570810697",
+        "3868755894839560402",
+        "3946045632194577103"
+      ],
+      "kernel_name": "sdsc_fused_add_gelu_mm_0",
+      "n_bundle_files": 7,
+      "n_specs": 6,
+      "output_dir": "/tmp/cache-primary-mlp-mlp-L2-w2048-r2/inductor-spyre/723be001_sdsc_fused_add_gelu_mm_0_8m8hodzt",
+      "provenance_key": "drxbda4rm5siuxpf",
+      "spec_type_run_length_signature": [
+        [
+          "OpSpec",
+          6
+        ]
+      ],
+      "spec_type_total_signature": [
+        [
+          "OpSpec",
+          6
+        ]
+      ],
+      "thread_id": 139751122461440
+    }
+  },
+  "mode": "stop"
+}

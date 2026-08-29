@@ -1,0 +1,3 @@
+[unspecified] [31m ERRR 29.08.2026 08:37:53.835956 [                  ras_base.hpp:  74] {"action":"information","category":"software","code":"0x8c0d","description":"No RuntimeContext has been created.","message":"RuntimeContext not created","name":"RAS::RUNTIMECONTEXT::ContextNotCreated","severity":"ERROR","step":"Open ticket","type":"runtime_error"}[0m
+[WARNING] [spyre.inductor.scratchpad.allocator] LX relayout is not supported by _make_cpsat_solver; continuing without relayout
+[WARNING] [spyre.inductor.pass_utils] lossy work-division scheduler transport for buf45; using iteration-order last-axis-wins: output:d1=absent

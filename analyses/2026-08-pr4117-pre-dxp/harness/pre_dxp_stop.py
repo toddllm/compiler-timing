@@ -429,6 +429,26 @@ def main() -> int:
         help="Path for the pre-DXP catalog JSON. Also read from "
              "$SPYRE_PRE_DXP_CATALOG if unset.",
     )
+    ap.add_argument(
+        "--expect-solver", type=str, default=None,
+        choices=[None, "cpsat", "greedy", "bestfit", "firstfit",
+                 "simulated_annealing"],
+        help=(
+            "Assert torch_spyre._inductor.config.layout_solver equals "
+            "this value; fail loudly (exit 5) if not. Use in sweep "
+            "drivers to guarantee the arm the run belongs to."
+        ),
+    )
+    ap.add_argument(
+        "--allow-cost-model",
+        action="store_true",
+        help=(
+            "Permit SPYRE_DUMP_COST / config.cost_model to be enabled. "
+            "By default the harness refuses to run when the analytical "
+            "cost model is on, so the primary timing baseline cannot "
+            "silently absorb its overhead."
+        ),
+    )
     args = ap.parse_args()
 
     _require_env("TORCHINDUCTOR_CACHE_DIR")
@@ -497,6 +517,58 @@ def main() -> int:
         k: os.environ.get(k, "<unset>") for k in _RECORDED_ENV_KEYS
     }
 
+    # ---- CP-SAT reproducibility metadata --------------------------------
+    # Record OR-Tools availability + visible CPU topology so downstream
+    # readers can reason about worker-pool sensitivity. CP-SAT compile
+    # cost depends on host CPU topology when num_search_workers scales
+    # with cpu_count.
+    reproducibility = {
+        "visible_cpu_count": os.cpu_count(),
+        "sched_getaffinity_count": None,
+        "ortools_version": None,
+    }
+    try:
+        reproducibility["sched_getaffinity_count"] = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        pass
+    try:
+        import ortools  # noqa
+        reproducibility["ortools_version"] = getattr(ortools, "__version__", None)
+    except ImportError:
+        pass
+
+    # ---- Guard: no cost model on for timing sweep ----------------------
+    # SPYRE_DUMP_COST is the env knob; config.cost_model is its resolved
+    # value. Both must be off for a primary timing baseline; add
+    # --allow-cost-model to override (diagnostic runs only).
+    cost_model_val = resolved_config.get("cost_model", "")
+    env_cost = os.environ.get("SPYRE_DUMP_COST", "")
+    if not args.allow_cost_model and (
+        cost_model_val not in ("", None, False)
+        or env_cost not in ("", "0", "false", "False")
+    ):
+        print(
+            f"FATAL: cost model is enabled (resolved config.cost_model="
+            f"{cost_model_val!r}, env SPYRE_DUMP_COST={env_cost!r}). "
+            "Timing baseline runs refuse to include cost-model overhead; "
+            "pass --allow-cost-model only for diagnostic runs.",
+            file=sys.stderr,
+        )
+        return 6
+
+    # ---- Guard: --expect-solver matches resolved config -----------------
+    if args.expect_solver is not None:
+        resolved_solver = resolved_config.get("layout_solver")
+        if resolved_solver != args.expect_solver:
+            print(
+                f"FATAL: --expect-solver={args.expect_solver!r} but "
+                f"config.layout_solver={resolved_solver!r}. "
+                "Refusing to run under a solver arm that does not "
+                "match the driver's assertion.",
+                file=sys.stderr,
+            )
+            return 5
+
     _tr.set_run_meta(
         workload=args.workload,
         mode=args.mode,
@@ -510,6 +582,7 @@ def main() -> int:
         pre_dxp_catalog_path=catalog_path,
         resolved_spyre_config=resolved_config,
         env_snapshot=env_snapshot,
+        reproducibility=reproducibility,
     )
 
     torch.manual_seed(0xAFFE)
