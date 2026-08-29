@@ -1,0 +1,5 @@
+=== [2026-08-29T06:19:30+00:00] shape=flash-512x1024 solver=cpsat Lq=512 Lk=1024 ===
+OK   flash-512x1024/cpsat rc=0 elapsed=48s
+=== [2026-08-29T06:20:18+00:00] shape=flash-512x1024 solver=greedy Lq=512 Lk=1024 ===
+OK   flash-512x1024/greedy rc=0 elapsed=36s
+=== [2026-08-29T06:20:54+00:00] solver A/B at 512x1024 complete

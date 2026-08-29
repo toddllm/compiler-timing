@@ -202,6 +202,90 @@ def install_extra_timers() -> None:
         # an absent event as "not measured".
         pass
 
+    # ---- ScratchpadAllocator.plan_allocation ------------------------------
+    # For the A/B solver comparison we want to distinguish:
+    #   * total scratchpad_planning time (already timed via passes.py pass
+    #     event `_maybe_scratchpad_planning`);
+    #   * per-phase inside plan_allocation: prepare_buffers, solve,
+    #     post_solve. These are directly observable via the template method
+    #     hooks in ScratchpadAllocator.plan_allocation.
+    #   * chosen solver class + number of buffers.
+    try:
+        from torch_spyre._inductor.scratchpad.allocator import (
+            ScratchpadAllocator,
+        )
+        _orig_plan_allocation = ScratchpadAllocator.plan_allocation
+
+        @functools.wraps(_orig_plan_allocation)
+        def _timed_plan_allocation(self, graph, *args, **kwargs):
+            # Solver class comes from the layout_planning factory attached
+            # to `self` — record it so the report doesn't have to look it
+            # up from config.
+            layout_planning = getattr(self, "layout_planning", None)
+            solver_name = getattr(
+                layout_planning, "__name__",
+                type(layout_planning).__name__ if layout_planning else "<none>",
+            )
+            allocator_cls = type(self).__name__
+            with _tr.stage(
+                "scratchpad_plan_allocation",
+                allocator_cls=allocator_cls,
+                solver_factory=solver_name,
+            ) as ev:
+                # Override the hook methods on this instance so we can time
+                # each phase. Save originals; restore in finally.
+                orig_prepare = self._prepare_buffers
+                orig_build = self._build_solver
+                orig_solve = self._solve
+                orig_post = self._post_solve
+                captured = {"n_buffers": None, "solver_cls": None}
+
+                def _timed_prepare(g):
+                    with _tr.stage("scratchpad_prepare_buffers"):
+                        bufs = orig_prepare(g)
+                    try:
+                        captured["n_buffers"] = len(bufs)
+                    except Exception:
+                        pass
+                    return bufs
+
+                def _timed_build(bufs):
+                    with _tr.stage("scratchpad_build_solver"):
+                        solver = orig_build(bufs)
+                    captured["solver_cls"] = type(solver).__name__
+                    return solver
+
+                def _timed_solve(solver):
+                    with _tr.stage(
+                        "scratchpad_solve",
+                        solver_cls=type(solver).__name__,
+                    ):
+                        return orig_solve(solver)
+
+                def _timed_post(g, allocation):
+                    with _tr.stage("scratchpad_post_solve"):
+                        return orig_post(g, allocation)
+
+                self._prepare_buffers = _timed_prepare
+                self._build_solver = _timed_build
+                self._solve = _timed_solve
+                self._post_solve = _timed_post
+                try:
+                    result = _orig_plan_allocation(self, graph, *args, **kwargs)
+                finally:
+                    self._prepare_buffers = orig_prepare
+                    self._build_solver = orig_build
+                    self._solve = orig_solve
+                    self._post_solve = orig_post
+                if ev is not None:
+                    ev.meta["n_buffers"] = captured["n_buffers"]
+                    ev.meta["solver_cls"] = captured["solver_cls"]
+                return result
+
+        ScratchpadAllocator.plan_allocation = _timed_plan_allocation
+    except (ImportError, AttributeError):
+        pass
+
     _INSTALLED = True
 
 

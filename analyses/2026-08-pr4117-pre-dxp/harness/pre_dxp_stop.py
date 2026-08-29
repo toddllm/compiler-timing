@@ -441,6 +441,61 @@ def main() -> int:
     import torch
     import torch_spyre  # noqa: F401
     from torch_spyre._inductor import timing_recorder as _tr
+    from torch_spyre._inductor import config as _spyre_config
+
+    # Resolved runtime values from torch_spyre._inductor.config (NOT env
+    # strings). Any env override has already fired by the time we import
+    # this module; the values below are what the compiler actually saw.
+    _RECORDED_CONFIG_KEYS = [
+        "layout_solver",
+        "co_optimizing_lx_planning",
+        "lx_planning",
+        "lx_planner_relayout",
+        "allow_all_ops_in_lx_planning",
+        "sencores",
+        "dxp_lx_frac_avail",
+        "hbm_pool_planning",
+        "frontend_pool_allocation",
+        "global_stick_optimizer",
+        "ignore_wsr_hints",
+        "ignore_span_overflow_hints",
+        "ignore_work_division_hints",
+        "max_buckets",
+        "min_default_granularity",
+        "validate_op_specs",
+        "native_layout_packer",
+        "cost_model",
+        "log_passes",
+    ]
+    resolved_config = {}
+    for key in _RECORDED_CONFIG_KEYS:
+        try:
+            resolved_config[key] = getattr(_spyre_config, key)
+        except AttributeError:
+            resolved_config[key] = "<missing>"
+
+    # Env strings recorded separately so we can see which values came
+    # from an explicit override vs the source default.
+    _RECORDED_ENV_KEYS = [
+        "LAYOUT_SOLVER",
+        "CO_OPTIMIZING_LX_PLANNING",
+        "LX_PLANNING",
+        "SPYRE_LX_PLANNER_RELAYOUT",
+        "SENCORES",
+        "DXP_LX_FRAC_AVAIL",
+        "HBM_POOL_PLANNING",
+        "FRONTEND_POOL_ALLOCATION",
+        "GLOBAL_STICK_OPTIMIZER",
+        "SPYRE_INDUCTOR_IGNORE_HINTS",
+        "SPYRE_VALIDATE_OP_SPECS",
+        "TORCH_SPYRE_NATIVE_PACKER",
+        "USE_SPYRE_CCL",
+        "TORCH_SPYRE_TIMING",
+        "TORCH_LOGS",
+    ]
+    env_snapshot = {
+        k: os.environ.get(k, "<unset>") for k in _RECORDED_ENV_KEYS
+    }
 
     _tr.set_run_meta(
         workload=args.workload,
@@ -453,6 +508,8 @@ def main() -> int:
         torch_version=torch.__version__,
         python_version=sys.version.split()[0],
         pre_dxp_catalog_path=catalog_path,
+        resolved_spyre_config=resolved_config,
+        env_snapshot=env_snapshot,
     )
 
     torch.manual_seed(0xAFFE)
