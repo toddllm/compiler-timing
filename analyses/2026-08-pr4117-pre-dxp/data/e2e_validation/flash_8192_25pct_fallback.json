@@ -1,0 +1,27 @@
+{
+  "capture": "/home/tdeshane/pr4117/compiler-timing/analyses/2026-08-pr4117-pre-dxp/data/captured_buffers/flash-512x8192.pkl",
+  "n_buffers": 2056,
+  "base_limit": 1625344,
+  "scaled_limit": 406336,
+  "alignment": 128,
+  "capacity_units_at_scaled_limit": 3174,
+  "greedy_alone": {
+    "objective_units": 578432,
+    "wall_s": 0.22507835389114916
+  },
+  "forced_spill_floor_units": 575872,
+  "greedy_above_floor": true,
+  "seed_alone": {
+    "returned_None": true,
+    "wall_s": 0.2605180540122092
+  },
+  "standalone_cpsat": {
+    "objective_units": 575872,
+    "wall_s": 45.30171148502268
+  },
+  "hybrid_public": {
+    "objective_units": 575872,
+    "wall_s": 64.90411266800947
+  },
+  "objectives_match": true
+}

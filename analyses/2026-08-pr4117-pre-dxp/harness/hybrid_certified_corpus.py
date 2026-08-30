@@ -58,19 +58,27 @@ def _objective(buffers) -> int:
     return sum(_spill_cost(b) for b in buffers if b.address is None)
 
 
-def _lower_bound_objective(buffers) -> int:
+def _lower_bound_objective(buffers, size, alignment) -> int:
     """The absolute floor of the placement-only CP-SAT objective.
 
     The objective is ``sum(spill_cost(b) * (1 - in_buffer(b)))``.
-    Buffers with ``residency_reason is not None`` are barred at the
-    allocator level: they enter the model but the solver pins them
-    non-resident (``in_buffer = 0``), so their ``spill_cost`` term is
-    always active. The minimum possible objective is the sum of
-    ``spill_cost`` over exactly those barred buffers — no plan can
-    beat that, and a plan reaches it iff every non-barred (placeable)
-    buffer is placed.
+    ``MemoryPlanSolver.record_exclusions`` pins to ``in_buffer = 0`` every
+    buffer with ``residency_reason is not None`` OR
+    ``min_footprint > limit`` (a size-only forced exclusion). Their
+    ``spill_cost`` terms are always active, so the objective's floor is
+    the sum over exactly that set.
+
+    Matches the shipped ``_try_certified_greedy_seed`` semantics: the
+    audit invariant only holds if the harness's floor uses the same
+    exclusion set as the shipped code.
     """
-    return sum(_spill_cost(b) for b in buffers if b.residency_reason is not None)
+    def _min_footprint(b) -> int:
+        return getattr(b, "min_footprint", b.size)
+    forced = [
+        b for b in buffers
+        if b.residency_reason is not None or _min_footprint(b) > size
+    ]
+    return sum(_spill_cost(b) for b in forced)
 
 
 def _legal(buffers, size, alignment) -> tuple[bool, str]:
@@ -126,55 +134,111 @@ def _run_solver(solver_cls, buffers_in, size, alignment):
     }
 
 
+def _run_standalone_cpsat(CpSatLayoutSolver, buffers_in, size, alignment):
+    """Standalone CP-SAT bypassing the shipped seed. Calls
+    ``_plan_layout_generic()`` directly so the harness measures raw
+    CP-SAT time and objective — the same thing pre-#4139 ``plan_layout``
+    would have returned. Never uses the seed."""
+    bufs = copy.deepcopy(buffers_in)
+    t0 = time.perf_counter()
+    err = None
+    result: list | None = None
+    try:
+        solver = CpSatLayoutSolver(bufs, size, alignment)
+        result = list(solver._plan_layout_generic())
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+    dur = time.perf_counter() - t0
+    legal_ok, legal_why = (False, "no result") if result is None else _legal(result, size, alignment)
+    return {
+        "error": err,
+        "buffers": result,
+        "wall_s": dur,
+        "legal": legal_ok,
+        "legal_error": legal_why,
+    }
+
+
 def _run_hybrid(GreedyLayoutSolver, CpSatLayoutSolver, buffers_in,
                 size, alignment):
-    """Certified greedy fast path over CP-SAT.
+    """Exercise the shipped hybrid on this input.
 
-    1. deep-copy the buffer list;
-    2. run greedy on the copy;
-    3. compute the CP-SAT placement objective on greedy's result;
-    4. if 0, accept greedy;
-    5. otherwise, run CP-SAT on a *fresh* deep-copy of the input.
+    ``CpSatLayoutSolver.plan_layout()`` is the shipped hybrid: it now
+    calls ``_try_certified_greedy_seed`` first and only falls through to
+    ``_plan_layout_generic`` if the certificate rejects. The harness
+    infers which branch ran by checking whether the *shipped* seed would
+    have accepted this input (same certificate the shipped code uses),
+    so it can attribute the wall time correctly for reporting.
     """
-    t_start = time.perf_counter()
-    greedy_probe = _run_solver(GreedyLayoutSolver, buffers_in, size, alignment)
-    t_probe = time.perf_counter() - t_start
-    if greedy_probe["error"] or not greedy_probe["legal"]:
-        # If greedy itself failed, fall through to CP-SAT.
-        cpsat = _run_solver(CpSatLayoutSolver, buffers_in, size, alignment)
+    from torch_spyre._inductor.scratchpad.ilp_solver_ortools import (
+        _hbm_spill_cost as shipped_spill_cost,
+    )
+
+    # Re-run the shipped certificate on a solver-local deep-copy to
+    # classify this input as certified or fallback — we do this outside
+    # the timed section so the reported ``hybrid_wall_s`` matches what
+    # a real ``plan_layout()`` call takes end-to-end.
+    _ = shipped_spill_cost  # binding proves the import exists
+
+    t0 = time.perf_counter()
+    err = None
+    result: list | None = None
+    try:
+        solver = CpSatLayoutSolver(copy.deepcopy(buffers_in), size, alignment)
+        result = list(solver.plan_layout())
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+    dur = time.perf_counter() - t0
+
+    # Classify: separately run just the seed on another copy to see if
+    # it would have certified. This is duplicated work for the harness,
+    # not for the shipped code.
+    try:
+        probe = CpSatLayoutSolver(
+            copy.deepcopy(buffers_in), size, alignment,
+        )
+        seed_result = probe._try_certified_greedy_seed()
+        chosen = "greedy-certified" if seed_result is not None else "cpsat-fallback"
+    except Exception:
+        chosen = "cpsat-fallback"
+
+    if err is not None:
+        # If the shipped call raised, still report as fallback (the
+        # error will be caught at the summary level).
         return {
             "chosen": "cpsat-fallback",
-            "greedy_probe_wall_s": t_probe,
-            "cpsat_wall_s": cpsat["wall_s"],
+            "greedy_probe_wall_s": 0.0,
+            "cpsat_wall_s": dur,
             "cpsat_run": True,
-            "error": cpsat["error"],
-            "buffers": cpsat["buffers"],
+            "error": err,
+            "buffers": None,
             "greedy_objective_on_probe": None,
         }
-    g_obj = _objective(greedy_probe["buffers"])
-    lb = _lower_bound_objective(buffers_in)
-    if g_obj == lb:
+
+    if chosen == "greedy-certified":
         return {
             "chosen": "greedy-certified",
-            "greedy_probe_wall_s": t_probe,
+            "greedy_probe_wall_s": dur,
             "cpsat_wall_s": 0.0,
             "cpsat_run": False,
             "error": None,
-            "buffers": greedy_probe["buffers"],
-            "greedy_objective_on_probe": g_obj,
-            "lower_bound_objective": lb,
+            "buffers": result,
+            "greedy_objective_on_probe": _objective(result) if result else 0,
+            "lower_bound_objective": _lower_bound_objective(
+                buffers_in, size, alignment,
+            ),
         }
-    # Greedy left objective on the table. Run CP-SAT for its
-    # optimality guarantee.
-    cpsat = _run_solver(CpSatLayoutSolver, buffers_in, size, alignment)
+    # Fallback: shipped code ran ``_plan_layout_generic`` after the
+    # seed's own probe cost. Attribute the whole wall to CP-SAT to
+    # match the pre-#4139 comparison shape.
     return {
         "chosen": "cpsat-fallback",
-        "greedy_probe_wall_s": t_probe,
-        "cpsat_wall_s": cpsat["wall_s"],
+        "greedy_probe_wall_s": 0.0,
+        "cpsat_wall_s": dur,
         "cpsat_run": True,
-        "error": cpsat["error"],
-        "buffers": cpsat["buffers"],
-        "greedy_objective_on_probe": g_obj,
+        "error": None,
+        "buffers": result,
+        "greedy_objective_on_probe": None,
     }
 
 
@@ -289,7 +353,9 @@ def main() -> int:
         alignment = fx["alignment"]
 
         greedy = _run_solver(GreedyLayoutSolver, buffers_in, size, alignment)
-        cpsat = _run_solver(CpSatLayoutSolver, buffers_in, size, alignment)
+        cpsat = _run_standalone_cpsat(
+            CpSatLayoutSolver, buffers_in, size, alignment,
+        )
         hybrid = _run_hybrid(
             GreedyLayoutSolver, CpSatLayoutSolver,
             buffers_in, size, alignment,
@@ -311,7 +377,7 @@ def main() -> int:
         # 2. if hybrid chose greedy-certified, hybrid objective == lower
         #    bound == greedy objective (i.e. greedy left NO value on the
         #    table on placeable buffers).
-        lb = _lower_bound_objective(buffers_in)
+        lb = _lower_bound_objective(buffers_in, size, alignment)
         if both_failed:
             invariant_1 = True
             invariant_2 = True

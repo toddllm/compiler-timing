@@ -1,0 +1,125 @@
+{
+  "workload": "flash",
+  "samples": [
+    {
+      "sample_idx": 0,
+      "meta": {
+        "Lq": 512,
+        "Lk": 4096
+      },
+      "first_call_wall_s": 5.8470852188766,
+      "hit_pre_dxp_boundary": true,
+      "error": null,
+      "invocations": [
+        {
+          "chosen": "greedy-certified",
+          "n_buffers": 13,
+          "n_forced": 7,
+          "alignment": 128,
+          "limit_bytes": 1625344,
+          "capacity_units": 12698,
+          "lower_bound_units": 16,
+          "hybrid_objective_units": 16,
+          "standalone_cpsat_objective_units": 16,
+          "objectives_match": true,
+          "n_placed": 6,
+          "n_spilled": 7,
+          "resident_set": [
+            "buf1",
+            "buf2",
+            "buf3",
+            "buf4",
+            "buf5",
+            "buf6"
+          ],
+          "seed_wall_s": 0.000451826024800539,
+          "cpsat_wall_s": 0.0,
+          "standalone_cpsat_wall_s": 0.01465777587145567
+        }
+      ],
+      "cache_dir": "/tmp/valpr4139/flash_4096_cache/sample_0"
+    },
+    {
+      "sample_idx": 1,
+      "meta": {
+        "Lq": 512,
+        "Lk": 4096
+      },
+      "first_call_wall_s": 0.4251441680826247,
+      "hit_pre_dxp_boundary": true,
+      "error": null,
+      "invocations": [
+        {
+          "chosen": "greedy-certified",
+          "n_buffers": 13,
+          "n_forced": 7,
+          "alignment": 128,
+          "limit_bytes": 1625344,
+          "capacity_units": 12698,
+          "lower_bound_units": 16,
+          "hybrid_objective_units": 16,
+          "standalone_cpsat_objective_units": 16,
+          "objectives_match": true,
+          "n_placed": 6,
+          "n_spilled": 7,
+          "resident_set": [
+            "buf1",
+            "buf2",
+            "buf3",
+            "buf4",
+            "buf5",
+            "buf6"
+          ],
+          "seed_wall_s": 0.0004969390574842691,
+          "cpsat_wall_s": 0.0,
+          "standalone_cpsat_wall_s": 0.010912998113781214
+        }
+      ],
+      "cache_dir": "/tmp/valpr4139/flash_4096_cache/sample_1"
+    },
+    {
+      "sample_idx": 2,
+      "meta": {
+        "Lq": 512,
+        "Lk": 4096
+      },
+      "first_call_wall_s": 0.43065516906790435,
+      "hit_pre_dxp_boundary": true,
+      "error": null,
+      "invocations": [
+        {
+          "chosen": "greedy-certified",
+          "n_buffers": 13,
+          "n_forced": 7,
+          "alignment": 128,
+          "limit_bytes": 1625344,
+          "capacity_units": 12698,
+          "lower_bound_units": 16,
+          "hybrid_objective_units": 16,
+          "standalone_cpsat_objective_units": 16,
+          "objectives_match": true,
+          "n_placed": 6,
+          "n_spilled": 7,
+          "resident_set": [
+            "buf1",
+            "buf2",
+            "buf3",
+            "buf4",
+            "buf5",
+            "buf6"
+          ],
+          "seed_wall_s": 0.00040335790254175663,
+          "cpsat_wall_s": 0.0,
+          "standalone_cpsat_wall_s": 0.010168369160965085
+        }
+      ],
+      "cache_dir": "/tmp/valpr4139/flash_4096_cache/sample_2"
+    }
+  ],
+  "aggregate": {
+    "total_seed_invocations": 3,
+    "certified_count": 3,
+    "fallback_count": 0,
+    "objective_mismatches": 0
+  }
+}

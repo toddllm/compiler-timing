@@ -48,16 +48,32 @@ def _objective(buffers) -> int:
     return sum(_spill_cost(b) for b in buffers if b.address is None)
 
 
-def _lower_bound_objective(buffers) -> int:
-    """Absolute floor of the placement-only CP-SAT objective. Buffers with
-    ``residency_reason is not None`` are pinned non-resident by the model
-    upstream, so their ``spill_cost`` contributes unavoidably to the
-    objective. The floor is reached iff every non-barred buffer is placed.
+def _lower_bound_objective(buffers, size) -> int:
+    """Absolute floor of the placement-only CP-SAT objective.
+    ``MemoryPlanSolver.record_exclusions`` pins to ``in_buffer = 0``
+    every buffer with ``residency_reason is not None`` OR
+    ``min_footprint > limit`` (size-only forced exclusion). Their
+    ``spill_cost`` is unavoidably active in the objective. The floor
+    equals the sum over exactly that set.
     """
-    return sum(_spill_cost(b) for b in buffers if b.residency_reason is not None)
+    def _min_footprint(b) -> int:
+        return getattr(b, "min_footprint", b.size)
+    forced = [
+        b for b in buffers
+        if b.residency_reason is not None or _min_footprint(b) > size
+    ]
+    return sum(_spill_cost(b) for b in forced)
 
 
-def _run(solver_cls, buffers_in, size, alignment, cpsat_time_limit_s=None):
+def _run(solver_cls, buffers_in, size, alignment, cpsat_time_limit_s=None,
+         standalone_cpsat=False):
+    """Run one solver against a fresh deep-copy of the buffers.
+
+    ``standalone_cpsat=True`` drives ``_plan_layout_generic`` directly on
+    ``CpSatLayoutSolver`` -- so the harness measures raw CP-SAT time and
+    objective bypassing the shipped ``_try_certified_greedy_seed``. The
+    hybrid path is measured separately by ``_run_hybrid``.
+    """
     bufs = copy.deepcopy(buffers_in)
     t0 = time.perf_counter()
     try:
@@ -69,7 +85,11 @@ def _run(solver_cls, buffers_in, size, alignment, cpsat_time_limit_s=None):
         kwargs = {}
         if "time_limit_seconds" in params and cpsat_time_limit_s is not None:
             kwargs["time_limit_seconds"] = cpsat_time_limit_s
-        result = solver_cls(bufs, size, alignment, **kwargs).plan_layout()
+        solver = solver_cls(bufs, size, alignment, **kwargs)
+        if standalone_cpsat:
+            result = list(solver._plan_layout_generic())
+        else:
+            result = solver.plan_layout()
         err = None
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
@@ -114,7 +134,7 @@ def _run_hybrid(GreedyLayoutSolver, CpSatLayoutSolver,
             "n_spilled": cpsat["n_spilled"],
             "greedy_objective_on_probe": None,
         }
-    lb = _lower_bound_objective(buffers_in)
+    lb = _lower_bound_objective(buffers_in, size)
     if greedy_probe["objective"] == lb:
         return {
             "chosen": "greedy-certified",
@@ -220,7 +240,7 @@ def main() -> int:
             greedy = _run(GreedyLayoutSolver, buffers, size, alignment)
             cpsat = _run(
                 CpSatLayoutSolver, buffers, size, alignment,
-                cpsat_time_limit_s=60.0,
+                cpsat_time_limit_s=60.0, standalone_cpsat=True,
             )
             hybrid = _run_hybrid(
                 GreedyLayoutSolver, CpSatLayoutSolver,
@@ -244,7 +264,7 @@ def main() -> int:
                     "agree": len(g_res & c_res),
                     "sym_diff": len(g_res ^ c_res),
                 }
-            lb = _lower_bound_objective(buffers)
+            lb = _lower_bound_objective(buffers, size)
             cap_results.append({
                 "scale": scale,
                 "size_bytes": size,

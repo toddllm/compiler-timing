@@ -1,0 +1,52 @@
+{
+  "workload": "mlp",
+  "samples": [
+    {
+      "sample_idx": 0,
+      "meta": {
+        "N_in": 1024,
+        "N_hidden": 4096,
+        "layers": 4
+      },
+      "first_call_wall_s": 3.652665704023093,
+      "hit_pre_dxp_boundary": true,
+      "error": null,
+      "invocations": [
+        {
+          "chosen": "greedy-certified",
+          "n_buffers": 21,
+          "n_forced": 13,
+          "alignment": 128,
+          "limit_bytes": 1625344,
+          "capacity_units": 12698,
+          "lower_bound_units": 2,
+          "hybrid_objective_units": 2,
+          "standalone_cpsat_objective_units": 2,
+          "objectives_match": true,
+          "n_placed": 8,
+          "n_spilled": 13,
+          "resident_set": [
+            "buf0",
+            "buf1",
+            "buf10",
+            "buf3",
+            "buf4",
+            "buf6",
+            "buf7",
+            "buf9"
+          ],
+          "seed_wall_s": 0.0007281219586730003,
+          "cpsat_wall_s": 0.0,
+          "standalone_cpsat_wall_s": 0.017291110008955002
+        }
+      ],
+      "cache_dir": "/tmp/valpr4139/mlp_L96_cache/sample_0"
+    }
+  ],
+  "aggregate": {
+    "total_seed_invocations": 1,
+    "certified_count": 1,
+    "fallback_count": 0,
+    "objective_mismatches": 0
+  }
+}

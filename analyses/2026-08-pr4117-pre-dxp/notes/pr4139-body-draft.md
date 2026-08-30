@@ -1,0 +1,226 @@
+# [Draft] inductor: certified greedy seed for placement-only CP-SAT
+
+> **Draft — not asking for review or merge yet.**
+> Placement-only CP-SAT first runs greedy on a solver-local copy. If
+> that placement is representable under CP-SAT's placement domain and
+> attains the exact forced-spill lower bound of CP-SAT's own residency
+> objective, then no feasible CP-SAT solution can have a lower
+> objective value, so the greedy placement is accepted. Otherwise
+> normal CP-SAT runs unchanged. The certificate bounds the objective,
+> not the placement set: a non-excluded buffer whose `spill_cost == 0`
+> may legally remain spilled on a certified plan.
+
+Refs #4117, #3978, #3932, #2062.
+
+Rebased onto upstream `main` at `ae9b88d` (includes #3810
+"Integrate cost model with ILP solver"). #3810 adds a `cost_expr`
+parameter reachable only through `plan_layout_and_core_divisions`; the
+placement-only entry `plan_layout` never passes `cost_expr`, so its
+`_run` branch is unchanged. The seed is on `plan_layout` only —
+`plan_layout_and_core_divisions` is untouched.
+
+## Certificate
+
+Under `co_optimizing_lx_planning=False` (the shipped default),
+`plan_layout` runs only level 1 of the lexicographic solve inside
+`_plan_layout_generic._run`: minimize
+`sum(spill_cost(b) * (1 - in_buffer(b)))` over CP-SAT's
+alignment-unit-scaled buffer copies. Levels 2 (parallelism) and 3
+(balance) are gated on `core_terms` being non-empty, which requires a
+non-`None` `.cores` on a wrapped buffer;
+`_LifetimeBufferWithCpVars.__post_init__` sets `cores = None`, so
+those levels never fire on the placement-only path. The `cost_expr`
+branch is also unreachable here.
+
+Every `spill_cost(b) ≥ 0` and `(1 - in_buffer) ∈ {0, 1}`, so the
+objective is a nonnegative sum. Its absolute lower bound is the sum
+over the buffers CP-SAT pins non-resident before it optimizes anything:
+`MemoryPlanSolver.record_exclusions()`, which is the union of
+
+- buffers whose allocator-declared `residency_reason` is not `None`,
+- buffers whose `min_footprint > limit` (size-only forced exclusion),
+
+matches the exact set `_add_core_division` pins to `in_buffer = 0`.
+Reaching the forced-spill lower bound proves global optimality of the
+placement-only residency objective. Any additionally spilled
+non-excluded buffers must have `spill_cost == 0` and therefore cannot
+improve or worsen that objective (test #5b covers this case). The
+certificate bounds the objective, not the placement set.
+
+The certificate compares CP-SAT-domain quantities. CP-SAT works over
+alignment-unit-scaled sizes (`ceil_div(size, alignment)` in `_wrap`)
+and can only express addresses in `[0, _capacity_units × alignment)`
+where `_capacity_units = self.limit // self.alignment`. The seed
+therefore:
+
+1. **Guards representability.** If `_capacity_units ≤ 0` the model
+   has no addressable slot; the seed cannot be evaluated in that
+   domain and returns `None` immediately (fallback to CP-SAT).
+2. **Runs greedy on a solver-local deep copy** at `self.limit`, so the
+   caller's buffers are never mutated by the probe.
+3. **Rejects any unrepresentable greedy plan.** Each placed buffer
+   must have `address % alignment == 0` and
+   `address + size ≤ _capacity_units × alignment`, so
+   `self.limit` not being a multiple of alignment does not fool the
+   certificate into accepting a plan CP-SAT could not encode.
+4. **Evaluates greedy's objective in the same alignment-unit domain**
+   the CP-SAT objective is built in, via a single module-level helper
+   `_hbm_spill_cost(buffer)` that `_LifetimeBufferWithCpVars.spill_cost`
+   also delegates to (one source of truth — no hand-duplicated
+   formula).
+5. **Accepts iff** `greedy_objective_units == lower_bound_units`;
+   otherwise falls through to `_plan_layout_generic` on the untouched
+   originals.
+
+On acceptance, greedy's addresses are committed onto the caller's
+buffers by name, and `spill_reasons` is populated with each excluded
+buffer's reason from `record_exclusions()` — matching what the
+`_plan_layout_generic` tail would have produced.
+
+## Evidence
+
+**Differential corpus** — 28 non-SKIP scenarios captured from
+`BaseLayoutSolverTests`, with the harness's lower-bound function using
+the exact `record_exclusions()` semantics:
+
+| hybrid choice        | count |
+|----------------------|------:|
+| greedy-certified     |    20 |
+| cpsat-fallback       |     8 |
+| SKIP (no solve call) |     7 |
+| **INVARIANT_VIOLATION** | **0** |
+
+Invariants that hold on every valid case:
+
+- `hybrid_objective == standalone_cpsat_objective` (via
+  `_plan_layout_generic` directly to bypass the seed)
+- `hybrid_chosen == "greedy-certified" ⇒ hybrid_objective == lb ==
+  greedy_objective`
+
+**Capacity-pressure sweep on captured planner-buffer sets** (flash
+512x{1024,2048,4096,8192}, MLP L∈{96,192,384}, sdpa
+S∈{512,1024,2048}, each at 100/75/50/25% of the shipped LX
+capacity — 40 workload-scale points):
+
+| hybrid choice   | count |
+|-----------------|------:|
+| greedy-certified |    39 |
+| cpsat-fallback   |     1 |
+
+Invariant `hybrid_objective == standalone_cpsat_objective` holds on
+every 40 points (0 mismatches).
+
+The single fallback is flash-512x8192 at 25% capacity — the exact
+capacity-pressure case where CP-SAT genuinely picks a better placement
+(greedy_obj = 74,039,296; cpsat_obj = 73,711,616). The seed correctly
+rejects and the hybrid returns CP-SAT's optimum.
+
+Compared with the previous sweep summary in `certified-greedy-seed.md`
+(which was written against a harness lower-bound function that only
+counted `residency_reason`-forced buffers), 9 sdpa/edge-case points
+that used to appear as fallback now correctly certify: they attain
+the true `record_exclusions`-based floor.
+
+Selected wall times:
+
+| workload         | scale | g_obj    | c_obj    | chosen           | g_ms  | c_ms      | h_ms   |
+|------------------|------:|---------:|---------:|------------------|------:|----------:|-------:|
+| flash-512x1024   |  1.00 |  3.75M   |  3.75M   | greedy-certified |   4.9 |     333.1 |    9.1 |
+| flash-512x2048   |  1.00 |  9.03M   |  9.03M   | greedy-certified |  19.6 |    1627.0 |   23.3 |
+| flash-512x4096   |  1.00 | 24.30M   | 24.30M   | greedy-certified |  57.0 |    8938.5 |   73.6 |
+| flash-512x8192   |  1.00 | 73.71M   | 73.71M   | greedy-certified | 229.1 |   50456.4 |  265.7 |
+| **flash-512x8192**  | **0.25** | **74.04M** | **73.71M** | **cpsat-fallback** | **236.9** | **65316.5** | **45476.2** |
+| mlp-L96          |  1.00 |   128    |   128    | greedy-certified |   9.5 |     196.4 |   19.9 |
+| mlp-L192         |  1.00 |   128    |   128    | greedy-certified |  38.0 |     621.6 |   53.1 |
+| mlp-L384         |  1.00 |   128    |   128    | greedy-certified | 151.7 |    1488.4 |  182.7 |
+| sdpa-S512        |  1.00 |  459K    |  459K    | greedy-certified |   0.2 |      23.6 |    0.8 |
+| sdpa-S1024       |  1.00 |  1.44M   |  1.44M   | greedy-certified |   0.2 |      23.5 |    0.8 |
+| sdpa-S2048       |  1.00 | 22.02M   | 22.02M   | greedy-certified |   0.2 |      17.1 |    1.0 |
+
+**Unit tests** — `tests/inductor/test_cpsat_certified_greedy_seed.py`,
+18 tests:
+
+1. lower-bound greedy plan skips CP-SAT solve
+2. non-zero greedy objective falls through to CP-SAT
+3. `residency_reason` contributes to lower bound
+4. `min_footprint > limit` contributes to lower bound (size-only
+   forced exclusion)
+5. zero-spill-cost buffer semantics
+5b. zero-cost non-excluded buffer may remain spilled on a certified
+    plan (proves the certificate bounds the objective, not the
+    placement set — a `spill_cost == 0` term neither raises nor
+    lowers the residency sum)
+6. graph-input spill-cost semantics
+7. intermediate spill-cost semantics
+8. non-aligned buffer sizes match CP-SAT objective in unit domain
+9. `limit < alignment` never certifies (`_capacity_units == 0`
+   representability guard)
+10. `limit` not divisible by `alignment` uses CP-SAT top for
+    representability
+11. in-place reuse still certifies
+12. rejected seed leaves originals untouched before CP-SAT
+13. accepted seed commits addresses only (no other field mutated)
+14. `spill_reasons` use forced reason for excluded buffer
+15. joint `plan_layout_and_core_divisions` never uses the seed
+    (behavioral: patch `_try_certified_greedy_seed` to raise;
+    joint path succeeds without hitting the raise)
+16. explicit greedy solver arm (`LAYOUT_SOLVER=greedy`) unchanged
+17. `_LifetimeBufferWithCpVars.spill_cost` delegates to shared
+    `_hbm_spill_cost` helper
+
+Also verified: the 250 existing scratchpad-solver tests all pass with
+the seed enabled.
+
+## What's in this PR
+
+`torch_spyre/_inductor/scratchpad/ilp_solver_ortools.py`:
+- Module-level `_hbm_spill_cost(buffer)` helper: the one source of
+  truth for the placement-only spill-cost formula.
+- `_LifetimeBufferWithCpVars.spill_cost` delegates to
+  `_hbm_spill_cost` (no duplicated formula).
+- `CpSatLayoutSolver._try_certified_greedy_seed()` implements the
+  certificate: representability guard, solver-local greedy probe,
+  address/top-of-buffer representability check per placed buffer,
+  unit-domain objective evaluation, exact
+  `record_exclusions()`-based lower bound, address commit on
+  acceptance, `None` return on rejection.
+- `CpSatLayoutSolver.plan_layout()` calls
+  `_try_certified_greedy_seed()` first and falls through to
+  `_plan_layout_generic()` on `None`.
+- `plan_layout_and_core_divisions()` is untouched (the `cost_expr`
+  branch added by #3810 is not on the placement-only path).
+
+`tests/inductor/test_cpsat_certified_greedy_seed.py`: 17 tests
+described above.
+
+## What is NOT in this PR
+
+- No config knob. No `adaptive_solver_threshold_ops`, no workload
+  classifier. The certificate is derived from CP-SAT's own objective.
+- No default change to `layout_solver`.
+- No change to the joint (`co_optimizing_lx_planning=True`) path.
+- No change to `demote_incoherent_lx_buffers` (#3378) or the
+  correctness path from #2062.
+- No mutation of caller buffers when the seed rejects; on
+  acceptance, only `address` (and `spill_reasons`) are written.
+
+## Caveats
+
+- Greedy probe adds ~0.2 ms on tiny graphs to ~250 ms on the largest
+  measured flash shape.
+- Bundle-generation nondeterminism from the #4117 study stands as a
+  separate follow-up; the regression gates for this PR are the
+  structural placement-objective identity, not `bundle.mlir` bytes.
+
+## Study links
+
+- Certified greedy seed writeup:
+  `toddllm/compiler-timing/analyses/2026-08-pr4117-pre-dxp/notes/certified-greedy-seed.md`
+- Differential corpus (with hybrid arm):
+  `.../data/hybrid_certified_corpus_v2/summary.json`
+- Capacity pressure sweep:
+  `.../data/capacity_pressure_sweep_v2/summary.json`
+- Captured planner-buffer sets:
+  `.../data/captured_buffers/*.pkl`
+
+Signed-off-by: Todd Deshane <todd.deshane@ibm.com>

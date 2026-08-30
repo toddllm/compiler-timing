@@ -9,6 +9,25 @@ tell, from greedy's own plan, when CP-SAT cannot improve on it?
 
 Yes. The mechanism ships in #4139.
 
+**Updated 2026-08-30**: after the §2A–§2D hardening pass, the
+harness now uses the same ``record_exclusions()`` semantics the
+shipped code uses (union of ``residency_reason is not None`` and
+``min_footprint > limit``). Data below reflects the v2 rerun:
+
+- Differential corpus (28 non-SKIP cases):
+  ``data/hybrid_certified_corpus_v2/summary.json`` — 20 certified,
+  8 fallback, 0 invariant violations.
+- Capacity-pressure sweep (40 workload×scale points):
+  ``data/capacity_pressure_sweep_v2/summary.json`` — 39 certified,
+  1 fallback (flash-512x8192 @ 25% capacity — the exact
+  capacity-pressure case where CP-SAT strictly wins),
+  ``hybrid_objective == standalone_cpsat_objective`` on all 40.
+
+The v1 tables below are kept as-is; they were computed against a
+harness lower-bound that only counted ``residency_reason`` and so
+misclassified some sdpa/edge-case points as fallback. The v2 data
+shows the actual shipped-code decision.
+
 ## The objective (source-proved)
 
 `CpSatLayoutSolver.plan_layout` (placement-only entry, i.e.
@@ -41,14 +60,20 @@ every `(1 - in_buffer) ∈ {0, 1}`. Objective is a nonnegative sum.
 
 The absolute lower bound of a nonnegative sum where some terms are
 forced active is the sum of the forced-active terms alone.
-`_add_core_division` inspects `forced_reasons` (equivalent to
-`b.residency_reason`) and pins those buffers non-resident
-(`in_buffer = 0`), so their `spill_cost` is unavoidably active.
+`_add_core_division` inspects `forced_reasons` (the union of
+`residency_reason is not None` and `min_footprint > limit`,
+returned by `MemoryPlanSolver.record_exclusions()`) and pins those
+buffers non-resident (`in_buffer = 0`), so their `spill_cost` is
+unavoidably active.
 
-    L = sum(spill_cost(b) for b in buffers if b.residency_reason is not None)
+    L = sum(spill_cost(b) for b in buffers if b.name in record_exclusions())
 
-A plan reaches `L` iff every non-barred buffer is placed. No plan can
-beat `L`.
+No plan can beat `L`. A plan reaches `L` iff its residency objective
+equals `L` — equivalently, iff every non-excluded buffer it leaves
+spilled has `spill_cost == 0`. Reaching the floor proves objective
+optimality; it does not prove that every non-excluded buffer is
+placed, since zero-cost buffers may sit either side of the placement
+gate without moving the sum.
 
 ## The certificate
 
