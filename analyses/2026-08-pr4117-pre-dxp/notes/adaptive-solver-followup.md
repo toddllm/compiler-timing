@@ -68,22 +68,31 @@ Signature hashes are sha256 over the buffer list sorted by name.
 
 Result (from `data/cpsat_investigation/report.md`):
 
-- Planner-buffer signature hashes are byte-identical between the
-  cpsat and greedy arms at every shape:
+- Planner-buffer signature hashes match between the cpsat and greedy
+  arms at every shape:
     - flash-512x1024:  `3c25d56686e666a9`
     - flash-512x2048:  `df5997edb35c4774`
     - flash-512x4096:  `4a6c8184f7a25459`
     - flash-512x8192:  `3c45992b2a4e8d8a`
-- Placement outcomes are byte-identical: same `placed_in_lx` count,
-  same bytes, same `placed_signature`. Symmetric difference of the
-  placed sets is `only_cpsat=0, only_greedy=0` at every shape.
+- The `(name, size)` placed_signature is identical between arms at
+  every shape: same `placed_in_lx` count, same bytes, symmetric
+  difference of the placed sets is `only_cpsat=0, only_greedy=0`.
+- The recorded `placed_signature` is `(name, size)` only — it does
+  not include the LX address. So this evidence establishes:
+  identical planner-buffer input universe (under RELAYOUT=0);
+  identical resident-buffer set and spilled-buffer set; identical
+  placed/spilled sizes; identical `n_specs`. It does **not** yet
+  establish identical LX addresses, byte-identical OpSpecs, or
+  byte-identical downstream bundle. The draft-PR validation
+  (§7 below) extends the signature to `(name, size, address)` and
+  compares placement addresses directly.
 
 **Conclusion:** on this workload family and range, once the paired-
-buffer asymmetry is removed, CP-SAT and greedy pick the same
-placement — every buffer, byte for byte. The previous
-solver_ab_v2 differences (`n_specs 257 vs 273`, different
-`bytes_placed_in_lx`) were caused entirely by the LX-relayout
-paired-buffer expansion, not by solver decisions.
+buffer asymmetry is removed, CP-SAT and greedy produce the same
+resident-vs-spilled split. The previous solver_ab_v2 differences
+(`n_specs 257 vs 273`, different `bytes_placed_in_lx`) were caused
+entirely by the LX-relayout paired-buffer expansion, not by solver
+decisions.
 
 Wall-clock cost under RELAYOUT=0 (single cold sample each; only
 CP-SAT's cost matters here — greedy solve is under 260 ms even at
@@ -143,8 +152,9 @@ Per-`Solve()` OR-Tools stats:
 
 Notable: `num_conflicts=0` everywhere, `num_branches` decreases as
 `planner_buffers` grows (134 → 24 → 30 → 6), `num_booleans` grows
-linearly (0.15 booleans per planner-buffer). Search is doing very
-little work; the cost is inside CP-SAT's presolve and propagation.
+linearly (roughly 1.15–1.18 booleans per planner-buffer:
+303/264, 607/520, 1215/1032, 2431/2056). Search is doing very
+little work by these two counters.
 `bin_prop` and `int_prop` are 0 in these outputs — OR-Tools
 counters are known to not always populate under all
 `log_search_progress` combinations. The `NumBooleans` and
@@ -173,12 +183,16 @@ extrapolatable):
 | num_variables                    |                     1.00 |
 | num_constraints                  |                     1.00 |
 
-**Conclusion:** the CP-SAT cost is 99% in `Solve()`. Model
-construction and extraction scale linearly with
-buffer count. `Solve()` grows with empirical exponent ~2.45 in
-buffer count on this shape family. The branch counts are small and
-declining; the conflict counter is 0. That means the cost lives in
-presolve + constraint propagation, not branch-and-bound search.
+**Conclusion:** the scaling cost is internal to `CpSolver.Solve()`.
+Python/model construction outside `Solve()` (all `_add_*` phases
+plus `_extract`) scales linearly with buffer count and is <0.1% of
+the total at the largest shape. `Solve()` grows with empirical
+exponent ~2.45 in buffer count on this shape family. The very low
+observed branch/conflict counts suggest it is not conventional
+branch-and-bound search dominating the wall time and is
+consistent with internal presolve/propagator/solver overhead —
+this study did not directly time OR-Tools sub-phases, so which
+specific internal work dominates is not established here.
 
 ## §3 — Prototype threshold policy
 
@@ -290,40 +304,201 @@ It disappears at any threshold that keeps small shapes on CP-SAT
 
 **Recommended threshold and metric.**
 Metric: `len(graph.operations)` at the entry to `scratchpad_planning`.
-Range: **200–800** operations. Threshold=800 arm B gives the
-largest total savings on this workload family (29.8% of pre-DXP,
-293.9 s absolute over 15 shapes); threshold=300–500 arm B is
-within 1.2 percentage points and switches slightly more shapes.
-On its own this workload set does not decide 300 vs 500 vs 800;
-all four flash shapes ≥ 1028 ops are switched by any threshold
-in that range and account for 289 s of the 294 s savings.
+Range (based on this workload set alone): the useful crossover
+lies between roughly **500 and 1000** operations. Below 500 the
+scratchpad pass is small enough that CP-SAT wins on total
+pre-DXP anyway; above ~1000 every measured flash shape has
+CP-SAT scratchpad ≥ 8 s and greedy solves in tens of ms with the
+same resident-set. Additional workloads are needed to select a
+production threshold — this study alone does not decide 500 vs
+800 vs 1000. All four flash shapes ≥ 1028 ops are switched by
+any threshold in that range and account for 289 s of the 294 s
+simulated savings.
 
 ## Estimated pre-DXP improvement on the #4117 baseline
 
-Using arm B and threshold=800, per the simulation:
+This is an **estimate** built by combining two different sample
+regimes: median-of-3 CP-SAT baseline measurements from
+`data/final_sweep/primary/` (3 cold samples per shape) plus
+single-sample greedy fallback measurements from
+`data/threshold_data/` (1 sample per shape). It is not a measured
+policy improvement — the actual adaptive path was not exercised in
+these numbers.
+
+Simulated arm B (fallback with `lx_planner_relayout=False`),
+threshold=800:
 - Total pre-DXP across the 15-shape sweep: 987.1s → 693.2s.
-- Absolute savings: **293.9s (~29.8%)**.
+- Absolute savings: **~294 s (~30% estimated)**.
 - Shapes switched: 4 of 15 (flash-2048x1024, flash-512x4096,
   flash-512x8192, flash-1024x8192).
 - Largest per-shape saving: flash-1024x8192, 515.0s → 315.4s,
   199.6s absolute (–38.8% pre-DXP for that shape).
 
-The comparable arm A number is 26.0% savings but with the
+The comparable arm A number is ~26% simulated savings but with the
 `n_specs` drift documented above, which is why arm B is the
 recommended flavor.
 
+The actual adaptive-policy validation with 3 cold samples per
+arm/shape is in §7 below. Use those numbers for the "measured"
+comparison; the ~30% estimate above is a rough sweep-total sanity
+check, not the policy result.
+
+## §7 — REAL adaptive-policy validation (3 cold samples per arm)
+
+Both arms configured with `LAYOUT_SOLVER=cpsat`. The adaptive arm
+sets `ADAPTIVE_SOLVER_THRESHOLD_OPS=500` and exercises the actual
+production-draft path in `torch-spyre`
+(`config.adaptive_solver_threshold_ops` +
+`_adaptive_solver_fallback_allocator` in
+`torch_spyre/_inductor/scratchpad/allocator.py`). The baseline arm
+leaves the threshold unset, giving byte-identical existing behavior.
+
+Chosen solver per arm (from the recorded
+`scratchpad_plan_allocation.meta.solver_cls`):
+
+| shape           | n_ops | baseline chosen  | adaptive chosen     |
+|-----------------|------:|------------------|---------------------|
+| flash-1024x1024 |   516 | CpSatLayoutSolver | GreedyLayoutSolver |
+| flash-2048x1024 |  1028 | CpSatLayoutSolver | GreedyLayoutSolver |
+| flash-512x8192  |  2052 | CpSatLayoutSolver | GreedyLayoutSolver |
+| flash-1024x8192 |  4100 | CpSatLayoutSolver | GreedyLayoutSolver |
+
+Median-of-3 pre-DXP wall time (ms):
+
+| shape           |  baseline |   adaptive | delta_ms | delta_% | baseline scratch | adaptive scratch | baseline solve | adaptive solve |
+|-----------------|----------:|-----------:|---------:|--------:|-----------------:|-----------------:|---------------:|---------------:|
+| flash-1024x1024 |  33 791.4 |   28 039.2 |  −5 752  | −17.0%  |         2 697.9  |         1 122.2  |       1 639.5  |          17.2  |
+| flash-2048x1024 |  69 917.9 |   56 496.7 | −13 421  | −19.2%  |        11 107.7  |         2 156.2  |       8 948.3  |          65.3  |
+| flash-512x8192  | 176 977.9 |  124 104.5 | −52 873  | −29.9%  |        55 569.4  |         5 201.9  |      50 566.5  |         258.0  |
+| flash-1024x8192 | 510 931.1 |  313 529.5 |−197 402  | −38.6%  |       212 566.7  |        13 683.6  |     199 926.7  |       1 021.4  |
+
+Sum across the four measured shapes: 791.6 s → 522.2 s = **269.4 s
+absolute reduction (~34%)** on this measured subset.
+
+Structural equivalence checks (best-of-9 pairing across the 3×3
+sample cross-product):
+
+| shape           | planner_buffers | placed (name,size) | placed (name,size,address) | spilled (name,size) | n_specs delta |
+|-----------------|:---------------:|--------------------|-----------------------------|---------------------|--------------:|
+| flash-1024x1024 |       YES       | MATCH (225 both)   | 187/188 differ, 37 same     | MATCH               |            +0 |
+| flash-2048x1024 |       YES       | MATCH (449 both)   | 381 differ, 68 same         | MATCH               |            +0 |
+| flash-512x8192  |       YES       | MATCH (897 both)   | 566 differ, 331 same        | MATCH               |            +0 |
+| flash-1024x8192 |       YES       | MATCH (1793 both)  | 1142 differ, 651 same       | MATCH               |            +0 |
+
+**What holds:** identical planner-buffer input universe, identical
+resident-buffer set at the `(name, size)` level, identical spilled
+set at `(name, size)`, identical `n_specs`.
+
+**What does not hold:** the two arms **do not** produce byte-identical
+LX addresses. Most buffers land at different LX addresses under
+greedy than under CP-SAT — same footprint on scratchpad, different
+placement. Within one arm across 3 cold samples the addresses are
+stable (3/3 identical on 3 of 4 shapes; 221/225 on flash-1024x1024
+matching the previously-documented cross-run bundle nondeterminism),
+so this is genuinely a between-arm placement difference, not sample
+noise. Whether that address change is downstream-safe on Spyre —
+DXP, kernel provenance, HBM allocator — is not something this
+compile-time study can settle. This is the load-bearing open
+question for the draft PR.
+
+Per-sample variance:
+
+| shape           | arm      | run1     | run2     | run3     | median   |
+|-----------------|----------|---------:|---------:|---------:|---------:|
+| flash-1024x1024 | baseline | 47 951.5 | 33 791.4 | 30 628.0 | 33 791.4 |
+| flash-1024x1024 | adaptive | 34 394.7 | 26 580.4 | 28 039.2 | 28 039.2 |
+| flash-2048x1024 | baseline | 70 895.1 | 69 917.9 | 69 687.9 | 69 917.9 |
+| flash-2048x1024 | adaptive | 54 720.3 | 57 828.1 | 56 496.7 | 56 496.7 |
+| flash-512x8192  | baseline |176 977.9 |177 888.0 |175 469.9 |176 977.9 |
+| flash-512x8192  | adaptive |122 987.0 |124 104.5 |124 757.4 |124 104.5 |
+| flash-1024x8192 | baseline |504 631.2 |601 650.6 |510 931.1 |510 931.1 |
+| flash-1024x8192 | adaptive |313 529.5 |318 512.6 |310 801.2 |313 529.5 |
+
+flash-1024x1024 baseline run 1 (47 s) is an outlier; the other two
+samples cluster tightly at ~31 s. flash-1024x8192 baseline run 2
+also (601 s vs 505 s / 511 s). Adaptive arm samples are tight in
+every shape. The median-based deltas above are the honest number.
+
+Data: `data/adaptive_real_validation/{baseline_cpsat,adaptive_greedy}/`.
+Analysis: `harness/analyze_adaptive_validation.py`.
+Table: `notes/tables/adaptive_real_validation.md`.
+
+## §8 — MLP coverage (different graph structure from flash)
+
+Same 3-cold-samples-per-arm methodology at 3 MLP layer counts.
+Layer-scaled MLP is a dense matmul stack with no tiling loop, so
+it exercises a very different graph structure from flash-attention
+tile sweeps. Threshold=500 as in §7.
+
+| shape          | n_ops | baseline chosen  | adaptive chosen     |
+|----------------|------:|------------------|---------------------|
+| mlp-L128-w2048 |   384 | CpSatLayoutSolver | CpSatLayoutSolver  |
+| mlp-L192-w2048 |   576 | CpSatLayoutSolver | GreedyLayoutSolver |
+| mlp-L384-w2048 |  1152 | CpSatLayoutSolver | GreedyLayoutSolver |
+
+Median-of-3 pre-DXP (ms):
+
+| shape          | baseline | adaptive | delta_ms | delta_% | baseline solve | adaptive solve |
+|----------------|---------:|---------:|---------:|--------:|---------------:|---------------:|
+| mlp-L128-w2048 | 17 171   | 15 432   | −1 739   | −10.1%  |          241.1 |          244.7 |
+| mlp-L192-w2048 | 21 108   | 23 428   | +2 320   | +11.0%  |          435.5 |        1 381.5 |
+| mlp-L384-w2048 | 39 037   | 44 234   | +5 197   | +13.3%  |        1 043.3 |        5 573.9 |
+
+Structural equivalence (same methodology as §7):
+
+| shape          | (name,size) placed | (name,size,address) placed        | n_specs |
+|----------------|--------------------|-----------------------------------|--------:|
+| mlp-L128-w2048 | MATCH (255 both)   | MATCH (all 255 identical)         |     +0  |
+| mlp-L192-w2048 | MATCH (383 both)   | 191/192 differ; 192/383 same addr |     +0  |
+| mlp-L384-w2048 | MATCH (767 both)   | 383/384 differ; 384/767 same addr |     +0  |
+
+**On MLP the adaptive fallback makes compile time WORSE.** On MLP
+graphs greedy solve is 3.2× longer than CP-SAT at L192 (1.38 s vs
+0.44 s) and 5.3× longer at L384 (5.57 s vs 1.04 s). The
+"greedy is always cheaper" assumption established on flash does
+not generalize to MLP.
+
+The size-only `len(graph.operations) > threshold` policy is
+therefore **wrong for MLP-family graphs** at these sizes. The
+resident-set equivalence still holds (same `(name, size)`
+placed set, same `n_specs`), but the compile-cost win doesn't.
+
+This is a strong signal that the threshold metric or the fallback
+predicate needs to be graph-shape aware, or that additional
+workload-specific data is needed before a single global threshold
+is defensible. It is exactly the "workloads where greedy diverges
+from CP-SAT" case the review anticipated.
+
+The address-difference pattern is the same as §7: same resident
+set, different LX addresses. On L128 (both arms CP-SAT) addresses
+match exactly across arms, confirming the CP-SAT arm is
+deterministic on this workload and the between-arm address drift
+in §7 is genuinely from the solver change.
+
+Data: `data/adaptive_mlp_coverage/{baseline_cpsat,adaptive_greedy}/`.
+Table: `notes/tables/adaptive_mlp_coverage.md`.
+
 ## Correctness and behavior risks
 
-- **Solver quality on flash shapes ≥ 512 ops.** §1 shows cpsat
-  and greedy produce byte-identical placement (and byte-identical
-  emitted spec sets under arm B) at every measured shape. This is
-  strong evidence for the specific shape ranges here, but this
-  study measured 15 shapes: 9 flash points and 6 MLP depths. It
-  is not a proof over all workloads. The prototype is
-  env-guarded and defaults off; any production wiring would need
-  to reproduce a similar signature-match check on the target
-  workload family, or hold a small tail of large-shape regression
-  cases.
+- **LX placement addresses differ between arms.** §7 shows the two
+  arms agree on the resident-buffer set (name, size) and the spilled
+  set, and produce the same `n_specs`, but greedy picks different
+  LX addresses than CP-SAT for the majority of buffers on every
+  measured shape. Within one arm across 3 cold samples the address
+  set is stable, so this is a genuine between-arm placement
+  difference rather than sample noise. Whether the downstream Spyre
+  pipeline (DXP, kernel provenance, HBM allocator, on-device
+  dispatch) is address-invariant across two valid layouts is not
+  something this compile-time study can answer. This is the
+  load-bearing open question for the draft PR.
+- **Solver quality on measured flash shapes.** §7 shows the two
+  arms match on placed-set membership and `n_specs` at every
+  measured shape. The study measured 15 shapes across 9 flash
+  points and 6 MLP depths. Not a proof over all workloads. The
+  prototype is off by default; any production enablement would
+  need to reproduce the signature check (and settle the address
+  question above) on the target workload family, or hold a small
+  tail of large-shape regression cases.
 - **CP-SAT residency objective is not exercised here.** The
   objective for these problems is dominated by "everything fits";
   every CP-SAT run in this study terminated `OPTIMAL` in a single
@@ -334,25 +509,25 @@ recommended flavor.
   Other CP-SAT problems in the same code path may be harder;
   their absolute cost could still be worse than greedy's, but the
   ratio may differ.
-- **Fallback config toggle changes global state briefly.** The
-  prototype temporarily flips `_c.layout_solver` and
-  `_c.lx_planner_relayout` around `select_allocator()`, restoring
-  in `finally`. That's safe within one thread of compilation; if
-  the code path grows concurrency later, this would need
-  revisiting.
-- **`scratchpad_planning_entry` timing event.** Introduces a
-  thin wrapper around `scratchpad_planning`. In the prototype
-  it's out-of-tree; in production wiring the equivalent
-  attribution point already exists as `select_allocator` /
-  `pipeline:CustomPreSchedulingPasses`.
-- **Bundle-generation nondeterminism (incidental).** `n_specs`
-  and placed sets match byte-for-byte between arm B and CP-SAT in
-  these numbers, but two independent cold compiles of the same
-  configuration produce `bundle.mlir` byte differences at every
-  shape (documented in `notes/next-opportunities.md`). Byte
-  equality of `bundle.mlir` cannot be used as a regression gate;
-  the correct gates are structural (`n_specs`, placed_signature,
-  placed bytes).
+- **Draft policy avoids global config mutation.** The production
+  draft threads the "disable LX relayout on this fallback" decision
+  through a new per-instance `ScratchpadAllocator.enable_lx_relayout`
+  field. Global `config.layout_solver` and
+  `config.lx_planner_relayout` are never mutated at plan time —
+  the earlier out-of-tree prototype (`patches/adaptive_solver_prototype.py`)
+  did briefly flip global config around `select_allocator()`, and
+  that was a bug (`_prepare_buffers` reads
+  `config.lx_planner_relayout` inside `plan_allocation`, after the
+  prototype's restore). The bug did not affect the arm-B data —
+  those runs set `SPYRE_LX_PLANNER_RELAYOUT=0` at process level —
+  but the prototype itself did not demonstrate the intended
+  solver-only fallback end-to-end. The production draft does.
+- **Bundle-generation nondeterminism (incidental).** Two independent
+  cold compiles of the same configuration produce `bundle.mlir`
+  byte differences at every shape (documented in
+  `notes/next-opportunities.md`). Byte equality of `bundle.mlir`
+  cannot be used as a regression gate; the correct gates are
+  structural (`n_specs`, placed_signature, placed_signature_with_address).
 
 ## Recommendation on next steps
 
