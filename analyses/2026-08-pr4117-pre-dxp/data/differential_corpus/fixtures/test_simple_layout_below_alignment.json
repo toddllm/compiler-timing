@@ -1,0 +1,131 @@
+{
+  "name": "test_simple_layout_below_alignment",
+  "size": 10,
+  "alignment": 128,
+  "input_buffers": [
+    {
+      "name": "buffer0",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "buffer1",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "buffer2",
+      "size": 4,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "greedy_result": [
+    {
+      "name": "buffer0",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": 0
+    },
+    {
+      "name": "buffer1",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "buffer2",
+      "size": 4,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "cpsat_result": [
+    {
+      "name": "buffer0",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "buffer1",
+      "size": 3,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "buffer2",
+      "size": 4,
+      "uses": [
+        0,
+        1
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "greedy_objective": 14,
+  "cpsat_objective": 20,
+  "objective_delta_greedy_minus_cpsat": -6
+}

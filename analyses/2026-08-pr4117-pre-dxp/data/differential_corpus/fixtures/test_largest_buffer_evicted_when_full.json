@@ -1,0 +1,131 @@
+{
+  "name": "test_largest_buffer_evicted_when_full",
+  "size": 50,
+  "alignment": 1,
+  "input_buffers": [
+    {
+      "name": "a",
+      "size": 10,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "b",
+      "size": 20,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "c",
+      "size": 30,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "greedy_result": [
+    {
+      "name": "a",
+      "size": 10,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": 0
+    },
+    {
+      "name": "b",
+      "size": 20,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": 10
+    },
+    {
+      "name": "c",
+      "size": 30,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "cpsat_result": [
+    {
+      "name": "a",
+      "size": 10,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "b",
+      "size": 20,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": 0
+    },
+    {
+      "name": "c",
+      "size": 30,
+      "uses": [
+        0,
+        3
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": 20
+    }
+  ],
+  "greedy_objective": 60,
+  "cpsat_objective": 20,
+  "objective_delta_greedy_minus_cpsat": 40
+}
