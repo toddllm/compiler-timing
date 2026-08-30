@@ -204,6 +204,38 @@ described above.
 - No mutation of caller buffers when the seed rejects; on
   acceptance, only `address` (and `spill_reasons`) are written.
 
+## Post-#3810 end-to-end validation on the rebased branch
+
+`harness/seed_endtoend_probe.py` instruments the shipped
+`plan_layout` on the rebased branch and records every real
+invocation as `torch.compile` drives the front end. The DXP
+subprocess is intercepted before its call so wall time stays
+bounded; the seed decision fires inside the scratchpad allocator,
+which runs before DXP.
+
+| workload   | sample | chosen           | n_buf | placed | lb_u | hybrid_obj | std_obj | seed_ms | std_cpsat_ms |
+|------------|-------:|------------------|------:|-------:|-----:|-----------:|--------:|--------:|-------------:|
+| flash-512x4096 | 0/1/2 | greedy-certified | 13 | 6 | 16 | 16 | 16 | 0.4–0.5 | 10–15 |
+| flash-512x8192 | 0/1/2 | greedy-certified | 13 | 6 | 16 | 16 | 16 | 0.4–0.5 | 10–16 |
+| mlp (N_in=1024, N_hidden=4096, 4L) | 0 | greedy-certified | 21 | 8 | 2 | 2 | 2 | 0.73 | 17.3 |
+| sdpa (S=512, D=128, H=8, B=1) | 0 | greedy-certified | 31 | 18 | 1152 | 1152 | 1152 | 1.42 | 35.1 |
+
+8 real seed invocations, all certified, 0 objective mismatches vs
+standalone CP-SAT.
+
+Fallback validation on the captured 2056-buffer flash-512x8192
+planner set at 25% of shipped LX capacity, driven through the
+rebased solver:
+
+- greedy alone: 578432 units (2560 units above the floor)
+- forced-spill floor: 575872 units
+- seed returned `None` (certificate rejects — greedy > floor)
+- standalone CP-SAT: 575872 units
+- hybrid public path: 575872 units
+- **objectives match**
+
+Data: `data/e2e_validation/*.json`.
+
 ## Caveats
 
 - Greedy probe adds ~0.2 ms on tiny graphs to ~250 ms on the largest
@@ -220,6 +252,10 @@ described above.
   `.../data/hybrid_certified_corpus_v2/summary.json`
 - Capacity pressure sweep:
   `.../data/capacity_pressure_sweep_v2/summary.json`
+- End-to-end validation on the rebased branch:
+  `.../data/e2e_validation/*.json`
+- Hardening report:
+  `.../notes/pr4139-hardening-report.md`
 - Captured planner-buffer sets:
   `.../data/captured_buffers/*.pkl`
 
