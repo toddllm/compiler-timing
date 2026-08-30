@@ -1,0 +1,47 @@
+{
+  "name": "test_write_only_in_place_parent_is_rejected",
+  "size": 120,
+  "alignment": 1,
+  "input_buffers": [
+    {
+      "name": "parent",
+      "size": 40,
+      "uses": [
+        0
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    },
+    {
+      "name": "child",
+      "size": 40,
+      "uses": [
+        0,
+        2
+      ],
+      "first_use_is_read": false,
+      "in_place_parents": [
+        "parent"
+      ],
+      "residency_reason": null,
+      "lifetime_end_override": null,
+      "address": null
+    }
+  ],
+  "greedy": [],
+  "cpsat": [],
+  "hybrid": [],
+  "objectives": {
+    "greedy": null,
+    "cpsat": null,
+    "hybrid": null
+  },
+  "hybrid_chosen": "cpsat-fallback",
+  "invariants": {
+    "hybrid_le_cpsat": false,
+    "certified_iff_zero": true
+  }
+}

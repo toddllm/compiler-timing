@@ -1,0 +1,19 @@
+{
+  "name": "test_empty_returns_empty_list",
+  "size": 512,
+  "alignment": 1,
+  "input_buffers": [],
+  "greedy": [],
+  "cpsat": [],
+  "hybrid": [],
+  "objectives": {
+    "greedy": null,
+    "cpsat": null,
+    "hybrid": null
+  },
+  "hybrid_chosen": "greedy-certified",
+  "invariants": {
+    "hybrid_le_cpsat": false,
+    "certified_iff_zero": false
+  }
+}
