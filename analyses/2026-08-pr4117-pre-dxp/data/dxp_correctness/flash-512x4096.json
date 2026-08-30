@@ -1,0 +1,52 @@
+{
+  "workload": "flash",
+  "shape_params": {
+    "Lq": 512,
+    "Lk": 4096,
+    "N_in": 1024,
+    "N_hidden": 2048,
+    "layers": 8
+  },
+  "cpsat_arm": {
+    "_tensor_path": "/home/tdeshane/pr4117/compiler-timing/analyses/2026-08-pr4117-pre-dxp/data/dxp_correctness/flash-512x4096.cpsat.pt",
+    "solver": "cpsat",
+    "compile_and_execute_wall_s": 161.21415877342224,
+    "error": null,
+    "result_shape": [
+      1,
+      8,
+      512,
+      128
+    ],
+    "result_sha256": "e2910df44305e3e44a54f11c59940ac1",
+    "cpu_reference_close": true,
+    "cpu_reference_maxdiff": 0.009765625,
+    "cpu_reference_atol": 0.5,
+    "cpu_reference_rtol": 0.5,
+    "tensor_saved": true
+  },
+  "greedy_arm": {
+    "_tensor_path": "/home/tdeshane/pr4117/compiler-timing/analyses/2026-08-pr4117-pre-dxp/data/dxp_correctness/flash-512x4096.greedy.pt",
+    "solver": "greedy",
+    "compile_and_execute_wall_s": 146.5945405960083,
+    "error": null,
+    "result_shape": [
+      1,
+      8,
+      512,
+      128
+    ],
+    "result_sha256": "e2910df44305e3e44a54f11c59940ac1",
+    "cpu_reference_close": true,
+    "cpu_reference_maxdiff": 0.009765625,
+    "cpu_reference_atol": 0.5,
+    "cpu_reference_rtol": 0.5,
+    "tensor_saved": true
+  },
+  "cross_arm": {
+    "shape_match": true,
+    "bitwise_equal": true,
+    "allclose_atol_rtol_5e-1": true,
+    "maxdiff": 0.0
+  }
+}

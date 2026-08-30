@@ -60,6 +60,220 @@ from . import timing_recorder as _tr
 _INSTALLED = False
 
 
+
+
+def _compute_structural_metrics(buffers):
+    """Deterministic structural metrics over a LifetimeBoundBuffer set.
+
+    Computed once from the buffer universe both solvers see (arm B /
+    RELAYOUT=0 makes this the same universe for cpsat and greedy). All
+    quantities are pure functions of the buffer set — they do not depend
+    on any solver decision.
+
+    Returns a dict of scalar metrics; empty dict on any error.
+    """
+    try:
+        n_buf = len(buffers)
+        if n_buf == 0:
+            return {"planner_buffers": 0}
+        # -- times --
+        times = set()
+        for b in buffers:
+            if not b.uses:
+                continue
+            times.add(b.start_time)
+            times.add(b.end_time)
+        sorted_times = sorted(times)
+        n_transition = len(sorted_times)
+        # -- lifetimes --
+        spans = [(b.start_time, b.end_time, b.size) for b in buffers if b.uses]
+        total_lifetime_ticks = sum(e - s for s, e, _ in spans)
+        # -- simultaneously-live buffer count & bytes per tick --
+        live_counts = []
+        live_bytes = []
+        for t in sorted_times:
+            cnt = 0
+            byt = 0
+            for s, e, sz in spans:
+                if s <= t < e:
+                    cnt += 1
+                    byt += sz
+            live_counts.append(cnt)
+            live_bytes.append(byt)
+        max_live = max(live_counts) if live_counts else 0
+        mean_live = (sum(live_counts) / len(live_counts)) if live_counts else 0.0
+        max_live_bytes = max(live_bytes) if live_bytes else 0
+        mean_live_bytes = (sum(live_bytes) / len(live_bytes)) if live_bytes else 0.0
+        # live-set area — sum over transitions of (live_count *
+        # tick_duration). Discrete integral of the live-count curve.
+        live_area = 0
+        for i, t in enumerate(sorted_times):
+            width = (sorted_times[i + 1] - t) if i + 1 < len(sorted_times) else 1
+            live_area += live_counts[i] * width
+        # -- lifetime-overlap pairs (unordered pair count) --
+        # Use a sweep: at each transition, add C(live,2) - C(prev_live,2)
+        # is wrong for pair count; the correct count is the number of
+        # unordered pairs (i, j) whose lifetimes overlap. Compute
+        # directly by sweeping starts/ends.
+        events = []
+        for s, e, _ in spans:
+            events.append((s, 0))  # start
+            events.append((e, 1))  # end
+        events.sort()
+        cur_live = 0
+        n_overlap_pairs = 0
+        for tick, kind in events:
+            if kind == 0:
+                # a new buffer overlaps with all currently live
+                n_overlap_pairs += cur_live
+                cur_live += 1
+            else:
+                cur_live -= 1
+        # -- overlap density = pairs / C(n, 2) --
+        denom = n_buf * (n_buf - 1) / 2 if n_buf >= 2 else 0
+        overlap_density = (n_overlap_pairs / denom) if denom else 0.0
+        # -- in-place edges --
+        in_place_edges = sum(len(b.in_place_parents) for b in buffers)
+        # -- size distribution --
+        sizes = sorted(b.size for b in buffers)
+        median_size = sizes[len(sizes) // 2] if sizes else 0
+        p90_size = sizes[int(0.9 * (len(sizes) - 1))] if sizes else 0
+        max_size = sizes[-1] if sizes else 0
+        # -- eligibility --
+        placeable = sum(1 for b in buffers if b.residency_reason is None)
+        barred = n_buf - placeable
+        return {
+            "planner_buffers": n_buf,
+            "placeable_buffers": placeable,
+            "barred_buffers_prep": barred,
+            "n_transition_points": n_transition,
+            "total_lifetime_ticks": total_lifetime_ticks,
+            "max_live_count": max_live,
+            "mean_live_count": mean_live,
+            "live_set_area": live_area,
+            "max_live_bytes": max_live_bytes,
+            "mean_live_bytes": mean_live_bytes,
+            "n_overlap_pairs": n_overlap_pairs,
+            "overlap_density": overlap_density,
+            "in_place_edges": in_place_edges,
+            "size_median": median_size,
+            "size_p90": p90_size,
+            "size_max": max_size,
+            # cross-product size — one motivated candidate cost proxy
+            "transition_x_placeable": n_transition * placeable,
+        }
+    except Exception as e:
+        return {"structural_probe_error": repr(e)[:200]}
+
+
+def _wrap_greedy_solver_counters(solver):
+    """Install per-instance counters on a GreedyLayoutSolver.
+
+    Wraps _find_free_block, _try_allocate_one, _try_deallocate,
+    _occupied_spans to count deterministic work quantities. Idempotent
+    per instance; safe to call unconditionally — no-op for other solvers.
+    """
+    try:
+        from torch_spyre._inductor.scratchpad.greedy_solver import (
+            GreedyLayoutSolver,
+        )
+    except ImportError:
+        return
+    if not isinstance(solver, GreedyLayoutSolver):
+        return
+    if getattr(solver, "_ab_counters_installed", False):
+        return
+    counters = {
+        "n_find_free_block_calls": 0,
+        "sum_live_set_size_entering_find": 0,
+        "max_live_set_size_entering_find": 0,
+        "n_try_allocate_one_calls": 0,
+        "n_in_place_parent_probes": 0,
+        "n_in_place_reuses": 0,
+        "n_try_deallocate_calls": 0,
+        "n_occupied_spans_calls": 0,
+        "sum_usage_entering_occupied_spans": 0,
+        # transition-loop work: outer loops over placeable at each idx
+        "n_alloc_transition_iterations": 0,
+        "n_dealloc_transition_iterations": 0,
+    }
+    solver._ab_counters = counters
+
+    _orig_find = solver._find_free_block
+    _orig_alloc_one = solver._try_allocate_one
+    _orig_dealloc = solver._try_deallocate
+    _orig_spans = solver._occupied_spans
+
+    def _find_free_block(size_needed):
+        counters["n_find_free_block_calls"] += 1
+        live = len(solver.usage)
+        counters["sum_live_set_size_entering_find"] += live
+        if live > counters["max_live_set_size_entering_find"]:
+            counters["max_live_set_size_entering_find"] = live
+        return _orig_find(size_needed)
+
+    def _try_allocate_one(buffer):
+        counters["n_try_allocate_one_calls"] += 1
+        counters["n_in_place_parent_probes"] += len(
+            getattr(buffer, "in_place_parents", []) or []
+        )
+        pre_addr = buffer.address
+        _orig_alloc_one(buffer)
+        # in-place reuse: buffer got an address without an entry in usage
+        # being added by _find_free_block. Detect by whether the placed
+        # buffer's address matches any *existing* usage entry's address.
+        if buffer.address is not None and pre_addr is None:
+            # Count as in-place reuse only if the address is shared with
+            # another live buffer (parent). Otherwise it was a normal
+            # gap allocation.
+            matches = sum(
+                1 for u in solver.usage
+                if u is not buffer and u.address == buffer.address
+            )
+            if matches:
+                counters["n_in_place_reuses"] += 1
+
+    def _try_deallocate(bufs):
+        counters["n_try_deallocate_calls"] += 1
+        return _orig_dealloc(bufs)
+
+    def _occupied_spans():
+        counters["n_occupied_spans_calls"] += 1
+        counters["sum_usage_entering_occupied_spans"] += len(solver.usage)
+        return _orig_spans()
+
+    solver._find_free_block = _find_free_block
+    solver._try_allocate_one = _try_allocate_one
+    solver._try_deallocate = _try_deallocate
+    solver._occupied_spans = _occupied_spans
+
+    # Wrap plan_layout to record the transition-loop iteration counts
+    # (n_transition_times x n_placeable in both allocate and deallocate
+    # loops). Overall solver time is timed separately in scratchpad_solve.
+    _orig_plan_layout = solver.plan_layout
+
+    def _plan_layout(log_lx_usage=False):
+        try:
+            placeable = sum(
+                1 for b in solver.buffers if b.residency_reason is None
+            )
+            times = set()
+            for b in solver.buffers:
+                if b.residency_reason is None and b.uses:
+                    times.add(b.start_time)
+                    times.add(b.end_time)
+            n_times = len(times)
+            counters["n_transition_times"] = n_times
+            counters["n_alloc_transition_iterations"] = n_times * placeable
+            counters["n_dealloc_transition_iterations"] = n_times * placeable
+        except Exception:
+            pass
+        return _orig_plan_layout(log_lx_usage=log_lx_usage)
+
+    solver.plan_layout = _plan_layout
+    solver._ab_counters_installed = True
+
+
 def install_extra_timers() -> None:
     """Wrap the timing boundaries listed in the module docstring.
 
@@ -248,32 +462,14 @@ def install_extra_timers() -> None:
                         captured["planner_buffers"] = len(bufs)
                     except Exception:
                         pass
-                    # Canonical input signature — the buffer universe the
-                    # solver sees, independent of solver identity.
-                    # Under SPYRE_LX_PLANNER_RELAYOUT=0 both cpsat and greedy
-                    # must observe the same signature; the A/B assertion
-                    # tests this.
+                    # Structural metrics computed once on the shared
+                    # planner-buffer universe (before any solver runs).
                     try:
-                        sig = []
-                        for b in bufs:
-                            sig.append({
-                                "name": b.name,
-                                "size": b.size,
-                                "uses": list(b.uses),
-                                "first_use_is_read": b.first_use_is_read,
-                                "residency_reason": b.residency_reason,
-                                "in_place_parents": list(b.in_place_parents),
-                                "lifetime_end_override": (
-                                    b.lifetime_end_override
-                                ),
-                                "n_paired_with": len(b.paired_with),
-                                "n_lx_relayout_plans": (
-                                    len(b.lx_relayout_plans)
-                                ),
-                            })
-                        captured["planner_buffer_signature"] = sig
+                        captured["structural_metrics"] = (
+                            _compute_structural_metrics(bufs)
+                        )
                     except Exception as e:
-                        captured["planner_signature_error"] = repr(e)[:200]
+                        captured["structural_metrics_error"] = repr(e)[:200]
                     return bufs
 
                 def _timed_build(bufs):
@@ -297,6 +493,13 @@ def install_extra_timers() -> None:
                         solver.spill_reasons = {}
                     except Exception as e:
                         captured["eligibility_probe_error"] = repr(e)[:200]
+                    # Install per-instance greedy counters (no-op for other
+                    # solvers). Recorded in _timed_solve after the solve
+                    # finishes so we see final counts.
+                    try:
+                        _wrap_greedy_solver_counters(solver)
+                    except Exception as e:
+                        captured["greedy_counters_error"] = repr(e)[:200]
                     return solver
 
                 def _timed_solve(solver):
@@ -348,6 +551,15 @@ def install_extra_timers() -> None:
                         )
                         captured["placed_signature"] = placed
                         captured["spilled_signature"] = spilled
+                        # (name, size, address) placement signature for the
+                        # adaptive-solver draft validation. Compare across
+                        # arms to prove not just resident-set equality but
+                        # byte-identical LX placement addresses.
+                        placed_with_addr = sorted(
+                            (b.name, b.size, b.address) for b in allocation
+                            if b.address is not None
+                        )
+                        captured["placed_signature_with_address"] = placed_with_addr
                     except Exception as e:
                         captured["placement_probe_error"] = repr(e)[:200]
                     # For CP-SAT: pick up solver stats stashed by our
@@ -355,14 +567,10 @@ def install_extra_timers() -> None:
                     stats = getattr(solver, "_ab_last_solver_stats", None)
                     if stats is not None:
                         captured["ortools_stats"] = stats
-                    all_stats = getattr(
-                        solver, "_ab_all_solver_stats", None
-                    )
-                    if all_stats is not None:
-                        captured["ortools_all_solves"] = all_stats
-                    model_size = getattr(solver, "_ab_model_size", None)
-                    if model_size is not None:
-                        captured["cpsat_model_size"] = model_size
+                    # For greedy: pick up per-instance work counters.
+                    gcounters = getattr(solver, "_ab_counters", None)
+                    if gcounters is not None:
+                        captured["greedy_counters"] = dict(gcounters)
                     return allocation
 
                 def _timed_post(g, allocation):
@@ -389,197 +597,61 @@ def install_extra_timers() -> None:
     except (ImportError, AttributeError):
         pass
 
-    # ---- CpSatLayoutSolver phase decomposition ---------------------------
-    # Instrument the CP-SAT model-build phases individually so we can see
-    # whether the observed solve-time growth is in model construction,
-    # OR-Tools presolve/propagation, or actual search.
+    # ---- CpSatLayoutSolver._run — stash OR-Tools status/walltime -----------
     try:
         from torch_spyre._inductor.scratchpad.ilp_solver_ortools import (
             CpSatLayoutSolver,
         )
-        from ortools.sat.python import cp_model  # noqa: F401
-
-        # Wrap the model-construction phases.
-        for _method_name, _stage_name in [
-            ("_add_inplace_relaxation", "cpsat_add_inplace_relaxation"),
-            ("_add_core_division", "cpsat_add_core_division"),
-            ("_add_no_overlap_2d", "cpsat_add_no_overlap_2d"),
-            ("_extract", "cpsat_extract"),
-        ]:
-            if not hasattr(CpSatLayoutSolver, _method_name):
-                continue
-            _orig_method = getattr(CpSatLayoutSolver, _method_name)
-
-            def _make_timed(orig, stage):
-                @functools.wraps(orig)
-                def _timed(self, *args, **kwargs):
-                    with _tr.stage(stage):
-                        return orig(self, *args, **kwargs)
-                return _timed
-
-            setattr(CpSatLayoutSolver, _method_name,
-                    _make_timed(_orig_method, _stage_name))
-
-        # Wrap the buffer-wrapping loop (called as a dict comprehension in
-        # _plan_layout_generic, so we instrument _plan_layout_generic itself
-        # to bracket "cpsat_wrap_buffers" around the working-dict build).
-        _orig_plan_generic = CpSatLayoutSolver._plan_layout_generic
-
-        @functools.wraps(_orig_plan_generic)
-        def _timed_plan_generic(self, *args, **kwargs):
-            # Overlay _wrap with a timed version for the duration of this
-            # call, so we get "cpsat_wrap_buffers" = total per-buffer wrap
-            # time this compile. Also emits a model-size summary event once
-            # every phase has built its constraints.
-            orig_wrap = self._wrap
-            wrap_stats = {"n_wrapped": 0}
-
-            def _wrapper(model, buffer):
-                wrap_stats["n_wrapped"] += 1
-                return orig_wrap(model, buffer)
-
-            # Time buffer-wrapping via a class-level attribute so the
-            # dict-comprehension in the base method picks up our stub.
-            self._wrap = _wrapper  # type: ignore[assignment]
-            try:
-                with _tr.stage(
-                    "cpsat_plan_layout_generic",
-                    n_buffers=len(self.buffers),
-                ) as plan_ev:
-                    # Manual timing around the wrap step: measure until
-                    # forced_reasons is computed and model is created. The
-                    # base _plan_layout_generic does:
-                    #   forced_reasons = self.record_exclusions()
-                    #   model = cp_model.CpModel()
-                    #   working = {b.name: self._wrap(model, b) ...}
-                    #   solved = self._run(model, working, forced_reasons)
-                    # So we time cpsat_wrap_buffers by wrapping _run to fire
-                    # its own stage first, capturing model-size right at the
-                    # boundary between build and solve.
-                    result = _orig_plan_generic(self, *args, **kwargs)
-                # Best-effort: record how many buffers went through _wrap.
-                if plan_ev is not None:
-                    plan_ev.meta["n_wrapped"] = wrap_stats["n_wrapped"]
-                return result
-            finally:
-                self._wrap = orig_wrap  # type: ignore[assignment]
-
-        CpSatLayoutSolver._plan_layout_generic = _timed_plan_generic
-
-        # Wrap _run to (a) time each Solve() individually, (b) capture
-        # model-size metrics, (c) stash per-solve stats.
         _orig_cpsat_run = CpSatLayoutSolver._run
 
         @functools.wraps(_orig_cpsat_run)
         def _timed_cpsat_run(self, model, tensors, forced_reasons):
-            from ortools.sat.python import cp_model
-            solves: list[dict] = []
+            from ortools.sat.python import cp_model  # already available
+            # We need to peek at the internal solver instance used by _run,
+            # but the real _run creates it as a local. Wrap CpSolver.Solve
+            # to snapshot at the end.
+            last = {}
+
             _orig_solve_cls = cp_model.CpSolver.Solve
 
             def _tracked_solve(cp_solver, mdl):
-                stats: dict = {}
-                # Emit a per-Solve() stage event so wall/self time from the
-                # timing recorder matches OR-Tools' own WallTime.
-                phase = f"cpsat_solve[{len(solves) + 1}]"
-                with _tr.stage(phase) as _ev:
-                    status = _orig_solve_cls(cp_solver, mdl)
+                status = _orig_solve_cls(cp_solver, mdl)
                 try:
-                    stats["status"] = cp_solver.StatusName(status)
-                    stats["walltime_s"] = cp_solver.WallTime()
-                    stats["usertime_s"] = cp_solver.UserTime()
-                    stats["objective_value"] = cp_solver.ObjectiveValue()
+                    last["status"] = cp_solver.StatusName(status)
+                    last["walltime_s"] = cp_solver.WallTime()
+                    last["usertime_s"] = cp_solver.UserTime()
+                    last["objective_value"] = cp_solver.ObjectiveValue()
                     try:
-                        stats["best_objective_bound"] = (
+                        last["best_objective_bound"] = (
                             cp_solver.BestObjectiveBound()
                         )
                     except Exception:
                         pass
-                    for attr in (
-                        "NumBranches", "NumConflicts",
-                        "NumBooleans", "NumBinaryPropagations",
-                        "NumIntegerPropagations", "NumRestarts",
-                    ):
-                        try:
-                            stats[attr.lower().replace("num", "num_")] = (
-                                getattr(cp_solver, attr)()
-                            )
-                        except Exception:
-                            pass
                     try:
-                        stats["deterministic_time"] = (
-                            cp_solver.parameters.deterministic_time
-                        )
+                        last["num_branches"] = cp_solver.NumBranches()
                     except Exception:
                         pass
-                    stats["num_workers"] = (
+                    try:
+                        last["num_conflicts"] = cp_solver.NumConflicts()
+                    except Exception:
+                        pass
+                    last["num_workers"] = (
                         cp_solver.parameters.num_search_workers
                     )
-                    stats["max_time_in_seconds"] = (
+                    last["max_time_in_seconds"] = (
                         cp_solver.parameters.max_time_in_seconds
                     )
                 except Exception as e:
-                    stats["stats_error"] = repr(e)[:200]
-                solves.append(stats)
-                if _ev is not None:
-                    _ev.meta["status"] = stats.get("status")
-                    _ev.meta["walltime_s"] = stats.get("walltime_s")
-                    _ev.meta["num_branches"] = stats.get("num_branches")
-                    _ev.meta["num_conflicts"] = stats.get("num_conflicts")
+                    last["stats_error"] = repr(e)[:200]
                 return status
 
             cp_model.CpSolver.Solve = _tracked_solve
             try:
-                # Emit a model-size event just after _run's constraint
-                # builders return, before the first Solve. To do that with
-                # minimal invasion we peek at the model after _run finishes;
-                # the numbers are cumulative (single model, all constraints
-                # already added). If we can, capture pre-first-solve too.
-                #
-                # Simpler approach: attach a stage inside the wrap of
-                # _add_no_overlap_2d that snapshots model size right after
-                # it returns. That stage already brackets the last
-                # constraint-add call, so capture there.
                 return _orig_cpsat_run(self, model, tensors, forced_reasons)
             finally:
                 cp_model.CpSolver.Solve = _orig_solve_cls
-                # Save all per-solve stats + a model-size snapshot.
-                model_size: dict = {}
-                try:
-                    proto = model.Proto()
-                    model_size["num_variables"] = len(proto.variables)
-                    model_size["num_constraints"] = len(proto.constraints)
-                    # Serialized size as a proxy for total model bulk.
-                    try:
-                        model_size["proto_bytes"] = proto.ByteSize()
-                    except Exception:
-                        pass
-                    # Count no_overlap_2d and no_overlap constraints
-                    # separately — those are the placement rectangles.
-                    n_nooverlap2d = 0
-                    n_nooverlap = 0
-                    n_interval = 0
-                    n_bool_or = 0
-                    for c in proto.constraints:
-                        which = c.WhichOneof("constraint")
-                        if which == "no_overlap_2d":
-                            n_nooverlap2d += 1
-                        elif which == "no_overlap":
-                            n_nooverlap += 1
-                        elif which == "interval":
-                            n_interval += 1
-                        elif which == "bool_or":
-                            n_bool_or += 1
-                    model_size["num_no_overlap_2d"] = n_nooverlap2d
-                    model_size["num_no_overlap"] = n_nooverlap
-                    model_size["num_interval"] = n_interval
-                    model_size["num_bool_or"] = n_bool_or
-                    model_size["num_tensors"] = len(tensors)
-                    model_size["num_forced_reasons"] = len(forced_reasons)
-                except Exception as e:
-                    model_size["proto_error"] = repr(e)[:200]
-                self._ab_last_solver_stats = solves[-1] if solves else {}
-                self._ab_all_solver_stats = solves
-                self._ab_model_size = model_size
+                # Save the LAST solve's stats (final lex step) plus meta.
+                self._ab_last_solver_stats = last
 
         CpSatLayoutSolver._run = _timed_cpsat_run
     except (ImportError, AttributeError):

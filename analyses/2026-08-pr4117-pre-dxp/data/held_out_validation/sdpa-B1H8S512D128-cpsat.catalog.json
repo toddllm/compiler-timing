@@ -1,0 +1,84 @@
+{
+  "captured": {
+    "sdsc_fused__scaled_dot_product_fused_attention_overrideable_0": {
+      "aten_ops": [
+        "aten._scaled_dot_product_fused_attention_overrideable.default"
+      ],
+      "catalog": {
+        "bundle.mlir": {
+          "mode": 420,
+          "sha256": "02755e5a330ac2285c2dea22246dab6b9222a5d519bd3d44bcdfbae69b84581d",
+          "size": 40194
+        },
+        "sdsc_0.json": {
+          "mode": 420,
+          "sha256": "1cb0d74576d365e074a4977a871ea507e7561e6efd58010af395a0ae5d61c6a8",
+          "size": 27152
+        },
+        "sdsc_1.json": {
+          "mode": 420,
+          "sha256": "9eb7ed6b16a74f698cee6608205150f2743000cc9def83ba63d56f8e831a54e1",
+          "size": 27005
+        },
+        "sdsc_2.json": {
+          "mode": 420,
+          "sha256": "e4e8a4ff553dc3b3e0c3ff18b18c17d61a36c407de414c10b2d035ad9f369c33",
+          "size": 27014
+        },
+        "sdsc_3.json": {
+          "mode": 420,
+          "sha256": "a5cad5b2323ef30d2df6f92961438a4b0df6eea319043ac5a21ff055d8e13f1c",
+          "size": 35884
+        },
+        "sdsc_4.json": {
+          "mode": 420,
+          "sha256": "6ddd90f25b727d8c3810d8d2d59bc2bf3c8697e79f06da0ecd1e06224ab4a6e8",
+          "size": 36162
+        },
+        "sdsc_5.json": {
+          "mode": 420,
+          "sha256": "33976c886d84317b530d19f6662edf25a1110fcc96b019f3d877ad56e4dc9f06",
+          "size": 27280
+        },
+        "sdsc_6.json": {
+          "mode": 420,
+          "sha256": "304246eeb5bb168eecc29ca54d219a6415389d8b58b8e8c78754fddcadbb399d",
+          "size": 37979
+        }
+      },
+      "cmd": [
+        "dxp_standalone",
+        "-d",
+        "/tmp/tsc-heldout-sdpa-B1H8S512D128-cpsat/inductor-spyre/be24cdb3_sdsc_fused__scaled_dot_product_fused_attention_overrideable_0_5bduwjdv"
+      ],
+      "debug_handle_ids": [
+        "3323718982976932393",
+        "636584074016019005",
+        "1944693048226107339",
+        "5497961048671541383",
+        "5081719671278948859",
+        "2255299171513602225",
+        "6819702363620340761"
+      ],
+      "kernel_name": "sdsc_fused__scaled_dot_product_fused_attention_overrideable_0",
+      "n_bundle_files": 8,
+      "n_specs": 7,
+      "output_dir": "/tmp/tsc-heldout-sdpa-B1H8S512D128-cpsat/inductor-spyre/be24cdb3_sdsc_fused__scaled_dot_product_fused_attention_overrideable_0_5bduwjdv",
+      "provenance_key": "mb6lfbwaz6pkkyoj",
+      "spec_type_run_length_signature": [
+        [
+          "OpSpec",
+          7
+        ]
+      ],
+      "spec_type_total_signature": [
+        [
+          "OpSpec",
+          7
+        ]
+      ],
+      "thread_id": 139967101911808
+    }
+  },
+  "mode": "stop"
+}

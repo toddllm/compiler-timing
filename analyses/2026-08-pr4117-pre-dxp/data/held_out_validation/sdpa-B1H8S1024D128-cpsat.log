@@ -1,0 +1,1 @@
+[unspecified] [31m ERRR 30.08.2026 02:50:03.489733 [                  ras_base.hpp:  74] {"action":"information","category":"software","code":"0x8c0d","description":"No RuntimeContext has been created.","message":"RuntimeContext not created","name":"RAS::RUNTIMECONTEXT::ContextNotCreated","severity":"ERROR","step":"Open ticket","type":"runtime_error"}[0m

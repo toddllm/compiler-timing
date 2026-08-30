@@ -1,0 +1,54 @@
+[unspecified] [31m ERRR 30.08.2026 02:55:58.622203 [                  ras_base.hpp:  74] {"action":"information","category":"software","code":"0x8c0d","description":"No RuntimeContext has been created.","message":"RuntimeContext not created","name":"RAS::RUNTIMECONTEXT::ContextNotCreated","severity":"ERROR","step":"Open ticket","type":"runtime_error"}[0m
+Traceback (most recent call last):
+  File "/home/tdeshane/pr4117/compiler-timing/analyses/2026-08-pr4117-pre-dxp/harness/pre_dxp_stop.py", line 803, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/tdeshane/pr4117/compiler-timing/analyses/2026-08-pr4117-pre-dxp/harness/pre_dxp_stop.py", line 748, in main
+    compiled(*inputs)
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1183, in compile_wrapper
+    raise e.remove_dynamo_frames() from None  # see TORCHDYNAMO_VERBOSE=1
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1079, in _compile_fx_inner
+    raise InductorError(e, currentframe()).with_traceback(
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1059, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1847, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1608, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/extra_timers.py", line 319, in _timed_compile_to_module
+    return _orig_compile_to_module(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 2669, in compile_to_module
+    return self._compile_to_module()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 2675, in _compile_to_module
+    self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+                                                             ^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/extra_timers.py", line 350, in _timed_gl_codegen
+    return _orig_gl_codegen(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/.venv/lib64/python3.12/site-packages/torch/_inductor/graph.py", line 2607, in codegen
+    self._update_scheduler()
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/patches.py", line 130, in _spyre_update_scheduler
+    _pre_scheduling_pass(self)
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/passes.py", line 555, in __call__
+    pass_fn(graph)
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 2139, in propagate_spyre_tensor_layouts
+    op.layouts = compute_layouts(op, output, output_dep, args)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 1469, in compute_layouts
+    return _matmul_layouts(op, output, output_dep, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 900, in _matmul_layouts
+    y_req_stl = find_stick_compatible_input_layout(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tdeshane/pr4117/torch-spyre/torch_spyre/_inductor/propagate_layouts.py", line 858, in find_stick_compatible_input_layout
+    raise Unsupported(
+torch._inductor.exc.InductorError: Unsupported: Spyre backend does not support: batchmatmul: cannot restickify any input layout of y to carry y_var=d2
+
+Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+

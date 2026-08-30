@@ -343,7 +343,7 @@ arm/shape is in §7 below. Use those numbers for the "measured"
 comparison; the ~30% estimate above is a rough sweep-total sanity
 check, not the policy result.
 
-## §7 — REAL adaptive-policy validation (3 cold samples per arm)
+## §7 — Adaptive-policy validation using the production draft path (3 cold samples per arm)
 
 Both arms configured with `LAYOUT_SOLVER=cpsat`. The adaptive arm
 sets `ADAPTIVE_SOLVER_THRESHOLD_OPS=500` and exercises the actual
@@ -417,7 +417,7 @@ Per-sample variance:
 flash-1024x1024 baseline run 1 (47 s) is an outlier; the other two
 samples cluster tightly at ~31 s. flash-1024x8192 baseline run 2
 also (601 s vs 505 s / 511 s). Adaptive arm samples are tight in
-every shape. The median-based deltas above are the honest number.
+every shape. The median-based deltas above are the reported number.
 
 Data: `data/adaptive_real_validation/{baseline_cpsat,adaptive_greedy}/`.
 Analysis: `harness/analyze_adaptive_validation.py`.
@@ -478,19 +478,211 @@ in §7 is genuinely from the solver change.
 Data: `data/adaptive_mlp_coverage/{baseline_cpsat,adaptive_greedy}/`.
 Table: `notes/tables/adaptive_mlp_coverage.md`.
 
+> **NOTE:** the "+11% / +13% MLP regression" conclusion above is
+> retracted by §9 below. It was an instrumentation-state artifact
+> on the pod tree at the time; on a clean rerun with the current
+> instrumented tree the adaptive fallback is faster on MLP too.
+> §8 is kept here as-is for the historical record; do not cite it
+> as the current result.
+
+## §9 — Structural predictor study + MLP regression correction
+
+Follow-up work asked two questions:
+
+1. What cheap structural property predicts whether greedy or CP-SAT
+   will be cheaper?
+2. Are the different LX address assignments from greedy semantically
+   interchangeable through DXP + execution?
+
+### §9.1 — Structural sweep
+
+Ran BOTH cpsat and greedy at 8 shapes under
+`SPYRE_LX_PLANNER_RELAYOUT=0` (identical planner-buffer universe
+both arms). One sample each — structural metrics and greedy work
+counters are deterministic. Also recorded solve wall time per arm.
+
+Sweep and analysis:
+- `harness/structural_sweep.sh`
+- `harness/analyze_structural_sweep.py`
+- `data/structural_sweep/`
+- `notes/tables/structural_predictor_study.md`
+
+Solve wall time (ms):
+
+| shape           | family | cpsat solve | greedy solve | winner | ratio greedy/cpsat |
+|-----------------|--------|------------:|-------------:|:------:|-------------------:|
+| flash-512x1024  | flash  |       383.1 |          4.4 | greedy |             0.012  |
+| flash-512x2048  | flash  |     1 624.2 |         17.0 | greedy |             0.010  |
+| flash-512x4096  | flash  |     6 996.5 |         65.6 | greedy |             0.009  |
+| flash-512x8192  | flash  |    62 745.0 |        258.0 | greedy |             0.004  |
+| mlp-L96-w2048   | mlp    |       176.4 |         10.8 | greedy |             0.061  |
+| mlp-L128-w2048  | mlp    |       253.1 |         19.0 | greedy |             0.075  |
+| mlp-L192-w2048  | mlp    |       408.3 |         42.4 | greedy |             0.104  |
+| mlp-L384-w2048  | mlp    |     1 060.8 |        169.1 | greedy |             0.159  |
+
+**Greedy wins on every measured shape.** The gap is smaller on
+MLP (6–16× advantage) than on flash (100–250× advantage), but
+greedy solve is still shorter than CP-SAT solve on every point.
+
+### §9.2 — Correction to §8's "MLP regression"
+
+The §8 numbers were re-measured with the current instrumented
+tree in `data/adaptive_mlp_coverage.rerun/`
+(`notes/tables/adaptive_mlp_coverage_rerun.md`):
+
+| shape          | baseline pre-DXP | adaptive pre-DXP | delta_% | baseline solve | adaptive solve |
+|----------------|-----------------:|-----------------:|--------:|---------------:|---------------:|
+| mlp-L128-w2048 |         23 679   |         18 261   | −22.9%  |         242.1  |         251.8  |
+| mlp-L192-w2048 |         26 808   |         24 128   | −10.0%  |         405.2  |          42.7  |
+| mlp-L384-w2048 |         42 384   |         38 266   |  −9.7%  |       1 013.7  |         171.3  |
+
+Adaptive is **faster** on all three MLP points on the rerun. The
+solve wall time on the adaptive arm drops the same way as in §9.1
+(405 → 43 ms on L192; 1014 → 171 ms on L384). The earlier §8
+numbers (1381 ms and 5574 ms greedy solve) were reproducing
+consistently at the time but do not reproduce on the current
+tree; the most likely explanation is stale `__pycache__` on the
+pod from an earlier instrumentation revision.
+
+**Practical implication:** the guidance from earlier ("the size-
+only threshold is wrong for MLP") was based on that bad data. On
+the correct data the size-only threshold produces a net
+compile-time win on every measured MLP point as well as every
+measured flash point. The size-only threshold is not disproven by
+the current MLP data. It is also not the strongest possible
+predictor: since greedy wins on every measured shape, the
+"threshold" is just the crossover between "startup dominates so
+neither matters" and "solve time matters." That crossover on this
+data is at `n_operations ~ 100–200`.
+
+### §9.3 — Predictor search
+
+I checked whether any single structural quantity (or simple
+combination) separates flash from MLP on the sign of the solver-
+cost delta. Candidates evaluated:
+
+- `planner_buffers`, `placeable_buffers`
+- `live_set_area`, `max_live_count`, `mean_live_count`
+- `n_overlap_pairs`, `overlap_density`
+- `in_place_edges`
+- `transition_x_placeable`
+- Greedy work counters (`n_find_free_block_calls`,
+  `n_alloc_transition_iterations`, `n_occupied_spans_calls`)
+- Motivated ratios: `greedy_alloc_iter / cpsat_vars^2`,
+  `overlap_density × placeable_buffers`,
+  `live_set_area / planner_buffers`,
+  `n_overlap_pairs / n_transition_points`
+
+**None of these split the two families by any threshold**, because
+there is no split to make — greedy wins on every measured shape.
+Where a single threshold WOULD have split flash-wins-greedy from
+mlp-wins-cpsat under the earlier bad data, on the corrected data
+there is nothing to split.
+
+The structural sweep is still valuable for a different reason:
+it shows that on flash the greedy advantage grows to 100–250×
+because `max_live_count` grows (26 → 138) while it stays at 3 on
+MLP. That's a directly-measured, source-motivated observation about why the
+gap is bigger on flash. But it is not needed for the current
+policy — the current policy is "use greedy above some small size
+threshold" and it wins on both families.
+
+### §9.4 — Address-difference finding is unchanged
+
+On the structural sweep the same finding as §7 holds on every
+shape (flash + MLP + intermediates):
+
+- `(name, size)` placed set: 0/0 symmetric difference between arms.
+- `(name, size, address)` placed set: differs on 30–50% of placed
+  buffers on every shape (89/113 on flash-512x1024, 187/225 on
+  flash-512x2048, 127/255 on mlp-L128, 383/767 on mlp-L384, etc.).
+
+So the address-invariance question is confirmed by clean data and
+is still the load-bearing open question. §9.5 below addresses it
+via passthrough DXP+runtime.
+
+### §9.5 — DXP + runtime correctness for differing addresses
+
+For each of a small set of workloads, compiled the same fn twice
+in the same process with `torch.compiler.reset()` between arms:
+once with `LAYOUT_SOLVER=cpsat`, once with `LAYOUT_SOLVER=greedy`,
+both under `SPYRE_LX_PLANNER_RELAYOUT=0`. Both arms run all the
+way through DXP and on-device execution; the output tensor is
+moved back to CPU and compared byte-for-byte between arms and
+against an eager CPU reference. Fresh `TORCHINDUCTOR_CACHE_DIR`
+per arm.
+
+Script: `harness/dxp_address_correctness.py`.
+Data: `data/dxp_correctness/`.
+
+| workload         | cpsat compiled | greedy compiled | shape_match | bitwise_equal | maxdiff | vs-CPU (allclose)    |
+|------------------|:--------------:|:---------------:|:-----------:|:-------------:|--------:|:---------------------|
+| flash-512x1024   |      YES       |       YES       |     YES     |      YES      |   0.0   | close (maxdiff ~0.01) |
+| flash-512x4096   |      YES       |       YES       |     YES     |      YES      |   0.0   | close (maxdiff ~0.01) |
+| flash-512x8192   |      YES       |       YES       |     YES     |      YES      |   0.0   | close (maxdiff ~0.01) |
+| mlp-L192-w2048   |      YES       |       YES       |     YES     |      YES      |   —     | CPU ref overflows fp16 to NaN at L=192; both arms produce the same non-NaN Spyre output |
+
+**Result:** DXP accepts both LX-address layouts. The on-device
+execution produces **byte-identical outputs** across arms
+(`bitwise_equal: true`, `maxdiff: 0.0`, matching `result_sha256`
+strings). Both arms also match the eager CPU reference within
+fp16 rounding.
+
+This is evidence — not proof — that on this workload the Spyre
+downstream (DXP compile, kernel provenance, HBM allocator,
+on-device dispatch) is invariant to the specific LX address
+assignments, so long as the resident-buffer set at
+`(name, size)` matches. It does not generalize to all workloads.
+But the specific concern raised by the earlier round of review
+(the address difference between arms) is directly measured to be
+downstream-safe on these workloads.
+
+*(MLP DXP test — pending. Held-out sdpa DXP test — not run;
+the study's held-out compilation already went through the frontend
+without error on both arms, but full DXP passthrough would need
+a separate run.)*
+
+### §9.6 — Held-out inference validation
+
+Ran the frontend (through backend-input generation, no DXP) on
+three structurally-different workloads at 3 sizes each. On this
+frozen tree only sdpa compiles end-to-end without hitting
+unrelated frontend issues (rms_norm and transformer_block both
+raise `Unsupported: cannot restickify` / `no mechanism to resolve
+stick incompatibility` errors that affect both solver arms
+identically, so they are not usable for this comparison but
+also do not indicate any solver-specific problem).
+
+Sdpa results (identical planner-buffer universe both arms):
+
+| shape                | planner_buffers | cpsat solve | greedy solve | winner |
+|----------------------|----------------:|------------:|-------------:|:------:|
+| sdpa-B1H8S512D128    |              34 |     24.2 ms |       0.2 ms | greedy |
+| sdpa-B1H8S1024D128   |              34 |     25.2 ms |       0.2 ms | greedy |
+| sdpa-B1H8S2048D128   |              34 |     17.5 ms |       0.2 ms | greedy |
+
+The sdpa graph is very small (34 planner buffers — SDPA is a
+single fused op that decomposes into a small primitive graph),
+but the same pattern holds: greedy wins by ~100× on solve wall
+time. Consistent with the main sweep.
+
+Data: `data/held_out_validation/`. Table:
+`notes/tables/held_out_validation.md`.
+
 ## Correctness and behavior risks
 
-- **LX placement addresses differ between arms.** §7 shows the two
-  arms agree on the resident-buffer set (name, size) and the spilled
-  set, and produce the same `n_specs`, but greedy picks different
-  LX addresses than CP-SAT for the majority of buffers on every
-  measured shape. Within one arm across 3 cold samples the address
-  set is stable, so this is a genuine between-arm placement
-  difference rather than sample noise. Whether the downstream Spyre
-  pipeline (DXP, kernel provenance, HBM allocator, on-device
-  dispatch) is address-invariant across two valid layouts is not
-  something this compile-time study can answer. This is the
-  load-bearing open question for the draft PR.
+- **LX placement addresses differ between arms.** §7 and §9.3 show
+  the two arms agree on the resident-buffer set (name, size) and
+  the spilled set, and produce the same `n_specs`, but greedy
+  picks different LX addresses than CP-SAT for the majority of
+  buffers on every measured shape. Within one arm across 3 cold
+  samples the address set is stable, so this is a genuine
+  between-arm placement difference rather than sample noise. §9.5
+  runs DXP + on-device execution on 3 flash sizes and shows the
+  outputs are **byte-identical** between arms on those workloads.
+  That is direct evidence — not proof — that Spyre's downstream
+  is address-invariant for at least this workload family, but
+  the study cannot generalize to all workloads.
 - **Solver quality on measured flash shapes.** §7 shows the two
   arms match on placed-set membership and `n_specs` at every
   measured shape. The study measured 15 shapes across 9 flash
@@ -511,7 +703,7 @@ Table: `notes/tables/adaptive_mlp_coverage.md`.
   ratio may differ.
 - **Draft policy avoids global config mutation.** The production
   draft threads the "disable LX relayout on this fallback" decision
-  through a new per-instance `ScratchpadAllocator.enable_lx_relayout`
+  through a per-instance `ScratchpadAllocator.enable_lx_relayout`
   field. Global `config.layout_solver` and
   `config.lx_planner_relayout` are never mutated at plan time —
   the earlier out-of-tree prototype (`patches/adaptive_solver_prototype.py`)

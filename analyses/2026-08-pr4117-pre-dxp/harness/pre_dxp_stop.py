@@ -397,6 +397,104 @@ def _mlp_workload(N_in: int, N_hidden: int, layers: int):
     }
 
 
+
+def _sdpa_workload(B: int, H: int, S: int, D: int):
+    """Real F.scaled_dot_product_attention (decomposition-driven).
+
+    Structurally different from the hand-tiled _flash_workload: the
+    compiler expands sdpa through its native decomposition, producing
+    a different graph shape from an explicit block-tiled loop.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    def sdpa(q, k, v):
+        return F.scaled_dot_product_attention(q, k, v, is_causal=True)
+
+    q = torch.randn(B, H, S, D, device="spyre", dtype=torch.float16)
+    k = torch.randn(B, H, S, D, device="spyre", dtype=torch.float16)
+    v = torch.randn(B, H, S, D, device="spyre", dtype=torch.float16)
+    return sdpa, (q, k, v), {"B": B, "H": H, "S": S, "D": D}
+
+
+def _rms_norm_workload(D: int, T: int):
+    """RMS-norm elementwise + reduction primitive.
+
+    A very different structural shape from both flash and MLP: no
+    heavy matmul, dominated by pointwise + reduction. Common
+    inference primitive.
+    """
+    import torch
+
+    F16_EPS = 1e-6
+
+    def rms_norm(x, w, eps, d):
+        x_sq = x * x
+        x_mean_sq = x_sq.mean(dim=0)
+        return x * torch.rsqrt(x_mean_sq + eps)[None, :] * w
+
+    activation = torch.randn(D, T, device="spyre", dtype=torch.float16)
+    weight = (
+        torch.randn(D, device="spyre", dtype=torch.float16)
+        .reshape(D, 1).expand(D, T).contiguous()
+    )
+    eps = torch.full([T], F16_EPS, device="spyre", dtype=torch.float16)
+    d_t = torch.full([T], D, device="spyre", dtype=torch.float16)
+    return rms_norm, (activation, weight, eps, d_t), {"D": D, "T": T}
+
+
+def _transformer_block_workload(seq_len: int, emb_dim: int):
+    """One transformer block: rms_norm -> attention -> rms_norm -> MLP.
+
+    Closest to real inference workloads in this study — combines
+    matmul-heavy attention/MLP with rms-norm reductions in a single
+    graph.
+    """
+    import math
+
+    import torch
+    import torch.nn.functional as F
+
+    H = 8
+    D_head = emb_dim // H
+    W_q = torch.randn(emb_dim, emb_dim, device="spyre", dtype=torch.float16)
+    W_k = torch.randn(emb_dim, emb_dim, device="spyre", dtype=torch.float16)
+    W_v = torch.randn(emb_dim, emb_dim, device="spyre", dtype=torch.float16)
+    W_o = torch.randn(emb_dim, emb_dim, device="spyre", dtype=torch.float16)
+    W_gate = torch.randn(emb_dim, 4 * emb_dim, device="spyre", dtype=torch.float16)
+    W_up = torch.randn(emb_dim, 4 * emb_dim, device="spyre", dtype=torch.float16)
+    W_down = torch.randn(4 * emb_dim, emb_dim, device="spyre", dtype=torch.float16)
+    norm_w_1 = torch.randn(emb_dim, device="spyre", dtype=torch.float16)
+    norm_w_2 = torch.randn(emb_dim, device="spyre", dtype=torch.float16)
+    x = torch.randn(seq_len, emb_dim, device="spyre", dtype=torch.float16)
+
+    def block(x, W_q, W_k, W_v, W_o, W_gate, W_up, W_down, nw1, nw2):
+        # rms_norm 1
+        h = x * torch.rsqrt((x * x).mean(dim=-1, keepdim=True) + 1e-6) * nw1
+        # attention: reshape for multi-head
+        q = (h @ W_q).reshape(seq_len, H, D_head).transpose(0, 1)
+        k = (h @ W_k).reshape(seq_len, H, D_head).transpose(0, 1)
+        v = (h @ W_v).reshape(seq_len, H, D_head).transpose(0, 1)
+        scale = 1.0 / math.sqrt(D_head)
+        scores = torch.matmul(q, k.transpose(-1, -2)) * scale
+        attn = torch.softmax(scores, dim=-1)
+        ctx = torch.matmul(attn, v)
+        ctx = ctx.transpose(0, 1).reshape(seq_len, emb_dim)
+        h2 = x + ctx @ W_o
+        # rms_norm 2
+        h3 = h2 * torch.rsqrt((h2 * h2).mean(dim=-1, keepdim=True) + 1e-6) * nw2
+        # MLP with SwiGLU
+        gate = F.silu(h3 @ W_gate)
+        up = h3 @ W_up
+        mlp = (gate * up) @ W_down
+        return h2 + mlp
+
+    return block, (x, W_q, W_k, W_v, W_o, W_gate, W_up, W_down,
+                   norm_w_1, norm_w_2), {
+        "seq_len": seq_len, "emb_dim": emb_dim, "H": H,
+    }
+
+
 # ---- main ------------------------------------------------------------------
 
 def _require_env(name: str) -> str:
@@ -409,12 +507,23 @@ def _require_env(name: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workload", choices=["flash", "mlp"], required=True)
+    ap.add_argument("--workload", choices=["flash", "mlp", "sdpa", "rms_norm", "transformer_block"], required=True)
     ap.add_argument("--Lq", type=int)
     ap.add_argument("--Lk", type=int)
     ap.add_argument("--N-in", type=int, dest="N_in", default=1024)
     ap.add_argument("--N-hidden", type=int, dest="N_hidden", default=4096)
     ap.add_argument("--layers", type=int, default=4)
+    # SDPA workload
+    ap.add_argument("--B", type=int, default=1)
+    ap.add_argument("--H", type=int, default=8)
+    ap.add_argument("--S", type=int, default=512)
+    ap.add_argument("--D", type=int, default=128)
+    # RMS-norm workload
+    ap.add_argument("--rms-D", type=int, dest="rms_D", default=1024)
+    ap.add_argument("--rms-T", type=int, dest="rms_T", default=512)
+    # Transformer-block workload
+    ap.add_argument("--seq-len", type=int, dest="seq_len", default=512)
+    ap.add_argument("--emb-dim", type=int, dest="emb_dim", default=1024)
     ap.add_argument("--out", type=str, required=True, help="timing JSON path")
     ap.add_argument(
         "--mode", choices=["stop", "observe", "passthrough"], default="stop",
@@ -610,6 +719,14 @@ def main() -> int:
         fn, inputs, meta = _flash_workload(args.Lq, args.Lk)
     elif args.workload == "mlp":
         fn, inputs, meta = _mlp_workload(args.N_in, args.N_hidden, args.layers)
+    elif args.workload == "sdpa":
+        fn, inputs, meta = _sdpa_workload(args.B, args.H, args.S, args.D)
+    elif args.workload == "rms_norm":
+        fn, inputs, meta = _rms_norm_workload(args.rms_D, args.rms_T)
+    elif args.workload == "transformer_block":
+        fn, inputs, meta = _transformer_block_workload(
+            args.seq_len, args.emb_dim
+        )
     else:
         raise AssertionError(args.workload)
     _tr.set_run_meta(**meta)
