@@ -12,11 +12,30 @@ Before I head out I wrapped up the #4117 baseline and the two current
 Torch-Spyre PRs I was carrying:
 
 - **#4139** — certified greedy seed for placement-only CP-SAT (Ready
-  for Review).
-- **#4141** — lazy OR-Tools loading; Ready for Review, compounds
+  for Review). Dave Grove commented on 2026-08-31 that joint CP-SAT
+  co-optimization is imminent as the shipped default. That obviously
+  changes the value proposition — #4139 accelerates only the
+  placement-only path, not the joint solver. I've asked Dave whether
+  the placement-only path stays a supported path or whether #4139
+  should be closed as performance-study evidence for #3932. Awaiting
+  his call; no code churn while that decision is pending.
+- **#4141** — lazy OR-Tools loading; Ready for Review, stacked on
   #4139, A/B is about -1 s on cold first useful certified compile.
   Rebased onto upstream `7c1d5b6` (post-#4084); all 5 required
-  workflows green.
+  workflows green. Its headline startup win compounds #4139, so if
+  the joint switch happens, the win no longer applies to the default
+  compile path. Held with #4139 pending Dave's direction.
+
+If joint CP-SAT does become the default, the first performance task
+on the new default path is to profile the actual joint solver at
+production graph scale — model-building time and solve time
+separately, decision-var / constraint counts if practical, scaling
+vs graph size. Don't assume it scales like placement-only did.
+Reuse `harness/frontend_reconnaissance.py`. Full experiment plan in
+`notes/pr4139-pr4141-coopt-transition.md`. **Don't try to extend
+#4139's placement-only certificate into the joint solver** — the
+joint objective has axes (parallelism, balance, `cost_expr`) that
+the forced-spill lower bound doesn't cover.
 
 Your restickify investigation is still the biggest known large-graph
 lane by a wide margin — the frozen-tree study had

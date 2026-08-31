@@ -29,17 +29,26 @@ established that fallback CP-SAT still runs and matches standalone.
   placement-only `CpSatLayoutSolver.plan_layout`. On accepted plans
   greedy replaces CP-SAT entirely (previously several tens of ms
   to tens of seconds); on rejected plans the standalone CP-SAT solve
-  runs unchanged. Ready-for-Review at 2026-08-31.
-- **PR #4141 (lazy OR-Tools loading, Todd's final PR)** — stacks on
-  #4139 and makes OR-Tools import truly lazy: certified compiles no
-  longer trigger the ~1.4 s SWIG bootstrap of
-  `ortools.sat.python.cp_model`. A/B on 5 fresh processes:
-  first-useful-compile median 3.04 s (baseline) -> 1.93 s (lazy) =
-  -1.11 s (-36%). Rebased onto upstream `7c1d5b6` (post-#4084
-  `elem_arr_1` ceiling fix) at head `1fa1f56`. Ready for Review.
-  All 5 required top-level workflows green on the rebased head.
-  <https://github.com/torch-spyre/torch-spyre/pull/4141>. This
-  implements **Card 1** from the roadmap.
+  runs unchanged. Ready-for-Review at 2026-08-31. **Strategic merge
+  value pending maintainer decision after 2026-08-31 comment from
+  Dave Grove indicating joint CP-SAT co-optimization is imminent as
+  the shipped default** — placement-only path (which is all #4139
+  accelerates) may become non-default or be removed. See
+  `notes/pr4139-pr4141-coopt-transition.md`.
+- **PR #4141 (lazy OR-Tools loading)** — stacks on #4139 and makes
+  OR-Tools import truly lazy: certified compiles no longer trigger
+  the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. A/B on
+  5 fresh processes: first-useful-compile median 3.04 s (baseline)
+  -> 1.93 s (lazy) = -1.11 s (-36%). Rebased onto upstream `7c1d5b6`
+  (post-#4084 `elem_arr_1` ceiling fix) at head `1fa1f56`. Ready for
+  Review. All 5 required top-level workflows green on the rebased
+  head. <https://github.com/torch-spyre/torch-spyre/pull/4141>. This
+  implements **Card 1** from the roadmap. **Strategic value coupled
+  to #4139**: if joint CP-SAT becomes the shipped default, the
+  measured startup win no longer applies to the default compile path
+  (joint solver needs OR-Tools); residual value is module-loading
+  hygiene, thread-safe first-load, and preserved absent-package
+  fallback. See `notes/pr4139-pr4141-coopt-transition.md`.
 - **`op_read_writes` memoization** — already in-tree on the rebased
   branch (`pass_utils.op_read_writes`, key `_ts_cached_read_writes`
   on the op instance, invalidated via `invalidate_op_read_writes`
@@ -237,7 +246,7 @@ worth prioritizing.
 
 ---
 
-### Card 1 — Defer OR-Tools import (Ready for Review as PR #4141)
+### Card 1 — Defer OR-Tools import (Ready for Review as PR #4141; strategic value coupled to #4139)
 
 **Problem.** Every first compile in a process was paying ~500-1200
 ms for the first-time SWIG bootstrap of `ortools.sat.python.cp_model`

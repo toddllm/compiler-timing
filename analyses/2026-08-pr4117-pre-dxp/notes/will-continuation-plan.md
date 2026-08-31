@@ -14,8 +14,8 @@ Slack, IBM internal wikis, or PR-comment threads.
 | # | Status | What it is |
 |---|---|---|
 | #4113 | merged | dedup fix. Baseline for everything below. |
-| #4139 | Ready for Review | **Certified greedy seed for placement-only CP-SAT.** ``CpSatLayoutSolver.plan_layout`` runs a cheap greedy probe first and skips CP-SAT entirely when the probe's placement is representable under CP-SAT's placement contract and attains the exact forced-spill lower bound of the residency objective. On 28 corpus scenarios: 20 certified, 8 fallback, 0 objective mismatches vs standalone CP-SAT. On 40 captured-buffer capacity-pressure points: 39 certified, 1 fallback (flash-512x8192 at 25% capacity — the case where CP-SAT strictly wins). See `notes/certified-greedy-seed.md`. |
-| #4141 | Ready for Review | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%); a second session under higher pod contention reproduced -2.06 s. Rebased onto upstream `7c1d5b6` (post-#4084 `elem_arr_1` ceiling fix). All 5 required top-level workflows green on head `1fa1f56`. See `notes/pr4141-body.md` and `data/lazy_ortools_ab_v2/`. |
+| #4139 | Ready for Review, **merge value pending maintainer decision** | **Certified greedy seed for placement-only CP-SAT.** Accelerates only `CpSatLayoutSolver.plan_layout` (`co_optimizing_lx_planning=False`); does NOT accelerate `plan_layout_and_core_divisions`. On 28 corpus scenarios: 20 certified, 8 fallback, 0 objective mismatches vs standalone CP-SAT. On 40 captured-buffer capacity-pressure points: 39 certified, 1 fallback (flash-512x8192 at 25% capacity). See `notes/certified-greedy-seed.md`. **Status update 2026-08-31**: Dave Grove (`dgrove-oss`, author of #3932 epic) indicated joint CP-SAT co-optimization is going to become the shipped default within a couple of days. That may make the placement-only path a non-default path, or remove it. Merge decision now maintainer-owned; see `notes/pr4139-pr4141-coopt-transition.md`. |
+| #4141 | Ready for Review, **strategic value coupled to #4139** | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%); a second session under higher pod contention reproduced -2.06 s. Rebased onto upstream `7c1d5b6` (post-#4084 `elem_arr_1` ceiling fix). All 5 required top-level workflows green on head `1fa1f56`. **If joint CP-SAT becomes the shipped default, #4141's measured startup win no longer applies to the default compile path** — the joint solver needs OR-Tools, so the lazy import fires immediately on first joint compile. Residual value (module-loading hygiene, thread-safe first-load, absent-package fallback preservation) is a maintainer judgment. See `notes/pr4141-body.md`, `data/lazy_ortools_ab_v2/`, and `notes/pr4139-pr4141-coopt-transition.md`. |
 
 Baseline instrumentation harness (all in
 `analyses/2026-08-pr4117-pre-dxp/harness/`):
@@ -73,6 +73,35 @@ Known measurement caveats:
   Observed on the `Test Inductor Ops Reduction Scalar` sub-check
   after the #4141 rebase-onto-`7c1d5b6` push (the parent `tests`
   workflow still concluded `success`).
+
+---
+
+## Priority-zero after the joint-CP-SAT default switch
+
+Once `co_optimizing_lx_planning` becomes the shipped default (per
+Dave Grove's 2026-08-31 note on #4139; see
+`notes/pr4139-pr4141-coopt-transition.md`), the first performance
+task is:
+
+**Profile the joint CP-SAT path at production graph scale. Do not
+assume it scales like placement-only CP-SAT did.**
+
+Reuse the `harness/frontend_reconnaissance.py` DXP-intercept
+methodology. Measure model-building time and solve time separately;
+capture n_buffers, n_core_division_buffers, and where possible the
+`cp_model.CpModel` decision-variable and constraint counts.
+Production-shaped workloads (flash, MLP, sdpa) with captured
+planner-buffer sets. Full experiment plan in the coopt-transition
+note.
+
+**Do NOT extend #4139's placement-only certificate into
+`plan_layout_and_core_divisions`.** The joint objective has axes
+(parallelism, balance, optional `cost_expr`) that the placement-
+only forced-spill lower bound does not cover. A joint-objective
+lower-bound proof would be a real research task, not a mechanical
+extension. The certificate methodology from #4139 remains useful
+as evidence for the #3932 compile-time/scalability track even if
+neither PR merges.
 
 ---
 
