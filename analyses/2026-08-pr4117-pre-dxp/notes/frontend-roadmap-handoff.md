@@ -134,10 +134,11 @@ The 5.99 s first-compile on a *trivial* graph decomposes to:
   first time `_make_cpsat_solver` is called.
 
 So the **fixed compile-latency floor** on a warm Python process is
-approximately 6 s, of which ~1.4 s can be removed by preloading
-OR-Tools during process init. The 8.85 s `torch + torch_spyre`
-import is separate and belongs to the process launch, not the
-compile.
+approximately 6 s, of which ~1.4 s can be avoided on certified
+compiles by deferring the OR-Tools import until CP-SAT is actually
+required (implemented in PR #4141; see Card 1 below). The 8.85 s
+`torch + torch_spyre` import is separate and belongs to the process
+launch, not the compile.
 
 ## SDSC decomposition (small graphs)
 
@@ -234,64 +235,70 @@ worth prioritizing.
 
 ---
 
-### Card 1 — Lazy OR-Tools loading (IN REVIEW as PR #4141)
+### Card 1 — Defer OR-Tools import (IN REVIEW as PR #4141)
 
-**Status.** In review as `toddllm/torch-spyre` PR #4141 stacked on
-#4139. Direction switched from "eager preload" (foil control) to
-"lazy load" after the reconnaissance proved eager preload merely
-relocates the ~1.4 s cost. The lazy approach removes it from every
-certified compile entirely (`_load_ortools` only fires when
-`_plan_layout_generic` runs, i.e. seed rejects or joint path).
-A/B evidence: `analyses/2026-08-pr4117-pre-dxp/data/lazy_ortools_ab/`.
+**Problem.** Every first compile in a process was paying ~500-1200
+ms for the first-time SWIG bootstrap of `ortools.sat.python.cp_model`
+inside `_maybe_scratchpad_planning`. On the workloads measured this
+was the single largest pre-scheduling bucket. Scaling: fixed
+one-shot per process. Source locus:
+`torch_spyre/_inductor/scratchpad/allocator.py:2310` chained through
+`ilp_solver_ortools.py`'s module-top
+`from ortools.sat.python import cp_model, cp_model_helper`. Fully
+diagnosed and reproducible in `build_solver_probe.py` and
+`ortools_import_chain_probe.py`.
 
-**Name (original).** Eager-import OR-Tools during Spyre backend
-init to remove the ~1.4 s first-compile lazy-import spike.
+#### Rejected control: eager preload
 
-**Current cost.** 500-1200 ms on **every first compile** in a
-process. On our data this is the single largest pre-scheduling
-bucket. Amortizes to zero after the first compile.
+Move the `from ortools.sat.python import cp_model, cp_model_helper`
+up into `torch_spyre/__init__.py` (or a lazy-loader that fires
+when `torch_spyre` is imported, not when the first compile runs).
 
-**Scaling / natural unit.** Fixed, one-shot per process.
+**Why rejected.** It moves the OR-Tools cost earlier but does not
+remove process-to-first-useful-result work. Users still pay the
+~1.4 s SWIG bootstrap; it just shows up on `import torch_spyre`
+instead of on the first compile. This is a control candidate that
+proves the win must be *avoiding* the import, not *relocating*
+it.
 
-**Source ownership.** Torch-Spyre. Locus:
-`torch_spyre/_inductor/scratchpad/allocator.py:2310` (lazy import
-inside `_make_cpsat_solver`).
+#### Chosen approach: lazy load (PR #4141)
 
-**What appears expensive.** SWIG-wrapped C++ ortools binding
-initialization. Verified in `build_solver_probe.py`: first
-`from ortools.sat.python import cp_model` takes ~1.4 s; every
-subsequent import is 0 ms.
+**Why.** #4139-certified placement-only compiles do not need
+CP-SAT, so avoid importing OR-Tools entirely unless the
+certificate rejects or joint CP-SAT is used.
 
-**Current hypothesis.** Move the `from ortools.sat.python import
-cp_model, cp_model_helper` up into `torch_spyre/__init__.py` (or
-a lazy-loader gated on `config.layout_solver in {"cpsat"}` that
-fires when torch_spyre is imported, not when the first compile
-runs). This shifts cost to import-time where users already pay
-`torch_spyre` import cost.
+**Shape.** In `ilp_solver_ortools.py`:
 
-**Confidence.** HIGH. Fully diagnosed and reproducible.
+- Module-top `from ortools.sat.python import ...` replaced with
+  `cp_model = None; cp_model_helper = None`.
+- `_ortools_available()`: cheap idempotent probe via
+  `importlib.util.find_spec("ortools.sat.python.cp_model")`.
+  Robust to `ModuleNotFoundError` / `ImportError` / `ValueError`.
+  Result cached.
+- `_load_ortools()`: idempotent, thread-safe (double-checked
+  `threading.Lock`) full import that populates the module globals.
+  Publishes both globals in one step; no half-initialized state.
+- `CpSatLayoutSolver.__init__` calls `_ortools_available()` (10 ms
+  once per process, cached thereafter) — preserves the pre-#4141
+  `ImportError`-at-construction contract when ortools is absent.
+- `CpSatLayoutSolver._plan_layout_generic` calls `_load_ortools()`
+  on entry — the single choke point every CP-SAT path flows
+  through, including #3810's `cost_expr` branch.
 
-**Expected upside.** 500-1200 ms shaved off every first compile;
-zero on subsequent compiles. This IS the small-graph interactive
-speedup — no other change in this list is as clean.
+**Measured (5 fresh-process samples, trivial compile).**
+BASELINE first_call_wall median 3.04 s → LAZY 1.93 s = -1.11 s
+(-36%). A/B evidence:
+`analyses/2026-08-pr4117-pre-dxp/data/lazy_ortools_ab/`.
 
-**Risk.** LOW. OR-Tools is already a hard dependency (no fallback
-path exists when `ilp_solver_ortools` is missing except the greedy
-solver, which is what our fallback already does). Import ordering
-in `torch_spyre.__init__.py` may interact with autoload gating —
-worth a small test.
+**Semantic note.** Package-absent behavior is preserved exactly
+(greedy fallback with warning). Present-but-broken behavior
+narrows: pre-#4141 silently fell back to greedy; post-#4141 the
+`ImportError` surfaces at solve time on a fallback compile.
+Certified compiles are invisible to broken installs.
 
-**Independence.** YES. Independent of Will's restickify lane and
-of the CP-SAT certificate work.
-
-**First next experiment.** Move the import to
-`torch_spyre.__init__`, gate on
-`config.layout_solver == "cpsat"`, re-run
-`fixed_startup_probe.py`. Should collapse the first-compile spike.
-
-**Likely fix shape.** Local import ordering change (~10 lines).
-
-**Ownership tag.** `GOOD_INDEPENDENT_TASK`. Trivial to hand off.
+**Confidence.** HIGH. **Risk.** LOW. **Ownership tag.**
+`GOOD_INDEPENDENT_TASK` (already picked up by Todd as the final
+#4117 PR).
 
 ---
 
@@ -567,8 +574,8 @@ a fixed startup cost regardless of workload.
 
 For "fixed compile latency; first useful compile":
 
-1. **Card 1** — OR-Tools eager preload. Removes 500-1200 ms from
-   every first compile in a process. Trivial local fix.
+1. **Card 1** — defer OR-Tools import (IN REVIEW as PR #4141).
+   Avoids ~1.4 s on every certified first compile in a process.
 2. **Card 3** — Spyre device first-tensor init (~5.7 s). Requires
    runtime-team input.
 3. **Card 2** — torch_spyre import cost (~8.85 s combined with
@@ -579,8 +586,8 @@ For "fixed compile latency; first useful compile":
 Derived from the data above:
 
 **Phase 1 — remove known dominant pathologies.**
-- Card 1 (OR-Tools eager preload): the single-highest-leverage
-  change for interactive latency, low risk, easy hand-off.
+- Card 1 (defer OR-Tools import, PR #4141): the single-highest-
+  leverage change for interactive latency, low risk, in review.
 - Continue Card 4 (Will).
 
 **Phase 2 — attack repeated linear work / per-spec constants.**
