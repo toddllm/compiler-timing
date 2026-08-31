@@ -49,6 +49,16 @@ Known measurement caveats:
   session. Deltas were stable; absolutes are not.
 - `torch` import (~5-9 s cold) and first Spyre-tensor allocation
   (~5.7 s) are separate from any compile-time optimisation.
+- **Recurring CI flake unrelated to #4117**:
+  `test_inductor_ops__oot_wrapper.py::TestOpsPRIVATEUSE1::test_keep_by_index_4d_dim3_spyre`
+  with `AssertionError: Tensor-likes are not close!` at
+  `test_inductor_ops.py:6354`. Seen intermittently on #4139
+  pushes (twice) and #4141 push `474b991`. Does not touch the
+  scratchpad memory planner or the CP-SAT layout solver — it's an
+  inductor-ops numerical-tolerance flake on `aten.index_select`-
+  style kernels. Retrying the CI job clears it. If you see it on
+  future #4117 PRs, do not investigate it as a scratchpad
+  regression; it is not one.
 
 ---
 
