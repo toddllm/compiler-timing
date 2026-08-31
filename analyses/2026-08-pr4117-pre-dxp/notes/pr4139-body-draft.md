@@ -1,6 +1,5 @@
-# [Draft] inductor: certified greedy seed for placement-only CP-SAT
+# inductor: certified greedy seed for placement-only CP-SAT
 
-> **Draft — not asking for review or merge yet.**
 > Placement-only CP-SAT first runs greedy on a solver-local copy. If
 > that placement is representable under CP-SAT's placement domain and
 > attains the exact forced-spill lower bound of CP-SAT's own residency
@@ -9,6 +8,14 @@
 > normal CP-SAT runs unchanged. The certificate bounds the objective,
 > not the placement set: a non-excluded buffer whose `spill_cost == 0`
 > may legally remain spilled on a certified plan.
+
+Ready for technical review by the scratchpad / CP-SAT owners.
+Reviewers should evaluate the certificate implementation, API
+assumptions, and whether any additional DXP/on-device validation is
+wanted before merge — objective equivalence is formally certified
+on accepted plans and preserved by the standalone CP-SAT fallback
+on rejected ones, but the final rebased end-to-end pass intercepted
+DXP before its subprocess (see caveat below).
 
 Refs #4117, #3978, #3932, #2062.
 
@@ -137,6 +144,17 @@ Selected wall times:
 | sdpa-S1024       |  1.00 |  1.44M   |  1.44M   | greedy-certified |   0.2 |      23.5 |    0.8 |
 | sdpa-S2048       |  1.00 | 22.02M   | 22.02M   | greedy-certified |   0.2 |      17.1 |    1.0 |
 
+**Wall-time framing on the fallback row.** On a fallback, the hybrid
+necessarily pays the greedy probe overhead before running CP-SAT.
+In the measured 2056-buffer flash-512x8192 case the greedy probe
+itself was about 237 ms. End-to-end CP-SAT solve wall varied
+substantially between runs (a separate rebased-branch run on the
+same captured buffers reported 45.3 s standalone vs 64.9 s hybrid;
+this table reports 65.3 s vs 45.5 s from a different run), so the
+fallback measurements are NOT used to claim a wall-time improvement
+or regression. The deterministic conclusions are objective identity
+and the per-run greedy-probe overhead.
+
 **Unit tests** — `tests/inductor/test_cpsat_certified_greedy_seed.py`,
 18 tests:
 
@@ -238,8 +256,38 @@ Data: `data/e2e_validation/*.json`.
 
 ## Caveats
 
-- Greedy probe adds ~0.2 ms on tiny graphs to ~250 ms on the largest
-  measured flash shape.
+- **The certificate proves objective optimality, not placement
+  identity.** On an accepted plan the returned buffer list is
+  objective-equivalent to what CP-SAT would produce; the placement
+  set may differ, and a non-excluded buffer whose `spill_cost == 0`
+  can legally remain spilled (test 5b guards this). `spill_reasons`
+  falls back to `_SOLVER_CHOSE_SPILL` in that branch.
+- **Zero-cost non-excluded buffers may remain spilled.** Single-use
+  graph inputs (`read_count == 1`, `first_use_is_read == True`) have
+  `reads_served == 0` and `is_intermediate == 0`, so `spill_cost ==
+  0`; the residency objective is invariant to their placement, so
+  the certificate is valid even when they are unplaced.
+- **Greedy probe adds overhead on CP-SAT fallback cases.** ~0.2 ms
+  on tiny graphs, ~237 ms on the 2056-buffer flash-512x8192
+  capacity-pressure case. On fallback the hybrid necessarily pays
+  this on top of the CP-SAT solve; the CP-SAT solve wall itself
+  varies substantially between runs, so the measurements here are
+  not used to claim a fallback wall-time improvement or regression.
+- **The current-main post-#3810 front-end validation intercepted
+  DXP before its subprocess.** The e2e harness records the seed
+  decision, buffer counts, objectives, and the standalone-CP-SAT
+  cross-check on the rebased branch, but the DXP compile itself was
+  short-circuited to keep wall time bounded (the seed fires inside
+  the scratchpad allocator, which runs before DXP). Earlier study
+  data on the parent #4117 branch contains actual DXP / on-device
+  bitwise-equality evidence; this final rebased validation did not
+  repeat device execution.
+- **Joint `plan_layout_and_core_divisions(cost_expr=...)` is
+  untouched.** #3810's `cost_expr` branch is reachable only through
+  that joint entry and never through `plan_layout`; the seed is on
+  `plan_layout` only. Test 15 exercises this behaviorally by
+  patching the seed to raise and confirming the joint path
+  completes without hitting the raise.
 - Bundle-generation nondeterminism from the #4117 study stands as a
   separate follow-up; the regression gates for this PR are the
   structural placement-objective identity, not `bundle.mlir` bytes.

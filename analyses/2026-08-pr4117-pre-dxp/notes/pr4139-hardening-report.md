@@ -331,8 +331,17 @@ it through the rebased solver. Result
 | **objectives match** | **True** |
 | greedy alone wall | 225 ms |
 | seed probe wall | 261 ms |
-| standalone CP-SAT wall | 45.3 s |
-| hybrid (seed + fallback) wall | 64.9 s |
+| standalone CP-SAT wall | 45.3 s (this run) |
+| hybrid (seed + fallback) wall | 64.9 s (this run) |
+
+On a fallback, the hybrid necessarily pays the greedy probe
+overhead before running CP-SAT. In this measured 2056-buffer flash
+case the greedy probe itself was ~237 ms (`_try_certified_greedy_seed`
+inside `plan_layout`). End-to-end CP-SAT solve wall varied
+substantially between runs, so the fallback measurements above are
+NOT used to claim a wall-time improvement or regression — only the
+per-run greedy-probe overhead and the objective identity are
+deterministic conclusions.
 
 The seed's greedy probe strictly leaves 2560 units of residency
 on the table vs the forced-spill floor. The certificate correctly
