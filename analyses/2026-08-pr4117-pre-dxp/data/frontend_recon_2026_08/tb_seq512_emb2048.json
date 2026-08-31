@@ -1,0 +1,132 @@
+{
+  "meta": {
+    "seq_len": 512,
+    "emb_dim": 2048,
+    "ffn_dim": 8192
+  },
+  "first_call_wall_s": 4.063992532901466,
+  "hit_pre_dxp": true,
+  "err": null,
+  "passes": [
+    {
+      "pass_name": "deadcode_elimination",
+      "elapsed_ms": 3
+    },
+    {
+      "pass_name": "propagate_named_dims",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "validate_named_dims",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "assign_dim_hints",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "_maybe_reorder_unhinted_interlopers",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "_maybe_coarse_tile_hints",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "split_multi_ops",
+      "elapsed_ms": 1
+    },
+    {
+      "pass_name": "propagate_spyre_tensor_layouts",
+      "elapsed_ms": 56
+    },
+    {
+      "pass_name": "validate_ops",
+      "elapsed_ms": 2
+    },
+    {
+      "pass_name": "optimize_restickify_locations",
+      "elapsed_ms": 53
+    },
+    {
+      "pass_name": "finalize_layouts",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "insert_restickify",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "validate_no_restickify_on_mutation_targets",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "enforce_indirect_access_layout",
+      "elapsed_ms": 4
+    },
+    {
+      "pass_name": "insert_post_mutation_restickify",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "insert_restickify_padding",
+      "elapsed_ms": 7
+    },
+    {
+      "pass_name": "insert_bmm_padding",
+      "elapsed_ms": 1
+    },
+    {
+      "pass_name": "dedup_and_promote_constants",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "_maybe_coarse_tile_span_overflow",
+      "elapsed_ms": 0
+    },
+    {
+      "pass_name": "span_reduction",
+      "elapsed_ms": 72
+    },
+    {
+      "pass_name": "_distribute_work",
+      "elapsed_ms": 92
+    },
+    {
+      "pass_name": "_maybe_scratchpad_planning",
+      "elapsed_ms": 614
+    },
+    {
+      "pass_name": "elide_proven_read_copies",
+      "elapsed_ms": 0
+    }
+  ],
+  "phases": [
+    {
+      "name": "spyre.pre_scheduling_pipeline",
+      "elapsed_s": 0.9187752150464803
+    },
+    {
+      "name": "inductor.Scheduler.__init__",
+      "elapsed_s": 0.19860674906522036
+    },
+    {
+      "name": "inductor.Scheduler.codegen",
+      "elapsed_s": 0.13468369306065142
+    },
+    {
+      "name": "spyre.SpyreAsyncCompile.sdsc",
+      "elapsed_s": 0.235052608884871
+    },
+    {
+      "name": "graphlowering.compile_to_module",
+      "elapsed_s": 1.5601671407930553
+    }
+  ],
+  "analysis_call_counts": {
+    "spyre.pass_utils.op_read_writes": 266
+  },
+  "scratchpad_lines": [
+    "LX relayout is not supported by _make_cpsat_solver; continuing without relayout"
+  ]
+}
