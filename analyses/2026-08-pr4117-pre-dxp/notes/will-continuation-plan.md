@@ -15,7 +15,7 @@ Slack, IBM internal wikis, or PR-comment threads.
 |---|---|---|
 | #4113 | merged | dedup fix. Baseline for everything below. |
 | #4139 | Ready for Review | **Certified greedy seed for placement-only CP-SAT.** ``CpSatLayoutSolver.plan_layout`` runs a cheap greedy probe first and skips CP-SAT entirely when the probe's placement is representable under CP-SAT's placement contract and attains the exact forced-spill lower bound of the residency objective. On 28 corpus scenarios: 20 certified, 8 fallback, 0 objective mismatches vs standalone CP-SAT. On 40 captured-buffer capacity-pressure points: 39 certified, 1 fallback (flash-512x8192 at 25% capacity — the case where CP-SAT strictly wins). See `notes/certified-greedy-seed.md`. |
-| #4141 | Ready for Review | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%); a second session under higher pod contention reproduced -2.06 s. Relevant coverage green; repository test rollup currently affected by the known unrelated `test_keep_by_index_4d_dim3_spyre` numerical-tolerance flake. See `notes/pr4141-body.md` and `data/lazy_ortools_ab_v2/`. |
+| #4141 | Ready for Review | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%); a second session under higher pod contention reproduced -2.06 s. Rebased onto upstream `7c1d5b6` (post-#4084 `elem_arr_1` ceiling fix). All 5 required top-level workflows green on head `1fa1f56`. See `notes/pr4141-body.md` and `data/lazy_ortools_ab_v2/`. |
 
 Baseline instrumentation harness (all in
 `analyses/2026-08-pr4117-pre-dxp/harness/`):
@@ -49,16 +49,30 @@ Known measurement caveats:
   session. Deltas were stable; absolutes are not.
 - `torch` import (~5-9 s cold) and first Spyre-tensor allocation
   (~5.7 s) are separate from any compile-time optimisation.
-- **Recurring CI flake unrelated to #4117**:
+- **Previously-recurring `keep_by_index_4d_dim3` CI failure was
+  fixed by #4084**:
   `test_inductor_ops__oot_wrapper.py::TestOpsPRIVATEUSE1::test_keep_by_index_4d_dim3_spyre`
   with `AssertionError: Tensor-likes are not close!` at
-  `test_inductor_ops.py:6354`. Seen intermittently on #4139
-  pushes (twice) and #4141 push `474b991`. Does not touch the
-  scratchpad memory planner or the CP-SAT layout solver — it's an
-  inductor-ops numerical-tolerance flake on `aten.index_select`-
-  style kernels. Retrying the CI job clears it. If you see it on
-  future #4117 PRs, do not investigate it as a scratchpad
-  regression; it is not one.
+  `test_inductor_ops.py:6354` (max absolute diff ~99 at tol 0.1 —
+  a real wrong-output signature, not a small tolerance flake).
+  Seen on multiple #4139 and #4141 pushes onto pre-#4084 upstream.
+  #4084 (`Round up elem_arr_1 factor for index tensors`) fixed
+  `compute_ops.gen_coord_info_value` to use ceiling division for
+  index-tensor coordinate factors; after rebasing #4141 onto
+  `7c1d5b6` (post-#4084 upstream), the failure did not reappear.
+  If you see it again on future #4117 PRs, first confirm the base
+  contains #4084; if it does, treat as a new regression, not a
+  return of this one.
+- **CI infrastructure stall watchdog**: individual sub-tests can
+  be `SIGKILL`ed by the pod-level stall-watcher after ~6.5 min,
+  producing `exit=137`. The killed attempt's VFIO fd doesn't
+  release synchronously, so the immediate retry hits
+  `RAS::VFIO::DeviceOpenFail: Device or resource busy` and
+  reports a spurious setup error. Not a code failure; the parent
+  workflow's aggregation logic treats it as recoverable.
+  Observed on the `Test Inductor Ops Reduction Scalar` sub-check
+  after the #4141 rebase-onto-`7c1d5b6` push (the parent `tests`
+  workflow still concluded `success`).
 
 ---
 

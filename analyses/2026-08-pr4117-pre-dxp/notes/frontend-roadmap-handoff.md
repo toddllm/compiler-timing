@@ -35,7 +35,9 @@ established that fallback CP-SAT still runs and matches standalone.
   longer trigger the ~1.4 s SWIG bootstrap of
   `ortools.sat.python.cp_model`. A/B on 5 fresh processes:
   first-useful-compile median 3.04 s (baseline) -> 1.93 s (lazy) =
-  -1.11 s (-36%). Draft at
+  -1.11 s (-36%). Rebased onto upstream `7c1d5b6` (post-#4084
+  `elem_arr_1` ceiling fix) at head `1fa1f56`. Ready for Review.
+  All 5 required top-level workflows green on the rebased head.
   <https://github.com/torch-spyre/torch-spyre/pull/4141>. This
   implements **Card 1** from the roadmap.
 - **`op_read_writes` memoization** — already in-tree on the rebased
@@ -235,7 +237,7 @@ worth prioritizing.
 
 ---
 
-### Card 1 — Defer OR-Tools import (IN REVIEW as PR #4141)
+### Card 1 — Defer OR-Tools import (Ready for Review as PR #4141)
 
 **Problem.** Every first compile in a process was paying ~500-1200
 ms for the first-time SWIG bootstrap of `ortools.sat.python.cp_model`
