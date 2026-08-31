@@ -97,10 +97,12 @@ maintainer answering the architectural question.
 
 Classification:
 
-- `RESEARCH_EVIDENCE = durable`
+- `RESEARCH_EVIDENCE = COMPLETE_AND_DURABLE`
 - `PRODUCTION_IMPLEMENTATION_VALUE = pending architecture decision`
 - `TODD_FINAL_CODE_STACK = #4139 + #4141`
-- `MERGE_DECISION = PENDING_MAINTAINER_COOPT_DIRECTION`
+- `TODD_CODE_WORK = COMPLETE`
+- `MERGE_DECISION = AWAITING_MAINTAINER_RESPONSE` (Dave asked; no reply yet)
+- `TODD_SIDE_FOLLOWUP_REQUIRED = NO` (question is asked; response can happen later; Todd's work is done)
 - `NO_NEW_TODD_PR = YES`
 
 ## Durable research value (not wasted)

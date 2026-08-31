@@ -19,16 +19,30 @@ DXP before its subprocess (see caveat below).
 
 Refs #4117, #3978, #3932, #2062.
 
-Rebased onto upstream `main` at `ae9b88d` (includes #3810
-"Integrate cost model with ILP solver"). #3810 adds a `cost_expr`
-parameter reachable only through `plan_layout_and_core_divisions`; the
-placement-only entry `plan_layout` never passes `cost_expr`, so its
-`_run` branch is unchanged. The seed is on `plan_layout` only —
+**Architecture note (Aug. 31):** maintainers indicated joint CP-SAT
+co-optimization of scratchpad allocation and work division is
+expected to become the default imminently. This PR intentionally
+does not apply to that joint path; the certificate is a
+forced-spill lower bound on the placement-only residency objective
+only, not on the joint objective (which adds parallelism, balance,
+and #3810's optional `cost_expr` axes). Merge value therefore
+depends on whether placement-only CP-SAT remains a meaningful
+supported configuration; that maintainer decision is pending in
+the discussion below.
+
+The final implementation was rebased on August 31 onto then-current
+upstream `main` (which includes #3810 "Integrate cost model with
+ILP solver"). #3810 adds a `cost_expr` parameter reachable only
+through `plan_layout_and_core_divisions`; the placement-only entry
+`plan_layout` never passes `cost_expr`, so its `_run` branch is
+unchanged. The seed is on `plan_layout` only —
 `plan_layout_and_core_divisions` is untouched.
 
 ## Certificate
 
-Under `co_optimizing_lx_planning=False` (the shipped default),
+Under `co_optimizing_lx_planning=False` (the current default at the
+time of writing; the joint-CP-SAT default switch flagged in the
+architecture note above is still pending),
 `plan_layout` runs only level 1 of the lexicographic solve inside
 `_plan_layout_generic._run`: minimize
 `sum(spill_cost(b) * (1 - in_buffer(b)))` over CP-SAT's
@@ -208,8 +222,9 @@ the seed enabled.
 - `plan_layout_and_core_divisions()` is untouched (the `cost_expr`
   branch added by #3810 is not on the placement-only path).
 
-`tests/inductor/test_cpsat_certified_greedy_seed.py`: 17 tests
-described above.
+`tests/inductor/test_cpsat_certified_greedy_seed.py`: 18 tests
+described above (the labelled `5b` addition brings the visually 1–17
+list to 18 actual test cases).
 
 ## What is NOT in this PR
 

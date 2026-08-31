@@ -2,6 +2,8 @@ Stacks on #4139 (certified greedy seed for placement-only CP-SAT) but touches an
 
 Refs #4117.
 
+**Architecture note (Aug. 31):** the measured 1–2 s startup benefit in this PR is for certified placement-only compiles stacked on #4139, where CP-SAT can be skipped entirely. If joint CP-SAT co-optimization becomes the default (see #4139 discussion), OR-Tools is needed on the first default compile and this headline startup elimination no longer applies. Residual value of lazy loading (module-loading hygiene, thread-safe first-load, preserved absent-package fallback) survives regardless, but the primary compile-latency win is coupled to the maintainer decision on #4139.
+
 ## Motivation
 
 PR #4139's certified greedy seed lets `CpSatLayoutSolver.plan_layout` return the CP-SAT-optimal placement without a CP-SAT solve when greedy already reaches the forced-spill lower bound of the residency objective. On the production-shaped compile probes used to demonstrate the startup win in this PR — 8/8 real `torch.compile` invocations on the rebased branch — the seed accepts on the certified path.
@@ -42,7 +44,7 @@ An earlier draft of this PR claimed "user-visible behavior unchanged." That clai
 - Post-#4141 on a certified compile: `_ortools_available()` returns True; `__init__` succeeds; the seed accepts; no `_load_ortools()` call; **the broken install is silently invisible on the certified path**.
 - Post-#4141 on a fallback compile: `_plan_layout_generic` calls `_load_ortools()`, which raises `ImportError`. That error propagates past `scratchpad_planning`'s `except SolveError` (it is not a `SolveError`) and past `_make_cpsat_solver`'s already-completed catch, so the compile fails with a genuine import error.
 
-Verdict: this is a **narrowing** of the pre-#4141 fallback contract for the present-but-broken case. We accept the narrowing intentionally because (a) an ortools install that resolves via `find_spec` but raises at import time is a corrupted environment problem the user should see, not paper over silently; and (b) certified compiles — the vast majority — silently succeed with an objective-equivalent result. The `_load_ortools` docstring documents this narrowing explicitly.
+Verdict: this is a **narrowing** of the pre-#4141 fallback contract for the present-but-broken case. We accept the narrowing intentionally because (a) an ortools install that resolves via `find_spec` but raises at import time is a corrupted environment problem the user should see, not paper over silently; and (b) certified compiles — the majority in the measured placement-only corpus — silently succeed with an objective-equivalent result (whether that remains "the vast majority" of shipped compiles depends on whether the placement-only path remains the default; see architecture note above). The `_load_ortools` docstring documents this narrowing explicitly.
 
 ## Measured impact
 

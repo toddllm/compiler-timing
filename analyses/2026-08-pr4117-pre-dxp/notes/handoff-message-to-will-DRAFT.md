@@ -1,8 +1,11 @@
-# Draft: handoff message to Will
+# Draft: handoff message to Will (send-ready)
 
-**Not sent.** For Todd to review, adjust, and send in his own words
-(or discard). Deliberately short and forward-looking; the durable
-evidence lives in the repo.
+**Not sent.** Terminal draft — Todd's technical work is complete, so
+this is what a final send would look like. For Todd to review, adjust,
+and send in his own words (or discard) when he chooses; nothing here
+should change further from the Todd side unless a maintainer response
+on #4139 alters the story. Deliberately short and forward-looking; the
+durable evidence lives in the repo.
 
 ---
 
