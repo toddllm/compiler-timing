@@ -13,9 +13,10 @@ Torch-Spyre PRs I was carrying:
 
 - **#4139** — certified greedy seed for placement-only CP-SAT (Ready
   for Review).
-- **#4141** — makes OR-Tools genuinely lazy so certified compiles
-  skip the SWIG bootstrap entirely (Ready for Review; compounds
-  #4139; A/B is about -1 s on cold first useful compile).
+- **#4141** — lazy OR-Tools loading; Ready for Review, compounds
+  #4139, A/B is about -1 s on cold first useful certified compile,
+  with an unrelated existing CI numerical flake still affecting the
+  repository test rollup.
 
 Your restickify investigation is still the biggest known large-graph
 lane by a wide margin — the frozen-tree study had

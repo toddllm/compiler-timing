@@ -15,7 +15,7 @@ Slack, IBM internal wikis, or PR-comment threads.
 |---|---|---|
 | #4113 | merged | dedup fix. Baseline for everything below. |
 | #4139 | Ready for Review | **Certified greedy seed for placement-only CP-SAT.** ``CpSatLayoutSolver.plan_layout`` runs a cheap greedy probe first and skips CP-SAT entirely when the probe's placement is representable under CP-SAT's placement contract and attains the exact forced-spill lower bound of the residency objective. On 28 corpus scenarios: 20 certified, 8 fallback, 0 objective mismatches vs standalone CP-SAT. On 40 captured-buffer capacity-pressure points: 39 certified, 1 fallback (flash-512x8192 at 25% capacity — the case where CP-SAT strictly wins). See `notes/certified-greedy-seed.md`. |
-| #4141 | Ready for Review | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%). See `notes/pr4141-body.md` and `data/lazy_ortools_ab_v2/`. |
+| #4141 | Ready for Review | **Lazy OR-Tools loading.** Certified compiles no longer trigger the ~1.4 s SWIG bootstrap of `ortools.sat.python.cp_model`. Compounds #4139. A/B fresh-process median: 3.04 s → 1.93 s first useful compile (-1.11 s, -36%); a second session under higher pod contention reproduced -2.06 s. Relevant coverage green; repository test rollup currently affected by the known unrelated `test_keep_by_index_4d_dim3_spyre` numerical-tolerance flake. See `notes/pr4141-body.md` and `data/lazy_ortools_ab_v2/`. |
 
 Baseline instrumentation harness (all in
 `analyses/2026-08-pr4117-pre-dxp/harness/`):
@@ -139,32 +139,40 @@ Files:
 - Per-spec cost of ~9 ms is reproducible; scales linearly with
   `n_specs`.
 - With `sdsc_cache` enabled, `_compile_specs` calls `compile_op_spec`
-  **twice per spec** on cache miss: once at
-  `bundle.py:515` for canonical cache-key generation, again at
-  `bundle.py:536` for the real emission. That's a clean halving
-  opportunity if a lighter cache key can be derived.
+  **twice per spec on a cache MISS**: once at `bundle.py:515` for
+  canonical cache-key generation, again at `bundle.py:536` for the
+  real emission. On a cache **hit** the second call is elided, so
+  the extra compile only runs on misses.
 - Each spec writes an `sdsc_N.json` file to disk in the hot loop.
 
 **What still needs large-graph confirmation:**
 
 - Ratio of pass-1 to pass-2 (`bundle.mlir` emission) at scale. On my
   small workloads pass 2 was below the noise floor.
-- Actual `sdsc_cache` hit rate on production graphs. If most specs
-  are unique, the double-compile isn't a factor; if many are
-  duplicates, halving matters.
+- **Actual `sdsc_cache` miss rate on production graphs.** The
+  double-compile matters *more* when many specs are unique
+  (high miss rate → the canonical-compile-then-real-compile path
+  runs for most specs). It matters *less* when many specs are
+  duplicates (high hit rate → most specs skip the second compile
+  anyway). Without the miss-rate measurement first, you don't
+  know whether halving the miss-path saves 40% of SDSC wall or
+  4%.
 - Whether disk-write is CPU-bound (JSON serialization dominates) or
   I/O-bound (`json.dump` fsync latency). Different fixes.
 
 **First 2–3 experiments:**
 
-1. **Confirm ratio at scale.** Run
+1. **Measure the production cache miss rate first.** In
+   `_compile_specs`, add throwaway counters for cache hits and
+   misses (the code already threads `_sdsc_cache_counts` for
+   this — just log the tuple at end of compilation on real graphs).
+   Do NOT change the cache key before you know what fraction of
+   specs are actually on the miss path.
+2. **Confirm ratio at scale.** Run
    `harness/sdsc_subtime_probe.py` on a captured production
    compile (or a bigger stand-alone workload) with hundreds of
    specs. Compare `_compile_specs` (Pass 1) vs bundle.mlir emit
    (Pass 2) wall.
-2. **Measure `sdsc_cache` hit rate.** In `_compile_specs`, add a
-   throwaway counter for cache hits and misses, run on a real
-   graph, compare hit fraction to the double-compile cost.
 3. **Ablate JSON write.** Comment out the `json.dump` in
    `_compile_specs` (skip the file write) and re-measure per-spec
    cost. If per-spec drops meaningfully, the win is in batching
@@ -258,29 +266,40 @@ SPYRE_INDUCTOR_LOG=1 SPYRE_INDUCTOR_LOG_LEVEL=INFO \
 Compare against my baseline in
 `analyses/2026-08-pr4117-pre-dxp/data/frontend_recon_2026_08/flash_512x8192.json`.
 
-**Look at these counters first:**
+**Look at these counters first** (all interpretation is
+same-machine / same-session relative to a comparison run — absolute
+wall values on this pod vary run-to-run under contention):
 
-- `first_call_wall_s` — target: < 5 s. If > 5 s on a warm process
-  with the same tree, either a pass regressed or a dep chain
-  regressed.
-- Top pass in `passes[].elapsed_ms`. Pre-#4141 this was
+- Ranked top of `passes[].elapsed_ms`. Pre-#4141 the top was
   `_maybe_scratchpad_planning` at 500-1200 ms; post-#4141 it should
-  be gone from the top of the list (< 60 ms).
+  no longer be in the top of the list. If it is, something in
+  #4141 regressed.
+- Ranked top of `phases[].elapsed_ms`. Compare shape against my
+  baseline JSON alongside your run; a new phase near the top that
+  wasn't in the baseline points at where to look.
 - `analysis_call_counts["Operation.get_read_writes"]` — should
-  scale with `n_ops`, not `n_ops^2`. Anything super-linear is a
-  regression.
+  scale with `n_ops`, not `n_ops^2`. Super-linear against graph
+  size across two runs is a regression signal.
+- `first_call_wall_s` — useful only for A/B against another fresh-
+  process run on the same machine within the same session. Do not
+  treat any absolute threshold as correctness-like; the same-pod
+  session showed BASELINE median wander from 3.04 s to 5.12 s
+  under contention.
 
-**Decision tree:**
+**Decision tree** (based on rankings, not absolute wall):
 
-- **If `_maybe_scratchpad_planning` is back at 500+ ms**: something
-  in #4141 regressed. Check that `_load_ortools` isn't being called
-  before the certificate rejects.
+- **If `_maybe_scratchpad_planning` reappears in the top of the pass
+  list on the rebased branch**: something in #4141 regressed. Check
+  that `_load_ortools` isn't being called before the certificate
+  rejects.
 - **If a restickify pass dominates on a big production graph**:
   restickify lane (yours already).
-- **If SDSC bundle-gen is >10 s at production scale**: SDSC lane
-  (see above).
-- **If a new pass appears in the top 5 that wasn't there before**:
-  new regression, investigate its own inner loop before generalising.
+- **If SDSC bundle-gen dominates at production scale**: SDSC lane
+  (see above). Confirm with `sdsc_subtime_probe.py` and the
+  miss-rate measurement.
+- **If a new pass appears in the top of the list that wasn't there
+  before**: new regression, investigate its own inner loop before
+  generalising.
 - **If none of the above and total wall is stable**: nothing #4117-
   scoped to do; the interactive-latency floor is dominated by
   `import torch` and Spyre device init, both other-team lanes.
