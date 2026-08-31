@@ -1,0 +1,103 @@
+{
+  "records": [
+    {
+      "label": "process_start",
+      "t": 1486256.157569813,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 0.0
+    },
+    {
+      "label": "after_import_torch",
+      "t": 1486260.324202455,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.1666326420381665
+    },
+    {
+      "label": "after_import_torch_spyre",
+      "t": 1486260.324204882,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.166635068831965
+    },
+    {
+      "label": "after_import_allocator",
+      "t": 1486260.338867915,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.181298102019355
+    },
+    {
+      "label": "after_select_allocator",
+      "t": 1486260.338888513,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.181318699847907
+    },
+    {
+      "label": "after_make_cpsat_solver",
+      "t": 1486260.871140441,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": true,
+        "ortools.sat.python.cp_model_helper": true,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.713570627849549
+    },
+    {
+      "label": "after_certified_plan_layout",
+      "t": 1486260.882067024,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": true,
+        "ortools.sat.python.cp_model_helper": true,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.7244972109328955
+    }
+  ],
+  "python_version": "3.12.13"
+}

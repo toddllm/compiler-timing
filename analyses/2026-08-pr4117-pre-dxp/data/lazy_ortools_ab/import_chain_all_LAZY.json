@@ -1,0 +1,133 @@
+{
+  "records": [
+    {
+      "label": "process_start",
+      "t": 1485992.610482137,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 0.0
+    },
+    {
+      "label": "after_import_torch",
+      "t": 1485996.696370206,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.08588806912303
+    },
+    {
+      "label": "after_import_torch_spyre",
+      "t": 1485996.696372648,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.08589051105082
+    },
+    {
+      "label": "after_import_allocator",
+      "t": 1485996.713060682,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.102578544989228
+    },
+    {
+      "label": "after_select_allocator",
+      "t": 1485996.713080267,
+      "present": {
+        "ortools": false,
+        "ortools.sat": false,
+        "ortools.sat.python": false,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.1025981300044805
+    },
+    {
+      "label": "after_make_cpsat_solver",
+      "t": 1485996.720387501,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.109905363991857
+    },
+    {
+      "label": "after_certified_plan_layout",
+      "t": 1485996.720605585,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": false,
+        "ortools.sat.python.cp_model_helper": false,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.110123448073864
+    },
+    {
+      "label": "after_forced_fallback_plan_layout",
+      "t": 1485997.564830987,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": true,
+        "ortools.sat.python.cp_model_helper": true,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "placed": [],
+      "forced_objective_units": 120,
+      "t_rel_s": 4.95434885006398
+    },
+    {
+      "label": "after_joint_plan_layout_and_core_divisions",
+      "t": 1485997.579226976,
+      "present": {
+        "ortools": true,
+        "ortools.sat": true,
+        "ortools.sat.python": true,
+        "ortools.sat.python.cp_model": true,
+        "ortools.sat.python.cp_model_helper": true,
+        "ortools.sat.python.swig_helper": false,
+        "ortools.sat.python.cp_model_pb2": false
+      },
+      "t_rel_s": 4.968744839075953
+    }
+  ],
+  "python_version": "3.12.13"
+}

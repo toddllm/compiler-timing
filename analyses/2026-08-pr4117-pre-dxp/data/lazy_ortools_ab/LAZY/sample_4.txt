@@ -1,0 +1,25 @@
+[ 0.000s] starting
+[ 0.007s] frontend_reconnaissance imported
+[ 0.009s] DXP stop installed
+[ 3.813s] torch imported
+[ 3.813s] torch_spyre imported
+[ 3.813s] torch._inductor imported
+[ 3.813s] GraphLowering imported
+[ 3.830s] scratchpad.allocator imported
+[ 3.851s] wrappers installed
+[ 9.546s] input allocated
+[ 9.553s] torch.compile wrapper created
+[11.771s] first compiled call done (2.218s)
+[11.836s] second call (64.6 ms)
+
+--- phase breakdown ---
+        54.4 ms  (2 calls)  GraphLowering.compile_to_module
+        54.4 ms  (2 calls)  GraphLowering._compile_to_module
+        38.5 ms  (2 calls)  GraphLowering.codegen
+         7.0 ms  (2 calls)  Scheduler.codegen
+         6.6 ms  (2 calls)  SpyreAsyncCompile.sdsc
+         4.2 ms  (2 calls)  Scheduler.__init__
+
+total wall since script start: 11.836 s
+first_call_wall: 2.218 s
+second_call_wall: 64.56 ms

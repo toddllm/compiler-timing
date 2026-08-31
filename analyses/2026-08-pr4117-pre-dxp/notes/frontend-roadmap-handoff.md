@@ -22,13 +22,22 @@ established that fallback CP-SAT still runs and matches standalone.
   in `analyses/2026-08-pr4117-pre-dxp/harness/` (see
   `pre_dxp_stop.py`, `frontend_reconnaissance.py`,
   `scratchpad_subtime_probe.py`, `fixed_startup_probe.py`,
-  `build_solver_probe.py`, `sdsc_subtime_probe.py`).
+  `build_solver_probe.py`, `sdsc_subtime_probe.py`,
+  `ortools_import_chain_probe.py`, `lazy_ortools_ab.sh`).
 - **PR #4113** dedup fix — merged upstream.
 - **CP-SAT investigation / PR #4139** — certified greedy seed inside
   placement-only `CpSatLayoutSolver.plan_layout`. On accepted plans
   greedy replaces CP-SAT entirely (previously several tens of ms
   to tens of seconds); on rejected plans the standalone CP-SAT solve
   runs unchanged. Ready-for-Review at 2026-08-31.
+- **PR #4141 (lazy OR-Tools loading, Todd's final PR)** — stacks on
+  #4139 and makes OR-Tools import truly lazy: certified compiles no
+  longer trigger the ~1.4 s SWIG bootstrap of
+  `ortools.sat.python.cp_model`. A/B on 5 fresh processes:
+  first-useful-compile median 3.04 s (baseline) -> 1.93 s (lazy) =
+  -1.11 s (-36%). Draft at
+  <https://github.com/torch-spyre/torch-spyre/pull/4141>. This
+  implements **Card 1** from the roadmap.
 - **`op_read_writes` memoization** — already in-tree on the rebased
   branch (`pass_utils.op_read_writes`, key `_ts_cached_read_writes`
   on the op instance, invalidated via `invalidate_op_read_writes`
@@ -225,10 +234,18 @@ worth prioritizing.
 
 ---
 
-### Card 1 — OR-Tools eager preload
+### Card 1 — Lazy OR-Tools loading (IN REVIEW as PR #4141)
 
-**Name.** Eager-import OR-Tools during Spyre backend init to remove
-the ~1.4 s first-compile lazy-import spike.
+**Status.** In review as `toddllm/torch-spyre` PR #4141 stacked on
+#4139. Direction switched from "eager preload" (foil control) to
+"lazy load" after the reconnaissance proved eager preload merely
+relocates the ~1.4 s cost. The lazy approach removes it from every
+certified compile entirely (`_load_ortools` only fires when
+`_plan_layout_generic` runs, i.e. seed rejects or joint path).
+A/B evidence: `analyses/2026-08-pr4117-pre-dxp/data/lazy_ortools_ab/`.
+
+**Name (original).** Eager-import OR-Tools during Spyre backend
+init to remove the ~1.4 s first-compile lazy-import spike.
 
 **Current cost.** 500-1200 ms on **every first compile** in a
 process. On our data this is the single largest pre-scheduling
