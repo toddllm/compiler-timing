@@ -83,8 +83,12 @@ change the compile-time worst case.
 1. **Instrument the joint CP-SAT solver at production scale.** Two
    things: (a) internal breakdown of `plan_layout_and_core_divisions`
    into deterministic sub-phases (see §5), (b) a machine-readable
-   per-compile timing record (this is #4156, still fully unclaimed —
-   see §9). Nothing else on this list is decidable without this data.
+   per-compile timing record. **#4156 is Will's measurement-infrastructure
+   lane** (opened and assigned to `willmj`; no implementation PR visible
+   as of 2026-09-02); the joint-solver instrumentation §5 proposes
+   should coordinate with / extend that work rather than fork a
+   competing timing path. See §9. Nothing else on this list is decidable
+   without this data.
 2. **Characterize the joint model's growth on production-shaped
    graphs.** How many candidate divisions per op, how many
    producer-consumer edges, how many `cd_parent_matches` pairs, how
@@ -94,19 +98,28 @@ change the compile-time worst case.
 3. **Decide the timeout-and-fallback policy from evidence.** Today, a
    CP-SAT timeout under `co_optimizing_lx_planning=True` degrades via
    `SolveError` to a **placement-only greedy fallback**
-   (`allocator.py:2415-2425`). That is the pre-#2062 unsafe path, gated
-   only by `demote_incoherent_lx_buffers`. Any shipped default needs a
-   timeout policy that does not silently reintroduce the very failure
-   mode joint co-optimization exists to prevent. See §7.
-4. **Look at whether the joint solver can be given a cheap feasible
-   incumbent** (warm start / solution hint / seeded plan). Today it
-   receives none (verified: zero occurrences of `add_hint`, `AddHint`,
-   or `SetSolutionHint` across `ilp_solver_ortools.py` on upstream
-   `main`, #4018, and #4203). This is Todd's most transferable
-   intuition from the #4139 work: greedy often finds an excellent
-   placement quickly. But greedy alone carries no core-division choice
-   and does not know the joint objective's parallelism/balance/relayout
-   axes, so the transfer is not mechanical. See §6.
+   (`allocator.py:2415-2425`). That fallback discards every joint
+   core-division decision; correctness of the placement-only path
+   depends on the #3378 post-fusion incoherent-LX demotion mitigation
+   rather than being guaranteed structurally by the joint model.
+   #3378 cleared the 11 frontend-owned #2062 failures and is enforced
+   in CI, so this is not a "known unsafe" path — but the fallback is
+   qualitatively different from the intended default architecture,
+   and a timeout policy that lands on it every time should not silently
+   erase the structural benefits of joint planning. See §7.
+4. **Look at whether the joint solver can be given a cheap
+   joint-feasible incumbent** (warm start / solution hint / seeded
+   plan). Today it receives none (verified: zero occurrences of
+   `add_hint`, `AddHint`, or `SetSolutionHint` across
+   `ilp_solver_ortools.py` on upstream `main`, #4018, and #4203). The
+   #4139 evidence that greedy often finds an excellent *placement* is
+   suggestive but not directly transferable: a greedy placement using
+   committed divisions may violate the joint model's slicing-match
+   residency constraints for any buffer kept resident, so it is not
+   automatically a feasible incumbent for CP-SAT. The seed has to be
+   validated as joint-feasible before hinting — construction rules and
+   the split between "reduces UNKNOWN-at-timeout" and "reduces solve
+   time" are in §6 H1 and §10 Step 5.
 
 ---
 
@@ -253,9 +266,12 @@ on `spyre.inductor.passes` (`passes.py:511-526`).
    placement-only greedy allocator. **This is important:** under
    `co_optimizing_lx_planning=True`, a timeout is caught by the same
    `except SolveError` and falls back to plain greedy placement, not
-   to the ExhaustiveSearchSolver or SA co-optimizer. That is the
-   pre-#2062 unsafe path, still relying on `demote_incoherent_lx_buffers`
-   to patch up any producer/consumer core-division disagreement.
+   to the ExhaustiveSearchSolver or SA co-optimizer. The joint model's
+   structural coherence guarantee is abandoned on this path;
+   correctness of the resulting placement-only compile then depends on
+   the #3378 post-fusion incoherent-LX demotion mitigation (which
+   cleared the 11 frontend-owned #2062 failures and is CI-enforced),
+   not on the joint model's slicing-match constraints.
 
 **Simplified flow (the real code above is authoritative):**
 
@@ -383,57 +399,181 @@ search itself.
 
 ## 5. Joint CP-SAT measurement plan
 
-**Concrete counters to add.** Every counter here is deterministic
-(reproducible across runs on the same graph and config, given #4196's
-`PYTHONHASHSEED` fix), unless flagged as **wall**.
-
-Instrumentation surface: a small structured record emitted by
+Instrumentation surface: a structured record emitted by
 `CpSatLayoutSolver._plan_layout_generic` (and its callees) plus one
 record emitted by `CoOptimizingAllocator._solve`. Every field below
 serializes to a value that survives across runs — no free-form
-strings for objective values, no absolute filesystem paths.
+strings for objective values, no absolute filesystem paths. **This
+schema is meant to sit inside #4156's `timing_recorder` framework
+(Will's lane), not alongside it**; the joint-solver fields extend the
+existing per-pass record with a per-compile joint-solver block.
 
-**Per compile, once.**
+### 5.1 Two measurement modes
 
-| Field | Source | Deterministic? |
+Not every "deterministic" field is deterministic under every solver
+configuration. The current solver code at `ilp_solver_ortools.py:812-816`
+sets `num_search_workers = 1` when
+`torch.are_deterministic_algorithms_enabled()` is true, otherwise
+`os.cpu_count()`; `random_seed = 0` is fixed either way. CP-SAT's
+parallel search is *not* asserted to be deterministic across workers,
+so multi-worker outputs (`num_conflicts`, `num_branches`,
+sometimes-`objective_value`-and-`status` when the model has multiple
+optima) must be treated as observations, not reproducible constants,
+unless single-worker mode is used.
+
+**Split every measurement into one of two modes.**
+
+**Reproducibility / analytical mode.** Force
+`num_search_workers = 1` (either by enabling
+`torch.use_deterministic_algorithms(True)` or by overriding the
+solver parameter). Use this mode when comparing:
+
+- model formulation (with vs. without a specific constraint)
+- candidate-set changes (pruning, dominance)
+- hint on / off (§6 H1, §10 Step 5)
+- time-limit curves (30 s vs. 120 s vs. 600 s on the same graph)
+- solver branch/conflict statistics
+- objective/bound progression
+
+In this mode, the fields below marked **deterministic-single-worker**
+are reproducible run-to-run on the same graph and config, subject to
+#4196's plan-determinism fixes.
+
+**Production-representative mode.** Use the shipped worker policy
+and shipped worker count. Use this mode for:
+
+- worst-case wall on production graphs
+- overall time-budget policy verification
+- production-shape sweeps at scale
+
+In this mode, search-path-sensitive solver outputs are measured
+observations across repeated samples (median across N=3 cold
+compiles), not deterministic counters.
+
+**Never claim determinism for arbitrary parallel CP-SAT execution.**
+#4196 fixes important Python/hash-order nondeterminism upstream of
+CP-SAT; it does not prove parallel CP-SAT search is bit-for-bit
+deterministic. Any A/B conclusion should be run in analytical mode
+where possible; production mode is for wall-envelope characterization.
+
+### 5.2 Per-compile record
+
+| Field | Source | Reproducibility |
 |---|---|---|
-| `n_ops` | `len(graph.operations)` | Yes |
-| `n_buffers` | `len(solver.buffers)` in `CpSatLayoutSolver` | Yes |
-| `n_core_division_buffers` | count of buffers with `len(core_divisions) > 0` | Yes |
-| `n_variable_buffers` | count of buffers with `len(core_divisions) > 1` | Yes |
-| `n_pinned_by_guard[guard_name]` | one counter per guard in `_division_map` (#4018) | Yes |
-| `sum_candidates_over_buffers` | sum of `len(b.core_divisions)` | Yes |
-| `sum_edges` | `sum(len(b.parents) for b in buffers)` | Yes |
-| `sum_match_pairs` | `sum(len(b.cd_parent_matches[p]) for b, p ...)` | Yes |
-| `sum_relayout_triples` | `sum(len(b.cd_parent_relayouts[p]) for b, p ...)` (#4203 only) | Yes |
-| `n_forced_reasons` | `len(record_exclusions())` | Yes |
-| `n_cp_int_vars` | `len(model.Proto().variables)` filtered for int | Yes |
-| `n_cp_bool_vars` | same filtered for bool | Yes |
-| `n_cp_constraints` | `len(model.Proto().constraints)` | Yes |
-| `used_cost_expr` | 1 if `cost_expr is not None` and linearization returned non-None | Yes |
-| `cost_expr_linearize_status` | `ok` / `linearization_failed` / `not_provided` | Yes |
-| `n_solves` | 1 for `cost_expr`, 1–3 for lex triple | Yes |
-| `time_limit_seconds` | `self._time_limit_seconds` | Yes (config-dependent) |
-| `layout_solver` | `config.layout_solver` | Yes |
-| `co_optimizing_lx_planning` | `config.co_optimizing_lx_planning` | Yes |
-| `torch_spyre_sha` | HEAD SHA | Yes |
-| `pythonhashseed` | `os.environ.get("PYTHONHASHSEED", "unset")` | Yes |
+| `n_ops` | `len(graph.operations)` | deterministic (fixed graph) |
+| `n_buffers` | `len(solver.buffers)` in `CpSatLayoutSolver` | deterministic |
+| `n_core_division_buffers` | count of buffers with `len(core_divisions) > 0` | deterministic |
+| `n_variable_buffers` | count of buffers with `len(core_divisions) > 1` | deterministic |
+| `n_pinned_by_guard[guard_name]` | one counter per guard in `_division_map` (#4018) | deterministic |
+| `sum_candidates_over_buffers` | sum of `len(b.core_divisions)` | deterministic |
+| `sum_edges` | `sum(len(b.parents) for b in buffers)` | deterministic |
+| `sum_match_pairs` | `sum(len(b.cd_parent_matches[p]) for b, p ...)` | deterministic |
+| `sum_relayout_triples` | `sum(len(b.cd_parent_relayouts[p]) for b, p ...)` (#4203 only) | deterministic |
+| `n_forced_reasons` | `len(record_exclusions())` | deterministic |
+| `n_cp_int_vars` | count of int vars in `model.Proto()` | deterministic |
+| `n_cp_bool_vars` | count of bool vars in `model.Proto()` | deterministic |
+| `n_cp_constraints` | `len(model.Proto().constraints)` | deterministic |
+| `sympy_expr_pre_expand_len` | node count of `cost_expr` before rewrites | deterministic |
+| `sympy_expr_post_len` | node count after `_SympyExprToCpSat` rewrites | deterministic |
+| `add_multiplication_equality_count` | count of new int vars minted inside `_print_Mul` | deterministic |
+| `used_cost_expr` | 1 if `cost_expr` was linearized and used | deterministic |
+| `cost_expr_linearize_status` | `ok` / `linearization_failed` / `not_provided` | deterministic |
+| `n_solves` | 1 for `cost_expr`, 1–3 for lex triple | deterministic (up to which levels run) |
+| `time_limit_seconds` | `self._time_limit_seconds` | config-recorded |
+| `layout_solver` | `config.layout_solver` | config-recorded |
+| `co_optimizing_lx_planning` | `config.co_optimizing_lx_planning` | config-recorded |
+| `lx_solver_relayout` | `config.lx_solver_relayout` (#4203) | config-recorded |
+| `torch_spyre_sha` | HEAD SHA | config-recorded |
+| `pythonhashseed` | `os.environ.get("PYTHONHASHSEED", "unset")` | config-recorded |
+| `deterministic_mode` | `torch.are_deterministic_algorithms_enabled()` | config-recorded |
+| `plan_fingerprint` | see §5.3 | deterministic-single-worker |
 
-**Per solve (once for `cost_expr` path, up to 3 times for lex).**
+All fields marked "deterministic" describe *model-construction*
+quantities and are reproducible on a fixed (graph, config) pair
+regardless of worker count. `plan_fingerprint` is the exception
+because it summarizes what CP-SAT *committed to*, which depends on
+the search path and therefore on worker count.
 
-| Field | Source | Deterministic? |
+### 5.3 Plan fingerprint — a first-class field, not an aggregate
+
+**#4196 established: two committed plans can share identical
+aggregate LX/HBM/predicted-time numbers and still differ in per-buffer
+decisions.** On the granite-4.0-micro probe graph in #4196, two runs
+at the same `_SEED` and step budget produced plans differing in **36
+of 63 buffers** with only a 2.5% wall spread — well outside device
+noise. That means: **aggregate solver-output numbers are not sufficient
+to conclude that two builds/configs produced the same plan**, and
+therefore not sufficient to conclude that a compile-time A/B was on
+matching plans. Every joint-solver A/B in this document (H1, H3, H4,
+H5, and Steps 3-5 in §10) should record and compare a stable
+per-plan fingerprint before drawing conclusions.
+
+**Definition.** `plan_fingerprint` is a stable serialization of the
+committed plan, sorted by buffer/op name to remove any incidental
+ordering dependency. Compute it in `_plan_layout_generic` after
+`_extract` writes back to the caller's buffers.
+
+Minimum fields per buffer (sorted by `name`):
+
+- `name`
+- `chosen_division`: index into the buffer's `core_divisions`, or
+  `-1` if there are none (placement-only wrapper). Prefer the
+  canonical `CoreDivision` representation (sorted
+  `output_splits` + `reduction_splits`) over the raw index, since the
+  index depends on candidate enumeration order and can change under
+  H2/H3.
+- `resident`: `True` if `address is not None`, else `False`
+- `address`: `int` if resident, else `None`
+- `spill_reason`: value from `spill_reasons` when spilled, else absent
+- `chosen_relayout[parent]` (#4203): `(i, j, dest_offset)` for every
+  fired relayout edge
+
+Emit both:
+
+1. **`plan_fingerprint_hash`** — a stable hex hash (e.g. sha1 of the
+   canonical serialization above) in the per-compile record. Cheap to
+   compare; suitable for equality checks across arms of an A/B and
+   for a "did this compile match a previous run" filter over an
+   archive.
+2. **`plan_fingerprint_vector`** — the full canonical serialization,
+   emitted alongside the per-compile record as a benchmark artifact
+   (JSON file next to the record, or a subfield if #4156's
+   framework can carry it). Needed when a hash mismatch has to be
+   debugged — the vector is what tells you which 36 of 63 buffers
+   moved.
+
+**How to use it.** Before comparing performance between two builds
+or two configurations, compare `plan_fingerprint_hash`. If the hashes
+differ, the wall-time / objective / bound comparison is measuring two
+different plans — investigate the plan diff before drawing any
+compile-time conclusion. If the hashes match, aggregate performance
+numbers become comparable.
+
+### 5.4 Per-solve record
+
+Emitted once per `solver.Solve()` call — 1 for the `cost_expr` path,
+up to 3 for the lex triple.
+
+| Field | Source | Reproducibility |
 |---|---|---|
-| `solve_level` | `residency` / `parallelism` / `balance` / `cost_expr` | Yes |
-| `status` | `solver.StatusName(status)` | Yes |
-| `objective_value` | `solver.ObjectiveValue()` (round when integer-lex) | Yes |
-| `best_bound` | `solver.BestObjectiveBound()` | Yes |
-| `walltime_ms` | `solver.WallTime() * 1e3` | **Wall** (already logged at line 902) |
-| `num_conflicts` | `solver.NumConflicts()` | Yes |
-| `num_branches` | `solver.NumBranches()` | Yes |
-| `num_booleans` | `solver.NumBooleans()` | Yes |
-| `num_search_workers` | `solver.parameters.num_search_workers` | Yes |
+| `solve_level` | `residency` / `parallelism` / `balance` / `cost_expr` | deterministic |
+| `status` | `solver.StatusName(status)` | deterministic-single-worker; observation in production mode |
+| `objective_value` | `solver.ObjectiveValue()` (round when integer-lex) | deterministic-single-worker for uniquely-optimal models; observation otherwise |
+| `best_bound` | `solver.BestObjectiveBound()` | deterministic-single-worker; observation in production mode |
+| `walltime_ms` | `solver.WallTime() * 1e3` | **wall** (measured, never asserted) |
+| `num_conflicts` | `solver.NumConflicts()` | deterministic-single-worker; observation in production mode |
+| `num_branches` | `solver.NumBranches()` | deterministic-single-worker; observation in production mode |
+| `num_booleans` | `solver.NumBooleans()` | deterministic (model quantity, not search-path) |
+| `num_search_workers` | `solver.parameters.num_search_workers` | **record on every solve** — required to interpret every other row above |
 
-**Sub-phase timers.** These are wall-clock, kept out of unit tests.
+**Record `num_search_workers` on every solve record.** Without it,
+`num_conflicts` / `num_branches` / `status` / `objective_value` cannot
+be interpreted. The convention should be: same graph + same config +
+same worker count → treat as reproducible; anything else → observation.
+
+### 5.5 Sub-phase wall timers
+
+Wall-clock, kept out of unit tests (per #4117's methodology).
 
 | Timer | Bracket |
 |---|---|
@@ -476,39 +616,89 @@ Ranked. Each includes: **why it might matter**, **evidence that would
 confirm/refute**, **correctness risk**, **likely implementation
 surface**. Do not implement any of these without §5 measurements first.
 
-**H1 — Cheap feasible incumbent for the joint CP-SAT solve.**
+**H1 — Cheap joint-feasible incumbent for the joint CP-SAT solve.**
 
 - **Why it might matter.** VERIFIED (grep across upstream `main`,
   #4018, #4203): the joint solver receives no warm start, no
-  `AddHint`, no seeded incumbent. The #4139 study demonstrated greedy
-  reaches the placement-only optimum on 39 of 40 measured
-  capacity-pressure points; even if that ratio does not transfer,
-  greedy is very likely to find *a* feasible plan quickly. A feasible
-  incumbent turns `SolveError` on timeout into
-  "return the best feasible plan we had", which is worth measuring
-  independently of any warm-start-improves-time claim.
+  `AddHint`, no seeded incumbent. Two separable payoffs to disentangle
+  in measurement — they may not co-occur:
+
+  1. **Reduce UNKNOWN-at-timeout / time-to-first-feasible.** A
+     joint-feasible incumbent lets the solver return "the incumbent"
+     on timeout instead of `UNKNOWN → SolveError → non-structural
+     placement-only greedy fallback" (§7). Even a deliberately
+     conservative seed — one that spills more than the optimum but
+     satisfies every joint constraint — could be extremely valuable
+     for a bounded-fallback policy, independent of whether it reduces
+     the wall of the search that follows.
+  2. **Reduce solve time or optimality gap on the median compile.** A
+     higher-quality seed shortens the branch-and-bound work CP-SAT
+     does before converging. Whether this happens for the specific
+     seeds we can construct cheaply is an empirical question.
+
+  The #4139 evidence (greedy reached the placement-only forced-spill
+  floor on 39 of 40 capacity-pressure points) argues that a greedy
+  *placement* is often near-optimal, but it does not transfer
+  mechanically to the joint model.
+
+- **Correctness of the seed itself is a proof obligation.** A greedy
+  placement built on committed divisions may violate the joint
+  model's slicing-match residency gate: the joint model requires that
+  a resident buffer's chosen division induces the same per-core
+  slicing as every consumer's division on every producer/consumer edge
+  in `cd_parent_matches`. Committed divisions were set by the
+  work-division pass optimizing each op independently, so producer and
+  consumer can disagree; a resident buffer under such a disagreement
+  is what #3378 exists to demote on the placement-only path, and what
+  the joint model forbids structurally. **Any hint must satisfy the
+  joint model's hard constraints before it can be treated as an
+  incumbent.**
+
+- **Sketch of a joint-feasible seed construction (not prescriptive).**
+  Start from everyone's committed division. Compute placement with
+  `GreedyLayoutSolver` — this gives an address for every buffer that
+  fits in LX under those divisions. Then walk each producer/consumer
+  edge and, for any resident buffer whose consumer's committed
+  division has no matching entry in `cd_parent_matches`, demote that
+  buffer to spilled in the seed. The result is a joint-feasible plan
+  (every resident buffer's slicing matches every consumer's, every
+  spilled buffer trivially satisfies the gate, capacity holds because
+  the greedy placement fit). It is deliberately conservative — the
+  demote step may spill buffers CP-SAT would keep resident by picking
+  a different consumer division — but that is fine for seed 1: **the
+  quality of the plan is a separate question from its feasibility.**
+  If the code suggests a better construction (e.g. seed the divisions
+  from `_cd_parent_matches` pairs directly), use that.
+
 - **Evidence to gather.** Instrument `_solve[level].status` and
   `_solve[level].objective_value` on production graphs. If a
   substantial fraction of joint solves currently exit `FEASIBLE` (not
-  `OPTIMAL`) with a small remaining `best_bound` gap, hinting helps
-  little on optimality but a lot on optimality-gap policy. If a
-  fraction exit `UNKNOWN`, a feasible-incumbent-preserving fallback is
-  the more urgent fix.
-- **Correctness risk.** *Low* on the hinting itself (CP-SAT's hint is
-  advisory), *high* on any change to the fallback that reuses the
-  hinted plan. A hinted incumbent that the search discarded must not
-  reappear on timeout unless it was structurally validated
-  (slicing-match on every resident edge, capacity, in-place rules).
-- **Implementation surface.** `CpSatLayoutSolver._plan_layout_generic`.
-  A cheap seed candidate: everyone's committed division (like
-  `ExhaustiveSearchSolver`'s initial state), with placement from
-  `GreedyLayoutSolver`. That's already a *coherent* plan (every op at
-  its committed division means producer/consumer divisions agree
-  trivially), so hinting it is safe. Whether it wins search time is
-  what §5 evidence would answer.
-- **Do not extend the #4139 certificate here.** The forced-spill lower
-  bound is a placement-only proof; the joint objective has extra axes
-  the proof does not cover.
+  `OPTIMAL`) with a small `best_bound` gap, hinting helps little on
+  optimality but a lot on the timeout-fallback story. If a fraction
+  exit `UNKNOWN`, a joint-feasible-incumbent-preserving fallback is
+  the urgent fix. Measure the two payoffs separately: A/B with hint
+  on/off, look at status distribution *and* solve time *and*
+  objective — a hint that improves UNKNOWN rate but leaves solve time
+  unchanged is a real, shippable win on its own.
+
+- **Correctness risk.** *Low* on the hint itself (CP-SAT's hint is
+  advisory — the search may ignore it). *High* on any use of the seed
+  as a fallback plan without validating it: the seed must be verified
+  against the actual constructed model, not against a Python-side
+  understanding of what the constraints are. **Before A/B'ing
+  AddHint, prove/validate the seed against the same `cp_model.CpModel`
+  the solver will search** — construct the model, apply the seed via
+  `AddHint`, run `CpSatCheckSatWrapper` (or equivalent) with zero
+  budget and confirm `FEASIBLE`.
+
+- **Implementation surface.** `CpSatLayoutSolver._plan_layout_generic`
+  (build seed after `_wrap` populates the wrappers, before `_run`
+  calls `solver.Solve`). Seed construction lives adjacent to
+  `_add_core_division` since it needs the same `forced_reasons` view.
+
+- **Do not extend the #4139 certificate here.** The forced-spill
+  lower bound is a placement-only proof; the joint objective has
+  extra axes the proof does not cover.
 
 **H2 — Redundant candidate/model construction between passes.**
 
@@ -638,9 +828,16 @@ surface**. Do not implement any of these without §5 measurements first.
   `ScratchpadAllocator(GreedyLayoutSolver)` — the placement-only
   greedy path. **Under `co_optimizing_lx_planning=True`, this
   fallback discards every core-division decision the joint solver
-  was about to make and reverts to the pre-#2062 unsafe path**, gated
-  only by `demote_incoherent_lx_buffers` for producer/consumer
-  disagreement.
+  was about to make**. The resulting placement-only compile is a
+  non-structural, mitigation-dependent path: producer/consumer
+  core-division coherence is enforced by #3378's post-fusion
+  incoherent-LX demotion, not by the joint model's slicing-match
+  constraints. #3378 cleared the 11 frontend-owned #2062 failures and
+  is enforced in CI, so this is not a known-unsafe fallback; but it
+  is qualitatively different from the joint architecture, and a
+  timeout policy that lands there on every hard graph would silently
+  give up the correctness scaffolding joint co-optimization is
+  supposed to provide.
 
 **What needs to be measured before choosing a shipped policy.**
 
@@ -759,17 +956,22 @@ document's §6 is where the work continues.
 
 ## 9. Relationship to #4117 / #4156 / #3934
 
-**Ownership map as I read it:**
+**Ownership map as of 2026-09-02:**
 
-- **#4117 (Compiler frontend performance)** is the umbrella epic.
-  Scope covers the whole frontend, not just scratchpad planning.
-  Owner not obviously named on the issue itself.
-- **#4156 (Frontend baseline suite)** is the measurement lane under
-  #4117. **No implementation and no assignees or comments as of
-  2026-09-02.** Fully unclaimed.
+- **#4117 (Compiler frontend performance)** is the umbrella epic
+  (opened by `tardieu`). Scope covers the whole frontend, not just
+  scratchpad planning. **Assigned: `toddllm` and `willmj`.** Todd's
+  #4117 lane is closing with this handoff; Will's continuation is
+  ongoing.
+- **#4156 (Frontend baseline suite: structured per-compile timing
+  records)** is the measurement lane under #4117. **Opened by and
+  assigned to `willmj`.** No implementation PR or comments visible on
+  the issue as of 2026-09-02, so nothing is yet in flight against it,
+  but it is Will's lane — not an unowned one.
 - **#3934 (Compile-time and scalability bounds for the CP-SAT
-  co-optimizing path)** is Track B of the #3932 epic. **Depends on
-  #3810 (now merged).** Owner not obviously named.
+  co-optimizing path)** is Track B of the #3932 epic (opened by
+  `dgrove-oss`). **Depends on #3810 (now merged).** No assignee visible
+  as of 2026-09-02.
 
 **Recommendation on how they should fit together.**
 
@@ -779,12 +981,16 @@ document's §6 is where the work continues.
   and implement a bail-out/timeout policy", "Document the expected
   compile-time envelope". Every one of these depends on §5's
   instrumentation; none should be answered by guess.
-- **#4156 becomes the general measurement/regression infrastructure**
-  that #3934 (and this document's §5) consume. #4156's spec —
-  timing_recorder, machine-readable per-compile record, cold-compile
-  protocol, log-log plots — is close to what §5 wants. The joint-path
-  fields in §5 fit inside its framework.
-- **#4117** stays the epic. #3934 and #4156 should both link back.
+- **§5's joint-solver instrumentation belongs inside #4156, not
+  alongside it.** #4156's spec — `timing_recorder`, machine-readable
+  per-compile record, cold-compile protocol, log-log plots — is the
+  general measurement infrastructure #3934 (and this document's §5)
+  consume. The right shape is: Will owns the timing-record framework
+  from #4156; whoever picks up #3934 contributes the joint-solver
+  fields in §5 as a schema extension to that framework, not as a
+  parallel probe. If Will has not yet started #4156, coordinate before
+  building anything — do not fork a competing instrumentation path.
+- **#4117** stays the epic; #3934 and #4156 both link back to it.
 - **This document** is the joint-path prioritization insert under
   #4117. It supersedes the earlier `will-continuation-plan.md` for
   what the next engineer works on; the earlier document is still
@@ -849,8 +1055,9 @@ data earlier steps produce.
 
 - **Question.** Given the observed status/`best_bound` distribution,
   which of the three §7 policy options (feasible-incumbent hint /
-  two-stage / optimality-gap) removes the pre-#2062 unsafe fallback
-  without a compile-time regression?
+  two-stage / optimality-gap) keeps the compile on a joint-feasible
+  plan without a compile-time regression, so we do not fall through
+  to the #3378-dependent placement-only path on every hard graph?
 - **Files.** `torch_spyre/_inductor/scratchpad/ilp_solver_ortools.py`
   (`_run`), `torch_spyre/_inductor/scratchpad/allocator.py`
   (`scratchpad_planning` fallback block).
@@ -877,19 +1084,40 @@ data earlier steps produce.
   expected worst-case bound. Red if a correctness test fails —
   investigate before touching the flag default.
 
-### Step 5. Warm start / seeded incumbent — measure separately from Step 4
+### Step 5. Joint-feasible seed / warm start — measure two questions separately
 
-- **Question.** Does hinting `AddHint` with everyone-at-committed-
-  division + greedy placement measurably reduce `solve_ms` on the
-  same production sweep? Does it change `status` distributions?
-- **Files.** Same as Step 3.
-- **Output.** A/B on the Step 2 sweep with hinting on/off, all other
-  config held.
-- **Stop/go.** Green if hinting is measurably neutral or better on the
-  sweep and the search never converges to a strictly worse objective
-  (CP-SAT's hint is advisory but a bug in how we set it up could
-  bias search). Red if hinting is neutral — that's a legitimate
-  finding; document and move on.
+- **Question 5a (feasibility).** Construct a joint-feasible seed —
+  the sketch is in §6 H1 ("Sketch of a joint-feasible seed
+  construction"); validate it against the same `cp_model.CpModel` the
+  solver will search *before* running any A/B. **Before treating the
+  seed as anything, prove it is `FEASIBLE` under that model.**
+- **Question 5b (payoff 1: UNKNOWN rate).** With the validated seed
+  supplied via `AddHint`, A/B the Step 2 sweep for `status`
+  distribution: does the `UNKNOWN` rate drop? At the 30 s time limit
+  where UNKNOWN is most likely to be observed, does the fraction of
+  joint compiles that reach `FEASIBLE` increase measurably?
+- **Question 5c (payoff 2: solve time / gap).** Independently A/B the
+  same sweep for `solve_ms` and `(objective_value - best_bound) /
+  objective_value`. A seed can improve payoff 1 without touching
+  payoff 2 (a mediocre-but-feasible seed) or improve both (a
+  near-optimal seed).
+- **Files.** `torch_spyre/_inductor/scratchpad/ilp_solver_ortools.py`
+  (seed construction + `AddHint`), possibly a small hook in
+  `CoOptimizingAllocator._solve` for the seed's inputs.
+- **Output.** A three-way comparison for each production graph:
+  no-hint, seed-only-for-fallback (seed built but not hinted; used
+  only if solver returns `UNKNOWN`), seed-hinted. Log the plan
+  fingerprint (§5) at every arm so post-hoc analysis can tell whether
+  arms produced the same committed plan or a different one — an
+  identical objective across arms is not proof the plan was the same.
+- **Stop/go.** Green if 5a produces a validated-feasible seed and 5b
+  or 5c shows a measurable improvement on production graphs (either
+  alone is a shippable win — bounded fallback is worth as much as
+  faster solves). Red if the seed fails validation on real graphs —
+  that means the sketch's demote step didn't catch a joint-model
+  constraint, and the construction needs to be re-derived from the
+  actual constraint set in `_add_inplace_relaxation` +
+  `_add_no_overlap_2d` + `constrain_residency` before proceeding.
 
 ---
 
@@ -944,9 +1172,12 @@ policy-bounded, not hard-coded — but a default number ships either way
 when #4018 or #4203 merges.
 
 **Q3. On `SolveError` under `co_optimizing_lx_planning=True`, is
-"placement-only greedy with `demote_incoherent_lx_buffers`" an
-acceptable production fallback?** §7 lays out the options; the choice
-is a correctness/UX trade-off, not a performance one.
+"placement-only greedy resting on the #3378 post-fusion demotion
+mitigation" an acceptable production fallback?** #3378 cleared the
+frontend-owned #2062 failures and is CI-enforced, so this is a
+correctness/UX trade-off — not a known-broken path — but the joint
+model's structural coherence guarantee is not what holds on this
+branch. §7 lays out the options.
 
 **Q4. Is s390x expected to run joint CP-SAT via `ExhaustiveSearchSolver`
 in production, or should the s390x default remain
@@ -955,7 +1186,11 @@ behavior as "likely unintended." No visible decision since.
 
 **Q5. If joint CP-SAT is the default, does #3934 become the
 performance implementation lane, with #4117 as the umbrella? If so,
-who owns #3934?** #3934 has no visible owner as of 2026-09-02.
+who owns #3934?** #3934 has no assignee visible as of 2026-09-02;
+#4117 is jointly assigned to `toddllm` and `willmj`, and #4156 (the
+timing-record lane) is Will's. Whoever picks up #3934 should
+coordinate with #4156's owner before building any measurement
+infrastructure of its own.
 
 ---
 
@@ -988,7 +1223,7 @@ who owns #3934?** #3934 has no visible owner as of 2026-09-02.
   `torch_spyre/_inductor/work_division_constraints.py`. Recent
   commit trail includes "Lower time limit and undo pruning".
 - **#4203** "Let the CP-SAT solver decide LX relayouts" — draft,
-  head `ee418b9`, updated 2026-09-01T18:23:17Z, author `tardieu`.
+  head `ee418b9`, updated 2026-09-01T18:23:17Z, author `jturney`.
   Files include `torch_spyre/_inductor/scratchpad/lx_relayout.py`,
   `torch_spyre/_inductor/cost_model.py`, and three dedicated test
   files: `test_solver_relayout_candidates.py`,
@@ -998,26 +1233,42 @@ who owns #3934?** #3934 has no visible owner as of 2026-09-02.
   2026-08-30T19:27:57Z. Provides the `cost_expr` parameter reached
   through `plan_layout_and_core_divisions` only.
 - **#4196** "Fix a gap in making LX planning independent of
-  `PYTHONHASHSEED`" — Ready, updated 2026-09-02T16:17:10Z, author
-  `dgrove-oss`. Referenced from Step 2 in §10 because the sweep
-  needs determinism.
+  `PYTHONHASHSEED`" — Ready, head `4225031`, updated
+  2026-09-02T16:17:10Z, author `postmath`. Fixes a
+  `next(iter(free_symbols))` bug plus 13 other `next(iter(set))` sites
+  where iteration order was hash-seeded. On the granite-4.0-micro
+  probe graph, two runs at the same `_SEED` and step budget produced
+  two plans differing in 36 of 63 buffers with a 2.5% wall spread —
+  well outside device noise. Referenced from Step 2 in §10 because the
+  sweep needs determinism. **Important lesson beyond determinism** —
+  identical aggregate LX/HBM/predicted-time numbers do not imply the
+  same committed plan; see §5's `plan_fingerprint` field.
 
 **Live issues.**
 
 - **#3932** "[Epic] Default enable CP-SAT co-optimizer for
-  lx_planning and core division" — Open, updated 2026-08-24.
-  Tracks A/B/C/D. Motivates the switch on correctness grounds
-  (#2062, 11 value-corruption failures).
+  lx_planning and core division" — Open (`dgrove-oss`), updated
+  2026-08-24. Tracks A/B/C/D. Motivates the switch on correctness
+  grounds (#2062, 11 frontend-owned value-corruption failures, all
+  cleared by #3378 and CI-enforced).
 - **#3934** "Track B: Compile-time and scalability bounds for the
-  cpsat co-optimizing path" — Open, updated 2026-08-21. Depends on
-  #3810. Named home for the joint-path performance work; no visible
-  owner as of 2026-09-02.
-- **#4117** "Compiler frontend performance" — Open, updated
-  2026-08-28. Umbrella epic. Contains the methodology section §10
-  quotes.
+  cpsat co-optimizing path" — Open (`dgrove-oss`), updated 2026-08-21.
+  Depends on #3810. Named home for the joint-path performance work;
+  no assignee visible as of 2026-09-02.
+- **#4117** "Compiler frontend performance" — Open (`tardieu`),
+  updated 2026-08-28. Umbrella epic. **Assigned: `toddllm`, `willmj`.**
+  Contains the methodology section §10 quotes.
 - **#4156** "Frontend baseline suite: structured per-compile timing
-  records" — Open, updated 2026-09-02. No comments and no
-  implementation yet. Fully unclaimed lane; §5 fields fit here.
+  records" — Open, opened by and assigned to `willmj`, updated
+  2026-09-02. No comments and no implementation PR visible yet, but
+  this is Will's lane, not an unowned one; §5 fields belong inside its
+  schema.
+- **#2062** "LX Planning Test Failure Summary" — Open (`jturney`),
+  updated 2026-07-29. Frontend-owned failures 11 → 0 by #3378.
+- **#3378** "fix(lx): re-check LX core->slice coherence after fusion
+  and demote" — Merged 2026-07-29 (`bfd4b87c`). Post-fusion
+  incoherent-LX demotion mitigation; the correctness scaffolding the
+  `SolveError` fallback rests on (§7).
 
 **Live PRs left as Ready by Todd.**
 
