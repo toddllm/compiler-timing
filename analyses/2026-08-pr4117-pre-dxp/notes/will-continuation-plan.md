@@ -7,6 +7,12 @@ you're expected to own next, and exactly which script to run first.
 For deeper context, follow the links; nothing here assumes access to
 Slack, IBM internal wikis, or PR-comment threads.
 
+> **Supersession note (2026-09-02):** for the joint-CP-SAT default
+> switch and #3934 performance work, prefer
+> `notes/final-frontend-performance-handoff.md`. This file remains
+> the authority on restickify, SDSC, and lanes independent of that
+> switch.
+
 ---
 
 ## What is already done
